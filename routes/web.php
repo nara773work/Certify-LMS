@@ -42,12 +42,37 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeakDrillController;
 use App\Http\Controllers\WeakDrillResultController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\QaThreadController;
 
 Route::get('/', function () {
     return auth()->check()
         ? redirect()->route('dashboard.index')
         : redirect('/login');
 });
+
+Route::get('qa-board',[QaThreadController::class,'index'])
+->name('qa-board.index');
+Route::get('/qa-board/create',[QaThreadController::class,'create'])
+->name('qa-board.create');
+Route::post('/qa-board',[QaThreadController::class,'store'])
+->name('qa-board.store');
+Route::get('/qa-board/{thread}',[QaThreadController::class,'show'])
+->name('qa-board.show');
+Route::get('/qa-board/{thread}/edit',[QaThreadController::class,'edit'])
+->name('qa-board.edit');
+Route::patch('/qa-board/{thread}',[QaThreadController::class,'update'])
+->name('qa-board.update');
+Route::delete('/qa-board/{thread}',[QaThreadController::class,'destroy'])
+->name('qa-board.destroy');
+
+Route::post('/qa-board/{thread}/resolve',[QaThreadController::class,'resolve'])
+->name('qa-board.resolve');
+Route::post('/qa-board/{thread}/unresolve',[QaThreadController::class,'unresolve'])
+->name('qa-board.unresolve');
+
+
+Route::post('/qa-board/{thread}/replies',[QaReplayControler::class,'store'])
+->name('qa-replay.store');
 
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)
@@ -474,3 +499,9 @@ if (app()->environment('local')) {
         return view('_dev.components');
     })->name('_dev.components');
 }
+
+
+
+
+
+
