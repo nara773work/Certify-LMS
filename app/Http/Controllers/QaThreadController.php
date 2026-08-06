@@ -5,9 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Certification;
 use App\Models\QaThread;
-use App\Models\Reply;
+use App\Models\QaReply;
 use App\Enums\QaThreadStatus;
 use App\Enums\CertificationStatus;
+use App\Enums\UserRole;
 
 class QaThreadController extends Controller
 {
@@ -52,7 +53,11 @@ class QaThreadController extends Controller
         }
 
         $threads = $query
-        ->with('certification')->with('user')->paginate(10)->withQueryString();
+        ->with('certification')
+        ->with('user')
+        ->withCount('replies')
+        ->paginate(10)
+        ->withQueryString();
 
         return view('qa-thread.index',
         compact('filters','certifications','indexRoute','publishedStatus','threads'));
@@ -92,19 +97,31 @@ class QaThreadController extends Controller
      */
     public function show(QaThread $thread){
 
-        $destroyRoute = 'qa-board.destroy';
+    $user = auth()->user();
 
-        $replies = $thread->replies;
+    if($user->role === UserRole::Admin){
+        $destroyRoute = 'admin.qa-board.destroy';
+        
+    }else{
+        $destroyRoute = 'qa-board.destroy';
+    }
+        $replies = $thread->withCount('replies')->with('user');
 
         return view('qa-thread.show',compact('thread','replies','destroyRoute'));
 
     }
 
+    /**
+     * 質問編集画面を表示する
+     */
     public function edit(QaThread $thread){
 
         return view('qa-thread.edit',compact('thread'));
     }
 
+    /**
+     * 質問を更新する
+     */
     public function update(QaThread $thread, Request $request){
 
         $thread->update([
@@ -115,6 +132,10 @@ class QaThreadController extends Controller
         return redirect()->route('qa-board.show',$thread)->with('success', '質問を更新しました。');
     }
 
+    /**
+     * 質問を削除する
+     * 紐づいている回答がある場合は削除できない
+     */
     public function destroy(QaThread $thread){
 
         if ($thread->replies()->exists()) {
@@ -130,6 +151,9 @@ class QaThreadController extends Controller
 
     }
 
+    /**
+     * 質問スレッドのステータスを解決済みに更新する
+     */
     public function resolve(QaThread $thread)
     {
         $thread->update([
@@ -139,6 +163,9 @@ class QaThreadController extends Controller
         return back();
     }
 
+    /**
+     * 質問スレッドのステータスを未解決に更新する
+     */
     public function unresolve(QaThread $thread)
     {
         $thread->update([

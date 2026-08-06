@@ -14,14 +14,17 @@ return new class extends Migration
         Schema::create('qa_threads', function (Blueprint $table) {
             $table->id();
             $table->foreignUlid('certification_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                ->constrained()
+                ->cascadeOnDelete();
+                //資格情報が削除されるとその資格の質問は削除される
             $table->string('title');
             $table->text('body');
             $table->string('status')->default('unresolved');
             $table->foreignUlid('user_id')
-                  ->constrained()
-                  ->cascadeOnDelete();
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+                //ユーザーが退出しても質問は削除されない
             $table->timestamps();
         });
     }

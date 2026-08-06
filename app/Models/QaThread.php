@@ -23,7 +23,7 @@ class QaThread extends Model
 
     public function replies()
     {
-        return $this->hasMany(Reply::class);
+        return $this->hasMany(QaReply::class,'qa_thread_id');
     }
 
     public function certification()

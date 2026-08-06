@@ -43,6 +43,7 @@ use App\Http\Controllers\WeakDrillController;
 use App\Http\Controllers\WeakDrillResultController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\QaThreadController;
+use App\Http\Controllers\QaReplyController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -71,9 +72,30 @@ Route::post('/qa-board/{thread}/unresolve',[QaThreadController::class,'unresolve
 ->name('qa-board.unresolve');
 
 
-Route::post('/qa-board/{thread}/replies',[QaReplayControler::class,'store'])
-->name('qa-replay.store');
+Route::post('/qa-board/{thread}/replies',[QaReplyController::class,'store'])
+->name('qa-board.replies.store');
+Route::get('/qa-board/{thread}/replies/{reply}/edit',[QaReplyController::class,'edit'])
+->name('qa-board.replies.edit');
+Route::patch('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'update'])
+->name('qa-board.replies.update');
+Route::delete('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'destroy'])
+->name('qa-board.replies.destroy');
 
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        Route::get('/qa-board',[QaThreadController::class,'index'])
+        ->name('qa-board.index');
+        Route::get('/qa-board/{thread}',[QaThreadController::class,'show'])
+        ->name('qa-board.show');
+        Route::delete('/qa-board/{thread}',[QaThreadController::class,'destroy'])
+        ->name('qa-board.destroy');
+        Route::delete('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'destroy'])
+        ->name('qa-board.replies.destroy');        
+
+    });
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)
 // ============================================================

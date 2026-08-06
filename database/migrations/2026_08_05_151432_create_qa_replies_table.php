@@ -11,13 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('replies', function (Blueprint $table) {
+        Schema::create('qa_replies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('qa_thread_id')
                 ->constrained()
                 ->cascadeOnDelete();
+                //質問が削除されると回答も削除される
             $table->text('body');
             $table->timestamps();
+            $table->foreignUlid('user_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+                //ユーザーが退出しても回答は削除されない
         });
     }
 
@@ -26,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('replies');
+        Schema::dropIfExists('qa_replies');
     }
 };

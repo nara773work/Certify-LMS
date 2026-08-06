@@ -16,10 +16,11 @@ class QaThreadPolicy
         
     }
 
-    public function view(User $auth, QaThread $qathread): bool
+    public function view(User $user, QaThread $qathread): bool
     {
-        return $auth->role === UserRole::Admin
-            || $auth->id === UserRole::Student;
+        return $user->role === UserRole::Admin
+            || $user->id === UserRole::Student
+            || $user->id === UserRole::Coach;
     }
 
     public function create(User $user): bool
@@ -29,8 +30,7 @@ class QaThreadPolicy
 
     public function update(User $user, QaThread $thread): bool
     {
-        return $user->role === UserRole::Admin
-            || $user->id === $thread->user_id;
+        return $user->id === $thread->user_id;
     }
 
     public function delete(User $user, QaThread $thread): bool
