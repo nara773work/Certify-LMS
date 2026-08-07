@@ -20,8 +20,8 @@ class QaThreadSeeder extends Seeder
     {
         $basic = Certification::where('name', '基本情報技術者試験')->first();
         $advance = Certification::where('name', '応用情報技術者試験')->first();
-        $toeic = Certification::where('name', 'TOEIC')->first();
-        $bookkeeping = Certification::where('name', '日商簿記2級')->first();
+        $toeic = Certification::where('name', 'TOEIC L&R 800 点コース')->first();
+        $bookkeeping = Certification::where('name', '日商簿記 2 級')->first();
         $PMP = Certification::where('name', 'PMP')->first();
 
         $fixedStudent =User::where('name','受講生花子')->first();

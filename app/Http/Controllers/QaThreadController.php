@@ -28,9 +28,24 @@ class QaThreadController extends Controller
         $certifications = Certification::where('status',CertificationStatus::Published)
         ->get();
         
-        $publishedStatus = CertificationStatus::Published;
+        $publishedStatus = CertificationStatus::cases();
 
         $query = QaThread::query();
+
+        if ($user->role === UserRole::Coach) {
+            $query->whereIn(
+                'certification_id',$user->coachingCertificationIds()
+            );
+        }
+
+        if (auth()->user()->role === UserRole::Admin) {
+            $certifications = Certification::all();
+        } else {
+            $certifications = Certification::where(
+            'status',
+            CertificationStatus::Published
+            )->get();
+    }
 
         //フィルター
         $filters = $request->input('filters', [
@@ -39,11 +54,10 @@ class QaThreadController extends Controller
             'keyword' => $request->input('keyword'),
         ]);
 
-        if($filters['status'] == 'unresolved'){
-            $query = QaThread::where('status','unresolved');
-        }
-        elseif($filters['status'] == 'resolved'){
-            $query = QaThread::where('status','resolved');
+        if ($filters['status'] == 'unresolved') {
+            $query->where('status', QaThreadStatus::UnResolved);
+        } elseif ($filters['status'] == 'resolved') {
+            $query->where('status', QaThreadStatus::Resolved);
         }
 
         if (!empty($filters['certification_id'])) {
