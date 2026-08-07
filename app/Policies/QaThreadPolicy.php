@@ -5,8 +5,8 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\QaThread;
 use App\Enums\UserRole;
-use App\Enums\CertificationStatus;
 use App\Enums\UserStatus;
+use App\Enums\CertificationStatus;
 
 class QaThreadPolicy
 {
@@ -20,39 +20,44 @@ class QaThreadPolicy
 
     public function viewAny(User $user): bool
     {
-        return in_array($user->role, [
-        UserRole::Admin,
-        UserRole::Student,
-        UserRole::Coach,
-    ]);
-
-    if (
-    $user->role !== UserRole::Admin &&
-    $user->status !== UserStatus::InProgress
-    ) {
-        return false;
-    }
-
-    }
-
-    public function view(User $user, QaThread $thread): bool
-{
-        // 管理者は全て閲覧可能
+    // 管理者は常にOK
     if ($user->role === UserRole::Admin) {
         return true;
     }
 
-    // 公開停止中の資格は管理者以外閲覧不可
+    // コーチ・受講生は受講中のみOK
+    if (
+        in_array($user->role, [UserRole::Student, UserRole::Coach], true)
+        && $user->status === UserStatus::InProgress
+    ) {
+        return true;
+    }
+
+    return false;
+    
+    }
+
+    public function view(User $user, QaThread $thread): bool
+{
+            // 管理者は常にOK
+    if ($user->role === UserRole::Admin) {
+        return true;
+    }
+
+    // 公開停止中の資格は管理者以外NG
     if ($thread->certification->status !== CertificationStatus::Published) {
         return false;
     }
 
     // 受講生は公開済資格なら閲覧可能
     if ($user->role === UserRole::Student) {
+        if($user->status !== UserStatus::InProgress){
+            return false;
+        }
         return true;
     }
 
-    // コーチは担当資格のみ閲覧可能
+    // コーチは担当資格のみ
     if ($user->role === UserRole::Coach) {
         return in_array(
             $thread->certification_id,
@@ -61,13 +66,7 @@ class QaThreadPolicy
         );
     }
 
-    if (
-    $user->role !== UserRole::Admin &&
-    $user->status !== UserStatus::InProgress
-    ) {
-        return false;
-    }
-        return false;
+    return false;
 }
 
     public function create(User $user): bool

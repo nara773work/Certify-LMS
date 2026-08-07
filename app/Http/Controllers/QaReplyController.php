@@ -25,7 +25,7 @@ class QaReplyController extends Controller
         return redirect()->route('qa-board.show',$thread)->with('success', '回答を作成しました。');
     }
 
-    public function edit(QaReply $reply){
+    public function edit(QaThread $thread,QaReply $reply){
         $this->authorize('edit', $reply);
 
         return view('qa-thread.reply-edit',compact('thread','reply'));
@@ -38,7 +38,7 @@ class QaReplyController extends Controller
             'body' => $request->body,
         ]);
 
-        return redirect()->route('qa-board.index')->with('success', '回答を更新しました。');
+        return redirect()->route('qa-board.show',$thread)->with('success', '回答を更新しました。');
     }
 
     public function destroy(QaThread $thread,QaReply $reply){

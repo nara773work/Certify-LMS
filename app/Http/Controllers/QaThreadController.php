@@ -117,6 +117,8 @@ class QaThreadController extends Controller
         $this->authorize('view', $thread);
 
         $user = auth()->user();
+        $thread->load(['replies.user']);
+        $thread->loadCount('replies');
 
         if($user->role === UserRole::Admin){
             $destroyRoute = 'admin.qa-board.destroy';
@@ -125,9 +127,7 @@ class QaThreadController extends Controller
             $destroyRoute = 'qa-board.destroy';
         }
 
-        $replies = $thread->withCount('replies')->with('user');
-
-        return view('qa-thread.show',compact('thread','replies','destroyRoute'));
+        return view('qa-thread.show',compact('thread','destroyRoute'));
 
     }
 
@@ -158,12 +158,20 @@ class QaThreadController extends Controller
      * 質問を削除する
      * 紐づいている回答がある場合は削除できない
      */
-    public function destroy(){
+    public function destroy(QaThread $thread){
         $this->authorize('delete', $thread);
+
+        $user = Auth()->user();
 
         if ($thread->replies()->exists()) {
 
-            return back()->with('error', '紐づいている回答があるため削除できません。');
+            if($user->role !== UserRole::Admin){
+                return back()->with('error', '紐づいている回答があるため削除できません。');
+            } 
+
+            $thread->delete();
+
+            return redirect()->route('admin.qa-board.index',$thread)->with('success', '質問を削除しました。');
 
         }
         
@@ -181,7 +189,7 @@ class QaThreadController extends Controller
     public function resolve(QaThread $thread){
         $this->authorize('resolve', $thread);
 
-        if($thread->whereHas('replies')){
+        if(! $thread->replies()->exists()){
             return back()->with('error', '回答がないため解決済みにできません');
         }
 
