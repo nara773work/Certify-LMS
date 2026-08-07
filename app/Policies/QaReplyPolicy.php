@@ -17,22 +17,25 @@ class QaReplyPolicy
         //
     }
 
-    public function create(User $user, QaThread $thread): bool
+    public function create(User $user): bool
     {
         return $user->role === UserRole::Coach
             || $user->role === UserRole::Student;
     }
 
+    public function edit(User $user, QaReply $reply): bool
+    {
+        return $user->id === $reply->user_id;
+    }
+
     public function update(User $user, QaReply $reply): bool
     {
-        return $user->role === UserRole::Coach
-            || $user->role === UserRole::Student;
+        return $user->id === $reply->user_id;
     }
 
     public function delete(User $user, QaReply $reply): bool
     {
         return $user->role === UserRole::Admin
-            || $user->role === UserRole::Coach
-            || $user->role === UserRole::Student;
+            || $user->id === $reply->user_id;
     }
 }

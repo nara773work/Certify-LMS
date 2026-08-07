@@ -18,7 +18,8 @@ class QaThreadController extends Controller
      * 解決・未解決、試験別、本文に含まれるキーワードで検索することができる
      * ページネーションで取得しており、ページを跨いでも検索結果は保持される
     */
-    public function index(Request $request){
+    public function index(Request $request,){
+        $this->authorize('viewAny', QaThread::class);
 
         $user = auth()->user(); 
         $indexRoute = 'qa-board.index';
@@ -68,6 +69,7 @@ class QaThreadController extends Controller
      * 質問スレッド投稿画面
      */
     public function create(){
+        $this->authorize('create', QaThread::class);
        
         $certifications = Certification::all();
 
@@ -80,6 +82,7 @@ class QaThreadController extends Controller
      */
 
     public function store(Request $request){
+        $this->authorize('create', QaThread::class);
 
         $thread = QaThread::create([
             'certification_id' => $request->certification_id,
@@ -96,15 +99,17 @@ class QaThreadController extends Controller
      * 質問詳細画面を表示する
      */
     public function show(QaThread $thread){
+        $this->authorize('view', $thread);
 
-    $user = auth()->user();
+        $user = auth()->user();
 
-    if($user->role === UserRole::Admin){
-        $destroyRoute = 'admin.qa-board.destroy';
+        if($user->role === UserRole::Admin){
+            $destroyRoute = 'admin.qa-board.destroy';
         
-    }else{
-        $destroyRoute = 'qa-board.destroy';
-    }
+        }else{
+            $destroyRoute = 'qa-board.destroy';
+        }
+
         $replies = $thread->withCount('replies')->with('user');
 
         return view('qa-thread.show',compact('thread','replies','destroyRoute'));
@@ -115,6 +120,7 @@ class QaThreadController extends Controller
      * 質問編集画面を表示する
      */
     public function edit(QaThread $thread){
+        $this->authorize('edit', $thread);
 
         return view('qa-thread.edit',compact('thread'));
     }
@@ -123,6 +129,7 @@ class QaThreadController extends Controller
      * 質問を更新する
      */
     public function update(QaThread $thread, Request $request){
+        $this->authorize('update', $thread);
 
         $thread->update([
             'title' => $request->title,
@@ -137,6 +144,7 @@ class QaThreadController extends Controller
      * 紐づいている回答がある場合は削除できない
      */
     public function destroy(QaThread $thread){
+        $this->authorize('delete', $thread);
 
         if ($thread->replies()->exists()) {
 
@@ -153,21 +161,28 @@ class QaThreadController extends Controller
 
     /**
      * 質問スレッドのステータスを解決済みに更新する
+     * 回答数が0のまま解決済みにはできないようにする
      */
-    public function resolve(QaThread $thread)
-    {
+    public function resolve(QaThread $thread){
+        $this->authorize('resolve', $thread);
+
+        if($thread->whereHas('replies')){
+            return back()->with('error', '回答がないため解決済みにできません');
+        }
+
         $thread->update([
             'status' => QaThreadStatus::Resolved,
         ]);
 
-        return back();
+        return back()->with('success', '解決済みに変更しました');
     }
 
     /**
      * 質問スレッドのステータスを未解決に更新する
      */
-    public function unresolve(QaThread $thread)
-    {
+    public function unresolve(QaThread $thread){
+        $this->authorize('unresolve', $thread);
+
         $thread->update([
             'status' => QaThreadStatus::UnResolved,
         ]);

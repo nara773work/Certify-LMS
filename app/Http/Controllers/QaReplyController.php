@@ -13,6 +13,7 @@ class QaReplyController extends Controller
      */
 
     public function store(Request $request, QaThread $thread){
+        $this->authorize('create', QaReply::class);
 
         $reply = QaReply::create([
             'body' => $request->body,
@@ -24,11 +25,13 @@ class QaReplyController extends Controller
     }
 
     public function edit(QaThread $thread,QaReply $reply){
+        $this->authorize('edit', $reply);
 
         return view('qa-thread.reply-edit',compact('thread','reply'));
     }
 
     public function update(Request $request,QaThread $thread,QaReply $reply){
+        $this->authorize('update', $reply);
 
         $reply->update([
             'body' => $request->body,
@@ -38,6 +41,7 @@ class QaReplyController extends Controller
     }
 
     public function destroy(QaThread $thread,QaReply $reply){
+        $this->authorize('delete', $reply);
 
         $reply->delete();
 

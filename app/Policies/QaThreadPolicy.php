@@ -16,16 +16,28 @@ class QaThreadPolicy
         
     }
 
-    public function view(User $user, QaThread $qathread): bool
+    public function viewAny(User $user): bool
     {
-        return $user->role === UserRole::Admin
-            || $user->id === UserRole::Student
-            || $user->id === UserRole::Coach;
+        return in_array($user->role, [
+            UserRole::Admin,
+            UserRole::Student,
+            UserRole::Coach,
+        ]);
+    }
+
+    public function view(User $user, QaThread $thread): bool
+    {
+        return $user->id === $thread->user_id;
     }
 
     public function create(User $user): bool
     {
         return $user->role === UserRole::Student;
+    }
+
+    public function edit(User $user, QaThread $thread): bool
+    {
+        return $user->id === $thread->user_id;
     }
 
     public function update(User $user, QaThread $thread): bool
