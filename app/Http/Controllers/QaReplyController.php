@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\QaReply;
 use App\Models\QaThread;
+use App\Http\Requests\QaBoard\QaReplyRequest;
 
 class QaReplyController extends Controller
 {
@@ -12,7 +13,7 @@ class QaReplyController extends Controller
      * 質問スレッド保存処理を行う
      */
 
-    public function store(Request $request, QaThread $thread){
+    public function store(QaReplyRequest $request, QaThread $thread){
         $this->authorize('create', QaReply::class);
 
         $reply = QaReply::create([
@@ -24,13 +25,13 @@ class QaReplyController extends Controller
         return redirect()->route('qa-board.show',$thread)->with('success', '回答を作成しました。');
     }
 
-    public function edit(QaThread $thread,QaReply $reply){
+    public function edit(QaReply $reply){
         $this->authorize('edit', $reply);
 
         return view('qa-thread.reply-edit',compact('thread','reply'));
     }
 
-    public function update(Request $request,QaThread $thread,QaReply $reply){
+    public function update(QaReplyRequest $request,QaThread $thread,QaReply $reply){
         $this->authorize('update', $reply);
 
         $reply->update([

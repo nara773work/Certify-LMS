@@ -9,6 +9,7 @@ use App\Models\QaReply;
 use App\Enums\QaThreadStatus;
 use App\Enums\CertificationStatus;
 use App\Enums\UserRole;
+use App\Http\Requests\QaBoard\QaThreadRequest;
 
 class QaThreadController extends Controller
 {
@@ -71,7 +72,7 @@ class QaThreadController extends Controller
     public function create(){
         $this->authorize('create', QaThread::class);
        
-        $certifications = Certification::all();
+        $certifications = Certification::where('status',CertificationStatus::Published);
 
         return view('qa-thread.create',compact('certifications'));
 
@@ -81,7 +82,7 @@ class QaThreadController extends Controller
      * 質問スレッド保存処理を行う
      */
 
-    public function store(Request $request){
+    public function store(QaThreadRequest $request){
         $this->authorize('create', QaThread::class);
 
         $thread = QaThread::create([
@@ -128,7 +129,7 @@ class QaThreadController extends Controller
     /**
      * 質問を更新する
      */
-    public function update(QaThread $thread, Request $request){
+    public function update(QaThreadRequest $request,QaThread $thread){
         $this->authorize('update', $thread);
 
         $thread->update([
@@ -143,7 +144,7 @@ class QaThreadController extends Controller
      * 質問を削除する
      * 紐づいている回答がある場合は削除できない
      */
-    public function destroy(QaThread $thread){
+    public function destroy(){
         $this->authorize('delete', $thread);
 
         if ($thread->replies()->exists()) {
@@ -187,7 +188,7 @@ class QaThreadController extends Controller
             'status' => QaThreadStatus::UnResolved,
         ]);
 
-        return back();
+        return back()->with('success', '未解決に変更しました');
     }
 
 }
