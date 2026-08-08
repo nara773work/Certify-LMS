@@ -72,6 +72,7 @@ class QaThreadController extends Controller
         ->with('certification')
         ->with('user')
         ->withCount('replies')
+        ->orderBy('created_at','desc')
         ->paginate(10)
         ->withQueryString();
 

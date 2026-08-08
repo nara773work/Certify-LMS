@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Enums\QaThreadStatus;
+use Carbon\Carbon;
 
 class QaThreadSeeder extends Seeder
 {
@@ -43,23 +44,30 @@ class QaThreadSeeder extends Seeder
         //bodyの文章の長さにばらつきができるように字数をコメントアウトで記す
 
         //50字程度　
+        $threadCreatedAt1 = Carbon::today()->subDays(15);
         QaThread::create([
             'certification_id' => $basic->id,
             'user_id' => $fixedStudent->id,
             'title' => 'IPアドレスとサブネットマスクの計算方法が分かりません',
             'body' => 'サブネットマスクの計算方法が分かりません。ネットワークアドレスの求め方を教えてください。',
             'status' => QaThreadStatus::UnResolved,
+            'created_at' => $threadCreatedAt1,
+            'updated_at' => $threadCreatedAt1
         ]);
 
         //100字程度
+        $threadCreatedAt2 = Carbon::today()->subDays(10);
         QaThread::create([
             'certification_id' => $basic->id,
             'user_id' => $fixedStudent->id,
             'title' => 'SQLのINNER JOINが苦手です',
             'body' => 'INNER JOINを使ったSQLの書き方が苦手です。テーブルを結合する考え方は分かるのですが、問題文からSQLを書くのが難しいです。基本的な考え方や練習方法があれば教えてください。',
             'status' => QaThreadStatus::Resolved,
+            'created_at' => $threadCreatedAt2,
+            'updated_at' => $threadCreatedAt2
         ]);
 
+        $threadCreatedAt3 = Carbon::today()->subDays(20);
         QaThread::create([
             'certification_id' => $advance->id,
             'user_id' => $fixedStudent->id,
@@ -67,9 +75,12 @@ class QaThreadSeeder extends Seeder
             'body' => '応用情報技術者試験の勉強を始めましたが、午後問題の対策方法が分かりません。午前問題は過去問を繰り返し解いていますが、午後問題は文章量が多く、
                         どこから読み始めればよいのか迷ってしまいます。また、記述式の解答にも慣れておらず、模範解答を見ても「なぜその答えになるのか」が理解できないことがあります。過去問を何年分くらい解けばよいのか、効率的な勉強方法やおすすめの進め方があれば教えていただきたいです。',
             'status' => QaThreadStatus::UnResolved,
+            'created_at' => $threadCreatedAt3,
+            'updated_at' => $threadCreatedAt3
         ]);
 
         //500字程度
+        $threadCreatedAt4 = Carbon::today()->subDays(15);
         QaThread::create([
             'certification_id' => $toeic->id,
             'user_id' => $fixedStudent->id,
@@ -84,18 +95,24 @@ class QaThreadSeeder extends Seeder
                         おすすめの教材やアプリ、実際に550点前後から700点以上までスコアを伸ばした方が実践した勉強方法があれば、ぜひ教えていただきたいです。
                         また、本番で問題を先読みするコツや、聞き取れなかったときの立て直し方についてもアドバイスをいただけると嬉しいです。',
             'status' => QaThreadStatus::UnResolved,
+            'created_at' => $threadCreatedAt4,
+            'updated_at' => $threadCreatedAt4
         ]);
 
         //30字程度
+        $threadCreatedAt5 = Carbon::today()->subDays(30);
         QaThread::create([
             'certification_id' => $bookkeeping->id,
             'user_id' => $fixedStudent->id,
             'title' => '貸借対照表と損益計算書の違いが分かりません',
             'body' => '貸借対照表と損益計算書の違いが理解できません。覚え方を教えてください。',
             'status' => QaThreadStatus::Resolved,
+            'created_at' => $threadCreatedAt5,
+            'updated_at' => $threadCreatedAt5
         ]);
 
         //1100字程度
+        $threadCreatedAt6 = Carbon::today()->subDays(7);
         QaThread::create([
             'certification_id' => $PMP->id,
             'user_id' => $fixedStudent->id,
@@ -115,10 +132,13 @@ class QaThreadSeeder extends Seeder
                         実務でプロジェクトマネージャーやリーダーを経験された方がいらっしゃれば、WBSを作成するときに意識しているポイントや、作業を分解する際の判断基準、初心者が陥りやすい失敗例なども教えていただけると嬉しいです。
                         また、PMP試験の学習を進めるうえで、WBSを効率よく理解するための勉強方法や、おすすめの順番があればぜひ参考にしたいと考えています。よろしくお願いいたします。',
             'status' => QaThreadStatus::Resolved,
+            'created_at' => $threadCreatedAt6,
+            'updated_at' => $threadCreatedAt6
         ]);
 
 
         //受講中ユーザーの初期データ
+        $threadCreatedAt7 = Carbon::today()->subDays(40);
         QaThread::create([
             'certification_id' => $basic->id,
             'user_id' => $students->random()->id,
@@ -130,8 +150,11 @@ class QaThreadSeeder extends Seeder
                         実際にどのような流れで利用されるのかもよく分かりません。
                         試験で解くときの覚え方や、それぞれの特徴・メリットを分かりやすく教えていただきたいです。',
             'status' => QaThreadStatus::Resolved,
+            'created_at' => $threadCreatedAt7,
+            'updated_at' => $threadCreatedAt7
         ]);
 
+        $threadCreatedAt8 = Carbon::today()->subDays(5);
         QaThread::create([
             'certification_id' => $advance->id,
             'user_id' => $students->random()->id,
@@ -141,8 +164,11 @@ class QaThreadSeeder extends Seeder
                         いつも時間がかかってしまいます。
                         設問の読み方や、効率よく解くためのコツがあれば教えていただきたいです。',
             'status' => QaThreadStatus::UnResolved,
+            'created_at' => $threadCreatedAt8,
+            'updated_at' => $threadCreatedAt8
         ]);
 
+        $threadCreatedAt9 = Carbon::today()->subDays(8);
         QaThread::create([
             'certification_id' => $advance->id,
             'user_id' => $students->random()->id,
@@ -151,8 +177,11 @@ class QaThreadSeeder extends Seeder
                         基本情報では用語を覚えるだけでもある程度対応できましたが、応用情報の午後問題ではネットワーク構成図やログを読み取る問題が多く、どこに注目すればよいのか分からなくなってしまいます。
                         ネットワーク分野を効率よく学習する方法や、午後問題を解く際に意識しているポイントがあれば教えていただきたいです。',
             'status' => QaThreadStatus::UnResolved,
+            'created_at' => $threadCreatedAt9,
+            'updated_at' => $threadCreatedAt9
         ]);
 
+        $threadCreatedAt10 = Carbon::today()->subDays(45);
         QaThread::create([
             'certification_id' => $advance->id,
             'user_id' => $students->random()->id,
@@ -162,8 +191,11 @@ class QaThreadSeeder extends Seeder
                         また、設問では「最も適切な対策」を選ぶ問題が多く、どのような視点で判断すればよいのか迷ってしまいます。
                         セキュリティ分野を効率よく学習する方法や、午後問題を解くときに意識しているポイントがあれば教えていただきたいです。',
             'status' => QaThreadStatus::UnResolved,
+            'created_at' => $threadCreatedAt10,
+            'updated_at' => $threadCreatedAt10
         ]);
 
+        $threadCreatedAt11 = Carbon::today()->subDays(10);
         QaThread::create([
             'certification_id' => $bookkeeping->id,
             'user_id' => $students->random()->id,
@@ -172,9 +204,12 @@ class QaThreadSeeder extends Seeder
                         勘定科目は覚えてきたのですが、本番になると混乱してしまいます。
                         借方・貸方を正しく判断するコツや、おすすめの勉強方法があれば教えてください。',
             'status' => QaThreadStatus::Resolved,
+            'created_at' => $threadCreatedAt11,
+            'updated_at' => $threadCreatedAt11
         ]);
 
         //卒業ユーザーの初期データ
+        $threadCreatedAt12 = Carbon::today()->subDays(60);
         QaThread::create([
             'certification_id' => $basic->id,
             'user_id' => $graduatedStudents->random()->id,
@@ -183,9 +218,12 @@ class QaThreadSeeder extends Seeder
                         LIFOとFIFOの意味は理解していますが、問題になるとどちらを使うべきか迷ってしまいます。
                         実際の利用例も合わせて教えていただけると嬉しいです。',
             'status' => QaThreadStatus::UnResolved,
+            'created_at' => $threadCreatedAt12,
+            'updated_at' => $threadCreatedAt12
         ]);
 
         //退会ユーザーの初期データ
+        $threadCreatedAt13 = Carbon::today()->subDays(50);
         QaThread::create([
             'certification_id' => $PMP->id,
             'user_id' => $withdrawnStudents->random()->id,
@@ -193,6 +231,8 @@ class QaThreadSeeder extends Seeder
             'body' => 'クリティカルパスの問題を解いていますが、最早開始時刻や最遅開始時刻の計算でいつも間違えてしまいます。
                         試験で確実に解けるようになるための勉強方法や、計算するときのポイントがあれば教えていただきたいです。',
             'status' => QaThreadStatus::Resolved,
+            'created_at' => $threadCreatedAt13,
+            'updated_at' => $threadCreatedAt13
         ]);
     }
 }
