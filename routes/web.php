@@ -44,6 +44,7 @@ use App\Http\Controllers\WeakDrillResultController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\QaThreadController;
 use App\Http\Controllers\QaReplyController;
+use App\Http\Controllers\MeetingPackController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -110,6 +111,35 @@ Route::middleware(['auth', 'role:admin'])
         ->name('qa-board.destroy');
         Route::delete('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'destroy'])
         ->name('qa-board.replies.destroy');        
+
+    });
+
+// ============================================================
+// S-B-02 meetingパック　admin
+// ============================================================
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')->name('admin.')->group(function () {
+
+        Route::get('/meeting-packs',[MeetingPackController::class,'index'])
+        ->name('meeting-packs.index');
+        Route::get('/meeting-packs/create',[MeetingPackController::class,'create'])
+        ->name('meeting-packs.create');
+        Route::post('/meeting-packs',[MeetingPackController::class,'store'])
+        ->name('meeting-packs.store'); 
+        Route::get('/meeting-packs/{plan}',[MeetingPackController::class,'show'])
+        ->name('meeting-packs.show');   
+        Route::get('/meeting-packs/{plan}/edit',[MeetingPackController::class,'edit'])
+        ->name('meeting-packs.edit');
+        Route::patch('/meeting-packs/{plan}',[MeetingPackController::class,'update'])
+        ->name('meeting-packs.update');
+        Route::delete('/meeting-packs/{plan}',[MeetingPackController::class,'destroy'])
+        ->name('meeting-packs.destroy');
+        Route::post('/meeting-packs/{plan}/publish',[MeetingPackController::class,'publish'])
+        ->name('meeting-packs.publish');    
+        Route::post('/meeting-packs/{plan}/archive',[MeetingPackController::class,'archive'])
+        ->name('meeting-packs.archive');
+        Route::post('/meeting-packs/{plan}/unarchive',[MeetingPackController::class,'unarchive'])
+        ->name('meeting-packs.unarchive');  
 
     });
 

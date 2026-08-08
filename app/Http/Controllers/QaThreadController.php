@@ -98,7 +98,7 @@ class QaThreadController extends Controller
      */
 
     public function store(QaThreadRequest $request){
-        $this->authorize('create', QaThread::class);
+        $this->authorize('update', QaThread::class);
 
         $thread = QaThread::create([
             'certification_id' => $request->certification_id,
