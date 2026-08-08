@@ -159,6 +159,10 @@ class QaThreadControllerTest extends TestCase
 
     }
 
+    /**
+     * 質問スレッドの新規登録画面が表示される
+     * コーチには表示されない
+     */
     public function test_QaThreadController_create(): void
     {
         $this->seed();
@@ -181,6 +185,9 @@ class QaThreadControllerTest extends TestCase
 
     }
 
+    /**
+     * バリデーションを通過したデータは、DBに保存される
+     */
     public function test_QaThreadController_store_succses(): void
     {
         $this->seed();
@@ -207,6 +214,9 @@ class QaThreadControllerTest extends TestCase
 
     }
 
+    /**
+     * バリデーションを通過しなかったデータはDBに保存されない
+     */
     public function test_QaThreadController_store_error(): void
     {
         $this->seed();
@@ -231,6 +241,9 @@ class QaThreadControllerTest extends TestCase
 
     }
 
+    /**
+     * コーチは質問スレッドを作成できない
+     */
     public function test_QaThreadController_store_Coach(): void
     {
         $this->seed();
@@ -244,6 +257,9 @@ class QaThreadControllerTest extends TestCase
 
     }
 
+    /**
+     * 詳細画面を表示することができる
+     */
     public function test_QaThreadController_show_Student(): void
     {
         $this->seed();
@@ -266,6 +282,31 @@ class QaThreadControllerTest extends TestCase
         }
     }
 
+    public function test_QaThreadController_show_Coach(): void
+    {
+        $this->seed();
+
+        $user = User::where('role', UserRole::Coach)->first();
+        $thread = QaThread::with('replies')->first();
+
+        $response = $this->actingAs($user)
+        ->get("/qa-board/{$thread->id}");
+
+        $response->assertStatus(200);
+
+        $response->assertviewIs('qa-thread.show');
+
+        $response->assertSee($thread->title);
+        $response->assertSee($thread->body);
+        
+        foreach ($thread->replies as $reply) {
+            $response->assertSee($reply->body);
+        }
+    }
+
+    /**
+     * 管理者も詳細画面を閲覧することができる
+     */
     public function test_QaThreadController_show_Admin(): void
     {
         $this->seed();
@@ -288,6 +329,9 @@ class QaThreadControllerTest extends TestCase
         }
     }
 
+    /**
+     * 投稿者は編集画面が表示される
+     */
     public function test_QaThreadController_edit_Student(): void
     {
         $this->seed();
@@ -307,6 +351,27 @@ class QaThreadControllerTest extends TestCase
     
     }
 
+    /**
+     * 投稿者以外は403
+     */
+    public function test_QaThreadController_edit_Student_403(): void
+    {
+        $this->seed();
+
+        $thread = QaThread::with('replies')->first();
+        $user = User::where('id', '!=', $thread->user_id)->first();
+
+        $response = $this->actingAs($user)
+        ->get("/qa-board/{$thread->id}/edit");
+
+        $response->assertStatus(403);
+    
+    }
+
+    /**
+     * 投稿者は更新できる
+     * バリデーションを通過したデータはDBに保存される
+     */
     public function test_QaThreadController_update_Student(): void
     {
         $this->seed();
@@ -333,6 +398,10 @@ class QaThreadControllerTest extends TestCase
     
     }
 
+    /**
+     * 投稿者は回答がないスレッドは削除できる
+     * DBからも削除される
+     */
     public function test_QaThreadController_delete_success_Student(): void
     {
         $this->seed();
@@ -350,6 +419,9 @@ class QaThreadControllerTest extends TestCase
         ]);
     }
 
+    /**
+     * 投稿者は回答があるスレッドは削除できない
+     */
     public function test_QaThreadController_delete_error_Student(): void
     {
         $this->seed();
@@ -368,11 +440,14 @@ class QaThreadControllerTest extends TestCase
     
     }
 
+    /**
+     * 管理者は回答があってもスレッドを削除できる
+     */
     public function test_QaThreadController_delete_success_Admin(): void
     {
         $this->seed();
 
-        $thread = QaThread::doesntHave('replies')->firstOrFail();
+        $thread = QaThread::whereHas('replies')->firstOrFail();
         $user = User::where('role', UserRole::Admin)->first();
 
         $response = $this->actingAs($user)
@@ -386,6 +461,10 @@ class QaThreadControllerTest extends TestCase
     
     }
 
+    /**
+     * 投稿者は回答がある未解決スレッドを解決済みに変更できる
+     * 
+     */
     public function test_QaThreadController_resolved(): void
     {
         $this->seed();
@@ -399,11 +478,15 @@ class QaThreadControllerTest extends TestCase
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('qa_threads', [
+            'id' => $thread->id,
             'status' => 'resolved',
         ]);
     
     }
 
+    /**
+     * 投稿者はスレッドを未解決に変更できる
+     */
     public function test_QaThreadController_unresolved(): void
     {
         $this->seed();
@@ -417,7 +500,8 @@ class QaThreadControllerTest extends TestCase
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('qa_threads', [
-            'status' => 'resolved',
+            'id' => $thread->id,
+            'status' => 'unresolved',
         ]);
     
     }

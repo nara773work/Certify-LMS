@@ -17,6 +17,10 @@ class QaReplyControllerTest extends TestCase
 
     use RefreshDatabase;
 
+    /**
+     * 受講生は回答を作成できる
+     * バリデーションを通過したデータはDBに保存される
+     */
         public function test_QaReplyController_store_succses(): void
     {
         $this->seed();
@@ -36,11 +40,15 @@ class QaReplyControllerTest extends TestCase
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('qa_replies', [
+            'id' => $reply->id,
             'body' => 'test',
         ]);
 
     }
 
+    /**
+     * バリデーションを通過しなかったデータはDBに保存されない
+     */
     public function test_QaReplyController_store_error(): void
     {
         $this->seed();
@@ -58,11 +66,15 @@ class QaReplyControllerTest extends TestCase
         ->post("/qa-board/{$thread->id}/replies",$data);
 
         $response->assertSessionHasErrors([
-            'body',
+           'id' => $reply->id,
         ]);
 
     }
 
+    /**
+     * コーチは回答を作成することができる
+     * バリデーションを通過したデータはDBに保存される
+     */
     public function test_QaReplyController_store_Coach(): void
     {
         $this->seed();
@@ -82,11 +94,15 @@ class QaReplyControllerTest extends TestCase
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('qa_replies', [
+            'id' => $reply->id,
             'body' => 'test',
         ]);
 
     }
 
+    /**
+     * 作成者は回答編集画面が表示される
+     */
     public function test_QaReplyController_edit_Student(): void
     {
         $this->seed();
@@ -106,6 +122,28 @@ class QaReplyControllerTest extends TestCase
     
     }
 
+    /**
+     * 作成者以外は回答編集画面が表示されない
+     */
+    public function test_QaReplyController_edit_Student_403(): void
+    {
+        $this->seed();
+
+        $thread = QaThread::has('replies')->first();
+        $reply = $thread->replies()->first();
+        $user = User::where('id', '!=', $reply->user_id)->first();
+
+        $response = $this->actingAs($user)
+        ->get("/qa-board/{$thread->id}/replies/{$reply->id}/edit");
+
+        $response->assertStatus(403);
+    
+    }
+
+    /**
+     * 作成者は質問が更新できる
+     * バリデーションを通過したデータはDBに保存される
+     */
     public function test_QaReplyController_update_Student(): void
     {
         $this->seed();
@@ -130,6 +168,10 @@ class QaReplyControllerTest extends TestCase
     
     }
 
+    /**
+     * 作成者は回答を削除できる
+     * DBからも削除される
+     */
     public function test_QaReplyController_delete_success_Student(): void
     {
         $this->seed();
@@ -148,6 +190,9 @@ class QaReplyControllerTest extends TestCase
         ]);
     }
 
+    /**
+     * 管理者は回答を削除できる
+     */
     public function test_QaReplyController_delete_success_Admin(): void
     {
         $this->seed();
