@@ -22,7 +22,7 @@ class QaThreadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'certification_id' =>['required','exists:certifications,id',],
+            'certification_id' =>['required_if:_method,POST','exists:certifications,id',],
             'title' =>['required','max:200','string'],
             'body' =>['required','max:5000','string'],
         ];

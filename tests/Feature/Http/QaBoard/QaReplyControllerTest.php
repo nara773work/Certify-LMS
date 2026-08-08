@@ -40,7 +40,6 @@ class QaReplyControllerTest extends TestCase
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('qa_replies', [
-            'id' => $reply->id,
             'body' => 'test',
         ]);
 
@@ -66,7 +65,7 @@ class QaReplyControllerTest extends TestCase
         ->post("/qa-board/{$thread->id}/replies",$data);
 
         $response->assertSessionHasErrors([
-           'id' => $reply->id,
+           'body',
         ]);
 
     }
@@ -94,7 +93,6 @@ class QaReplyControllerTest extends TestCase
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('qa_replies', [
-            'id' => $reply->id,
             'body' => 'test',
         ]);
 

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\QaReply;
 use App\Models\QaThread;
 use App\Http\Requests\QaBoard\QaReplyRequest;
+use App\Enums\UserRole;
 
 class QaReplyController extends Controller
 {
@@ -43,6 +44,15 @@ class QaReplyController extends Controller
 
     public function destroy(QaThread $thread,QaReply $reply){
         $this->authorize('delete', $reply);
+         $user = Auth()->user();
+
+            if($user->role === UserRole::Admin){
+                $reply->delete();
+                return redirect()->route('admin.qa-board.show',$thread)->with('success', '質問を削除しました。');
+            } 
+
+            
+
 
         $reply->delete();
 
