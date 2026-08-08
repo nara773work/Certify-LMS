@@ -34,6 +34,7 @@
                 </p>
             @endif
         </div>
+        
         @if ($canPost)
             <x-link-button href="{{ route('qa-board.create') }}" variant="primary">
                 <x-icon name="plus" class="w-4 h-4" />

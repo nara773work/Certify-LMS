@@ -42,12 +42,76 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeakDrillController;
 use App\Http\Controllers\WeakDrillResultController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\QaThreadController;
+use App\Http\Controllers\QaReplyController;
 
 Route::get('/', function () {
     return auth()->check()
         ? redirect()->route('dashboard.index')
         : redirect('/login');
 });
+
+// ============================================================
+// S-B-01　新規機能　質問掲示板　thread
+// ============================================================
+Route::middleware(['auth', 'role:student,coach'])
+    ->name('qa-board.')->group(function () {
+
+        Route::get('qa-board',[QaThreadController::class,'index'])
+        ->name('index');
+        Route::get('/qa-board/create',[QaThreadController::class,'create'])
+        ->name('create');
+        Route::post('/qa-board',[QaThreadController::class,'store'])
+        ->name('store');
+        Route::get('/qa-board/{thread}',[QaThreadController::class,'show'])
+        ->name('show');
+        Route::get('/qa-board/{thread}/edit',[QaThreadController::class,'edit'])
+        ->name('edit');
+        Route::patch('/qa-board/{thread}',[QaThreadController::class,'update'])
+        ->name('update');
+        Route::delete('/qa-board/{thread}',[QaThreadController::class,'destroy'])
+        ->name('destroy');
+
+        Route::post('/qa-board/{thread}/resolve',[QaThreadController::class,'resolve'])
+        ->name('resolve');
+        Route::post('/qa-board/{thread}/unresolve',[QaThreadController::class,'unresolve'])
+        ->name('unresolve');    
+
+    });
+
+// ============================================================
+// S-B-01　新規機能　質問掲示板　reply
+// ============================================================
+Route::middleware(['auth', 'role:student,coach'])
+    ->name('qa-board.')->group(function () {
+
+        Route::post('/qa-board/{thread}/replies',[QaReplyController::class,'store'])
+        ->name('replies.store');
+        Route::get('/qa-board/{thread}/replies/{reply}/edit',[QaReplyController::class,'edit'])
+        ->name('replies.edit');
+        Route::patch('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'update'])
+        ->name('replies.update');
+        Route::delete('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'destroy'])
+        ->name('replies.destroy');      
+
+    });
+
+// ============================================================
+// S-B-01　新規機能　質問掲示板　admin
+// ============================================================
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')->name('admin.')->group(function () {
+
+        Route::get('/qa-board',[QaThreadController::class,'index'])
+        ->name('qa-board.index');
+        Route::get('/qa-board/{thread}',[QaThreadController::class,'show'])
+        ->name('qa-board.show');
+        Route::delete('/qa-board/{thread}',[QaThreadController::class,'destroy'])
+        ->name('qa-board.destroy');
+        Route::delete('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'destroy'])
+        ->name('qa-board.replies.destroy');        
+
+    });
 
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)
@@ -474,3 +538,9 @@ if (app()->environment('local')) {
         return view('_dev.components');
     })->name('_dev.components');
 }
+
+
+
+
+
+

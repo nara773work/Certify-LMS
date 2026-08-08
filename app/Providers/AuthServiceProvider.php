@@ -87,6 +87,7 @@ class AuthServiceProvider extends ServiceProvider
         SectionQuestionAttempt::class => SectionQuestionAttemptPolicy::class,
         Meeting::class => MeetingPolicy::class,
         CoachAvailability::class => CoachAvailabilityPolicy::class,
+        QaThread::class => QaThreadPolicy::class,
     ];
 
     /**
