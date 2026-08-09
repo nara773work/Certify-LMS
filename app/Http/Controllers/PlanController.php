@@ -92,9 +92,14 @@ class PlanController extends Controller
         if($plan->status === PlanStatus::Published){
             return redirect()->route('admin.plans.index')->with('error','公開中のため削除できません');
         }
+        if ($plan->userPlanLogs()->exists()) {
+        return redirect()
+            ->route('admin.plans.index')
+            ->with('error', '利用履歴があるため削除できません');
+        }
         $plan->delete();
 
-        return redirect()->route('admin.plans.show',$plan)->with('success','プランを更新しました');
+        return redirect()->route('admin.plans.index')->with('success','プランを削除しました');
     }
 
     public function publish(Plan $plan){

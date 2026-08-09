@@ -12,11 +12,11 @@ class PlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'max:200'],
+            'name' => ['required', 'max:100'],
             'description' => ['nullable', 'max:2000'],
-            'duration_days' => ['required', 'between:1,3650'],
-            'default_meeting_quota' => ['required', 'between:0,1000'],
-            'sort_order' => ['nullable', 'between:0,1000'],
+            'duration_days' => ['required', 'integer', 'between:1,3650'],
+            'default_meeting_quota' => ['required', 'integer', 'between:0,1000'],
+            'sort_order' => ['nullable', 'integer', 'between:0,1000'],
         ];
     }
 
@@ -24,7 +24,7 @@ class PlanRequest extends FormRequest
     {
         return [
             'name.required' => 'プラン名を入力してください',
-            'name.max' => '200字以内で入力してください',
+            'name.max' => '100字以内で入力してください',
             'description.max' => '2000字以内で入力してください',
             'duration_days.required' => '受講期間を入力してください',
             'duration_days.between' => '1~3650の範囲で入力してください',
