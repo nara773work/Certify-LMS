@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Plan;
 use App\Enums\PlanStatus;
+use App\Http\Requests\Plan\PlanRequest;
 
 class PlanController extends Controller
 {
@@ -43,7 +44,7 @@ class PlanController extends Controller
         return view('plan.management.create',compact('plan'));
     }
 
-    public function store(Plan $plan, Request $request){
+    public function store(Plan $plan, PlanRequest $request){
 
         $this->authorize('create', $plan);
 
@@ -69,7 +70,7 @@ class PlanController extends Controller
         return view('plan.management.edit',compact('plan'));
     }
 
-    public function update(Plan $plan,Request $request){
+    public function update(Plan $plan, PlanRequest $request){
 
         $this->authorize('update', $plan);
 
@@ -84,7 +85,7 @@ class PlanController extends Controller
         return redirect()->route('admin.plans.show',$plan)->with('success','プランを更新しました');
     }
 
-    public function destroy(Plan $plan,Request $request){
+    public function destroy(Plan $plan){
 
         $this->authorize('delete', $plan);
 
