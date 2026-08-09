@@ -42,7 +42,7 @@ class MeetingPackRequest extends FormRequest
             'price.required' => '価格を入力してください',
             'price.between' => '0~1000000の範囲で入力してください',
             'stripe_price_id.max' => '200字以内で入力してください',
-            'sort_order' => '0~1000の範囲で入力してください'
+            'sort_order.between' => '0~1000の範囲で入力してください'
         ];
     }
 }
