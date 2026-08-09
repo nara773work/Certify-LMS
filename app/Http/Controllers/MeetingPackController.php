@@ -96,7 +96,7 @@ class MeetingPackController extends Controller
             'updated_by_user_id' => $user->id
         ]);
 
-        return redirect()->route('admin.meeting-packs.index')->with('success','SKUを更新しました');
+        return redirect()->route('admin.meeting-packs.show',$plan)->with('success','SKUを更新しました');
     }
 
     public function destroy(MeetingPack $plan){
@@ -119,7 +119,7 @@ class MeetingPackController extends Controller
             'status'=> MeetingPackStatus::Published,
         ]);
 
-        return redirect()->route('admin.meeting-packs.index')->with('success','SKUを公開しました');
+        return redirect()->route('admin.meeting-packs.index')->with('success','公開しました');
     }
 
     public function archive(MeetingPack $plan){
