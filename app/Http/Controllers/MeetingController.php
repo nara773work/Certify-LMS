@@ -32,6 +32,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use App\Notifications\MeetingReservationNotification;
 
 /**
  * 1on1 面談予約 (Meeting) の HTTP エントリポイント。
@@ -205,6 +206,15 @@ class MeetingController extends Controller
                     'topic' => $topic,
                     'meeting_url_snapshot' => $coach->meeting_url,
                 ]);
+
+                $coach->notify(
+                    new MeetingReservationNotification($meeting)
+                );
+
+                $student->notify(
+                    new MeetingReservationNotification($meeting)
+                );
+
             } catch (UniqueConstraintViolationException $e) {
                 // 同時刻に他受講生が先行予約した race condition: UNIQUE(coach_id, scheduled_at) で弾かれた
                 throw new MeetingNoAvailableCoachException($e);
