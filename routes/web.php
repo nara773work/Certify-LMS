@@ -46,6 +46,7 @@ use App\Http\Controllers\QaThreadController;
 use App\Http\Controllers\QaReplyController;
 use App\Http\Controllers\MeetingPackController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\NotificationController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -173,6 +174,20 @@ Route::middleware(['auth', 'role:admin'])
 
     });
 
+// ============================================================
+// S-B-04 通知基盤　admin Coach Student
+// ============================================================
+Route::middleware(['auth', 'role:admin,coach,student'])
+    ->group(function () {
+
+        Route::get('/notifications',[NotificationController::class,'index'])
+        ->name('notifications.index');
+        Route::post('/notifications/{notification}/read',[NotificationController::class,'read'])
+        ->name('notifications.markAsRead');
+        Route::post('/notifications/read-all',[NotificationController::class,'readall'])
+        ->name('notifications.markAllAsRead');  
+
+    });
 
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)
