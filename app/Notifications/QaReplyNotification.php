@@ -39,7 +39,7 @@ class QaReplyNotification extends Notification
             'type' => 'QaBoardReply',
             'title' => '質問掲示板',
             'message' => '質問に回答が届きました',
-            'url' => route('qa-board.show', $this->qaReply->id),
+            'url' => route('qa-board.show', $this->qaReply->thread->id),
         ];
     }
 

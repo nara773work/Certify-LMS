@@ -212,11 +212,9 @@ class MeetingController extends Controller
                 // 同時刻に他受講生が先行予約した race condition: UNIQUE(coach_id, scheduled_at) で弾かれた
                 throw new MeetingNoAvailableCoachException($e);
             }
-dump('通知対象のコーチID:', $coach->id);
             $coach->notify(
                     new MeetingReservationNotification($meeting)
             );
-dump('通知の送信完了');
             $student->notify(
                     new MeetingReservationNotification($meeting)
             );
