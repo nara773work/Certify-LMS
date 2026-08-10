@@ -10,6 +10,7 @@ use App\Enums\QaThreadStatus;
 use App\Enums\CertificationStatus;
 use App\Enums\UserRole;
 use App\Http\Requests\QaBoard\QaThreadRequest;
+use App\Models\User;
 
 class QaThreadController extends Controller
 {

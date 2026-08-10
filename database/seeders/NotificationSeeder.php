@@ -50,15 +50,11 @@ class NotificationSeeder extends Seeder
         //コーチ太郎
 
         $coach->notify(
-            new ChatMessageNotification($chatMessage)
-        );
-
-        $coach->notify(
-            new QaReplyNotification($qaReply)
-        );
-
-        $coach->notify(
             new MeetingReservationNotification($meeting)
+        );
+        
+        $coach->notify(
+            new ChatMessageNotification($chatMessage)
         );
 
         // 面談：既読
