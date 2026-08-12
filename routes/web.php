@@ -47,6 +47,7 @@ use App\Http\Controllers\QaReplyController;
 use App\Http\Controllers\MeetingPackController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\EnrollmentGoalController;
+use App\Http\Controllers\SettingController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -174,7 +175,23 @@ Route::middleware(['auth', 'role:admin'])
 
     });
 
-  // ============================================================
+// ============================================================
+// S-B-04 通知基盤　admin Coach Student
+// ============================================================
+Route::middleware(['auth', 'role:admin,coach,student'])
+    ->group(function () {
+
+        Route::get('/notifications',[NotificationController::class,'index'])
+        ->name('notifications.index');
+        Route::post('/notifications/{notification}/read',[NotificationController::class,'read'])
+        ->name('notifications.markAsRead');
+        Route::post('/notifications/read-all',[NotificationController::class,'readall'])
+        ->name('notifications.markAllAsRead');  
+
+    });
+
+// ============================================================
+>>>>>>> c1199ea (Add Controllre Request)
 // S-B-05 個人学習目標の管理
 // ============================================================
 Route::middleware(['auth', 'role:admin,student,coach'])
@@ -194,6 +211,24 @@ Route::middleware(['auth', 'role:admin,student,coach'])
         ->name('enrollment-goals.unmarkAchieved');
     });  
 
+
+// ============================================================
+// S-B-06 設定プロフィール
+// ============================================================
+Route::middleware(['auth', 'role:admin,student,coach'])
+    ->group(function () {
+
+        Route::get('/settings/profile',[SettingController::class,'edit'])
+        ->name('settings.profile.edit');
+        Route::patch('/settings/profile',[SettingController::class,'update'])
+        ->name('settings.profile.update');
+        Route::post('/settings/avatar',[SettingController::class,'avatar'])
+        ->name('settings.avatar.store');   
+        Route::delete('/settings/avatar',[SettingController::class,'avatardelete'])
+        ->name('settings.avatar.destroy');
+        Route::put('/settings/password',[SettingController::class,'updatepassword'])
+        ->name('settings.password.update');
+    });  
 
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)
