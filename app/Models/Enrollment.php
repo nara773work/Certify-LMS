@@ -175,4 +175,10 @@ class Enrollment extends Model
             default => $query->whereRaw('1 = 0'),
         };
     }
+
+    public function goals()
+    {
+        return $this->hasMany(EnrollmentGoal::class);
+    }
+
 }
