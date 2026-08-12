@@ -47,6 +47,7 @@ use App\Http\Controllers\QaReplyController;
 use App\Http\Controllers\MeetingPackController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\EnrollmentGoalController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -174,6 +175,7 @@ Route::middleware(['auth', 'role:admin'])
 
     });
 
+
 // ============================================================
 // S-B-04 通知基盤　admin Coach Student
 // ============================================================
@@ -188,6 +190,25 @@ Route::middleware(['auth', 'role:admin,coach,student'])
         ->name('notifications.markAllAsRead');  
 
     });
+// ============================================================
+// S-B-05 個人学習目標の管理
+// ============================================================
+Route::middleware(['auth', 'role:admin,student,coach'])
+    ->group(function () {
+
+        Route::post('/enrollments/{enrollment}/goals',[EnrollmentGoalController::class,'store'])
+        ->name('enrollments.goals.store'); 
+        Route::get('/enrollment-goals/{goal}/edit',[EnrollmentGoalController::class,'edit'])
+        ->name('enrollment-goals.edit');
+        Route::patch('/enrollment-goals/{goal}',[EnrollmentGoalController::class,'update'])
+        ->name('enrollment-goals.update');
+        Route::delete('/enrollment-goals/{goal}',[EnrollmentGoalController::class,'destroy'])
+        ->name('enrollment-goals.destroy');   
+        Route::post('/enrollment-goals/{goal}/achieve',[EnrollmentGoalController::class,'achieve'])
+        ->name('enrollment-goals.markAchieved');
+        Route::delete('/enrollment-goals/{goal}/achieve',[EnrollmentGoalController::class,'unachieve'])
+        ->name('enrollment-goals.unmarkAchieved');
+    });  
 
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)
