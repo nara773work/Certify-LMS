@@ -10,6 +10,7 @@ use App\Enums\QaThreadStatus;
 use App\Enums\CertificationStatus;
 use App\Enums\UserRole;
 use App\Http\Requests\QaBoard\QaThreadRequest;
+use App\Models\User;
 
 class QaThreadController extends Controller
 {
@@ -98,7 +99,7 @@ class QaThreadController extends Controller
      */
 
     public function store(QaThreadRequest $request){
-        $this->authorize('update', QaThread::class);
+        $this->authorize('create', QaThread::class);
 
         $thread = QaThread::create([
             'certification_id' => $request->certification_id,
