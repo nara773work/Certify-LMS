@@ -191,7 +191,6 @@ Route::middleware(['auth', 'role:admin,coach,student'])
     });
 
 // ============================================================
->>>>>>> c1199ea (Add Controllre Request)
 // S-B-05 個人学習目標の管理
 // ============================================================
 Route::middleware(['auth', 'role:admin,student,coach'])
