@@ -104,6 +104,8 @@ http://localhost:8000 にアクセスし、下記の[ログインアカウント
 | コーチ | coach@certify-lms.test | IT 系資格の担当 |
 | コーチ | coach2@certify-lms.test | ビジネス系資格の担当 |
 | 受講生 | student@certify-lms.test | 受講中の資格・学習履歴・面談などのデモデータ付き |
+| 修了生 | student-graduated@certify-lms.test | 修了生。チケットS-B-06の動作確認の際に使われる|
+| 修了生2 | student-graduated@certify-lms.test | 同上 |
 
 このほか、ライフサイクル（招待中 / 受講中 / 卒業 / 退会）を網羅したデモユーザーが投入されます。
 
@@ -143,3 +145,13 @@ sail bin pint --test     # 整形漏れの確認（CI 相当のチェック）
 - `PUSHER_*` — チャットのリアルタイム配信に使用します。有効にする場合は Pusher のキーを取得して設定し、`BROADCAST_DRIVER=pusher` に変更してください。未設定（既定の `BROADCAST_DRIVER=log`）でもメッセージの送受信自体は動作し、相手画面へのリアルタイム反映のみ行われません
 
 新しい環境変数やセットアップ手順を追加した場合は、`.env.example` と本 README に追記し、チームの誰でも環境を再現できる状態を保ってください。
+
+
+## 追加機能について
+以下のコマンドで初期データを投入し、動作確認を行ってください。
+
+```bash
+sail artisan migrate:fresh --seed
+```
+
+※docs以下にそれぞれチケット番号のファイルがあり、中に詳細設計を記載しているので、そちらを参照してください。

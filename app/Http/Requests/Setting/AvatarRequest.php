@@ -30,7 +30,10 @@ class AvatarRequest extends FormRequest
 
         return [
 
-            'avatar.string'=>'URL形式で入力してください',
+            'avatar.image'=>'画像形式で登録してください',
+            'avatar.mimes'=>'jepg,png,webpで登録してください',
+            'avatar.max'=>'2MB以内で登録してください',
+
         ];
 
     }

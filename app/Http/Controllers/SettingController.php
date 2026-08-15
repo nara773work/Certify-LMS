@@ -53,7 +53,7 @@ class SettingController extends Controller
         ->with('success', 'アバターを登録しました');
     }
 
-    public function avatardelete(AvatarRequest $request){
+    public function avatardelete(){
 
         $user = Auth()->user();
         $this->authorize('profile.avatardelete', $user);
@@ -67,10 +67,10 @@ class SettingController extends Controller
         ->with('success','アバターを削除しました');
     }
 
-        public function updatepassword(PasswordRequest $request){
+    public function updatepassword(PasswordRequest $request){
 
         $user = Auth()->user();
-        $this->authorize('profile.updatepassword', $user);
+        $this->authorize('profile.passwordupdate', $user);
         
         $user->update([
             'password'=>$request->password,
