@@ -7,6 +7,7 @@ use App\Models\QaReply;
 use App\Models\QaThread;
 use App\Http\Requests\QaBoard\QaReplyRequest;
 use App\Enums\UserRole;
+use App\Notifications\QaReplyNotification;
 
 class QaReplyController extends Controller
 {
@@ -22,6 +23,10 @@ class QaReplyController extends Controller
             'qa_thread_id' => $thread->id,
             'user_id' => auth()->id(),
         ]);
+
+        $thread->user->notify(
+            new QaReplyNotification($reply)
+        );
 
         return redirect()->route('qa-board.show',$thread)->with('success', '回答を作成しました。');
     }

@@ -10,6 +10,7 @@ use App\Models\ChatMessage;
 use App\Models\ChatRoom;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\ChatMessageNotification;
 
 /**
  * ChatRoom にメッセージを INSERT し、送信者の既読時刻を更新したうえで Broadcast を発火する Action。
@@ -24,22 +25,49 @@ final class StoreMessageAction
     /**
      * @param array{body: string} $validated
      */
-    public function __invoke(User $sender, ChatRoom $room, array $validated): ChatMessage
-    {
+    public function __invoke(
+        User $sender,
+        ChatRoom $room,
+        array $validated
+    ): ChatMessage {
         return DB::transaction(function () use ($sender, $room, $validated) {
+
+            // メッセージを保存
             $message = ChatMessage::create([
                 'chat_room_id' => $room->id,
                 'sender_user_id' => $sender->id,
                 'body' => $validated['body'],
             ]);
 
+            // 送信者自身を既読にする
             ChatMember::query()
                 ->where('chat_room_id', $room->id)
                 ->where('user_id', $sender->id)
-                ->update(['last_read_at' => now()]);
+                ->update([
+                    'last_read_at' => now(),
+                ]);
 
+            // 送信者以外のチャット参加者を取得
+            $receiverIds = ChatMember::query()
+                ->where('chat_room_id', $room->id)
+                ->where('user_id', '!=', $sender->id)
+                ->pluck('user_id');
+
+            // 相手に通知
+            User::query()
+                ->whereIn('id', $receiverIds)
+                ->get()
+                ->each(function (User $receiver) use ($message): void {
+                    $receiver->notify(
+                        new ChatMessageNotification($message)
+                    );
+                });
+
+            // コミット後にBroadcast
             DB::afterCommit(function () use ($message): void {
-                broadcast(new ChatMessageSent($message->load('sender')))->toOthers();
+                broadcast(
+                    new ChatMessageSent($message->load('sender'))
+                )->toOthers();
             });
 
             return $message;

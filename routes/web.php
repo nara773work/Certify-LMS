@@ -46,6 +46,7 @@ use App\Http\Controllers\QaThreadController;
 use App\Http\Controllers\QaReplyController;
 use App\Http\Controllers\MeetingPackController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\EnrollmentGoalController;
 use App\Http\Controllers\SettingController;
 
@@ -209,7 +210,6 @@ Route::middleware(['auth', 'role:admin,student,coach'])
         Route::delete('/enrollment-goals/{goal}/achieve',[EnrollmentGoalController::class,'unachieve'])
         ->name('enrollment-goals.unmarkAchieved');
     });  
-
 
 // ============================================================
 // S-B-06 設定プロフィール

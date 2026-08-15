@@ -1,2 +1,5 @@
 *
 !.gitignore
+!avatars/
+!avatars/test.png
+!avatars/test_coach.png

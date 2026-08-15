@@ -70,7 +70,7 @@ class UserSeeder extends Seeder
                 'bio' => '5 年以上のコーチング経験。基本情報・応用情報を中心に指導。',
                 'profile_setup_completed' => true,
                 'email_verified_at' => $now,
-                'avatar_url' => '/storage/avatars/coach.jpg',
+                'avatar_url' => '/storage/avatars/test_coach.png',
                 'meeting_url' => 'https://meet.google.com/coach-taro-room',
             ])
             ->create();
@@ -128,7 +128,7 @@ class UserSeeder extends Seeder
                 'password' => 'password',
                 'status' => UserStatus::Graduated->value,
                 'bio' => '無事に資格を取得しました。',
-                'avatar_url' => '/storage/avatars/graduated.jpg',
+                'avatar_url' => '/storage/avatars/test.png',
                 'plan_expires_at' => $now->copy()->subDays(30),
                 'profile_setup_completed' => true,
                 'email_verified_at' => $now,
