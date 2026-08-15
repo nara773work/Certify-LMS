@@ -22,7 +22,7 @@ class ProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'=>['required','max:50','string'],
+            'name'=>['required','max:255','string'],
             'bio'=>['nullable','max:1000','string'],
         ];
     }
@@ -31,7 +31,7 @@ class ProfileRequest extends FormRequest
     {
         return [
             'name.required' => '氏名を入力してください',
-            'name.max'=> '50字以内で入力してください',
+            'name.max'=> '255字以内で入力してください',
             'name.string'=>'文字形式で入力してください',
             'bio.max'=>'1000字以内で入力してください',
             'bio.string'=>'文字形式で入力してください',
