@@ -43,6 +43,7 @@ use App\Policies\MockExamQuestionPolicy;
 use App\Policies\MockExamSessionPolicy;
 use App\Policies\PartPolicy;
 use App\Policies\PartViewPolicy;
+use App\Policies\ProfilePolicy;
 use App\Policies\QuestionCategoryPolicy;
 use App\Policies\SectionImagePolicy;
 use App\Policies\SectionPolicy;
@@ -110,5 +111,11 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('quiz.section.view', [SectionQuizPolicy::class, 'view']);
         Gate::define('quiz.weak-drill.view', [WeakDrillPolicy::class, 'view']);
         Gate::define('quiz.answer.create', [SectionQuestionAnswerPolicy::class, 'create']);
+
+        Gate::define('profile.update', [ProfilePolicy::class, 'update']);
+        Gate::define('profile.avatar', [ProfilePolicy::class, 'update']);
+        Gate::define('profile.avatardelete', [ProfilePolicy::class, 'avatardelete']);
+        Gate::define('profile.passwordupdate', [ProfilePolicy::class, 'update']);
     }
+
 }

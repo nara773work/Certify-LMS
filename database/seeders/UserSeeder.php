@@ -46,6 +46,7 @@ class UserSeeder extends Seeder
         $defaultPassword = Hash::make('password');
         $now = now();
 
+
         User::factory()
             ->admin()
             ->state([
@@ -58,6 +59,7 @@ class UserSeeder extends Seeder
             ])
             ->create();
 
+        //アバターあり
         User::factory()
             ->coach()
             ->state([
@@ -68,6 +70,7 @@ class UserSeeder extends Seeder
                 'bio' => '5 年以上のコーチング経験。基本情報・応用情報を中心に指導。',
                 'profile_setup_completed' => true,
                 'email_verified_at' => $now,
+                'avatar_url' => '/storage/avatars/test_coach.png',
                 'meeting_url' => 'https://meet.google.com/coach-taro-room',
             ])
             ->create();
@@ -109,12 +112,45 @@ class UserSeeder extends Seeder
                 'password' => $defaultPassword,
                 'status' => UserStatus::InProgress->value,
                 'bio' => '面談回数を使い切った状態の受講生。',
+                'plan_expires_at' => $now->copy()->subDays(30),
+                'profile_setup_completed' => true,
+                'email_verified_at' => $now,
+            ])
+            ->create();
+    
+
+    // 修了済み受講生（アバターあり）
+        User::factory()
+            ->student()
+            ->state([
+                'name' => '修了生一郎',
+                'email' => 'student-graduated@certify-lms.test',
+                'password' => 'password',
+                'status' => UserStatus::Graduated->value,
+                'bio' => '無事に資格を取得しました。',
+                'avatar_url' => '/storage/avatars/test.png',
+                'plan_expires_at' => $now->copy()->subDays(30),
+                'profile_setup_completed' => true,
+                'email_verified_at' => $now,
+            ])
+            ->create();
+
+        // 修了済み受講生（アバターなし）
+        User::factory()
+            ->student()
+            ->state([
+                'name' => '修了生花子',
+                'email' => 'student-graduated2@certify-lms.test',
+                'password' => $defaultPassword,
+                'status' => UserStatus::Graduated->value,
+                'bio' => '無事に資格を取得しました。',
+                'avatar_url' => null,
+                'plan_expires_at' => $now->copy()->subDays(30),
                 'profile_setup_completed' => true,
                 'email_verified_at' => $now,
             ])
             ->create();
     }
-
     /**
      * 状態網羅 demo データ(Factory 生成、ランダムな name / email)。
      * 一覧画面のフィルタ・並び順・各 status のバッジ表示を実機確認するために投入する。
