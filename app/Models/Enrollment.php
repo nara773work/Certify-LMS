@@ -181,4 +181,9 @@ class Enrollment extends Model
         return $this->hasMany(EnrollmentGoal::class);
     }
 
+    public function notes(): HasMany
+{
+    return $this->hasMany(EnrollmentNote::class);
+}
+
 }
