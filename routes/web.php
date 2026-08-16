@@ -49,6 +49,7 @@ use App\Http\Controllers\PlanController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\EnrollmentGoalController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\EnrollmentNoteController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -227,6 +228,23 @@ Route::middleware(['auth', 'role:admin,student,coach'])
         ->name('settings.avatar.destroy');
         Route::put('/settings/password',[SettingController::class,'updatepassword'])
         ->name('settings.password.update');
+    });  
+
+
+// ============================================================
+// S-B-07 受講生メモの管理
+// ============================================================
+Route::middleware(['auth', 'role:admin,coach'])
+    ->group(function () {
+
+        Route::post('/enrollments/{enrollment}/notes',[EnrollmentNoteController::class,'store'])
+        ->name('enrollments.notes.store');
+        Route::get('/enrollment-notes/{note}/edit',[EnrollmentNoteController::class,'edit'])
+        ->name('enrollment-notes.edit');
+        Route::patch('/enrollment-notes/{note}',[EnrollmentNoteController::class,'update'])
+        ->name('enrollment-notes.update');   
+        Route::delete('/enrollment-notes/{note}',[EnrollmentNoteController::class,'destroy'])
+        ->name('enrollment-notes.destroy');
     });  
 
 // ============================================================
