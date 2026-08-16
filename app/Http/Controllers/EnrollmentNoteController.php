@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\EnrollmentNote;
 use App\Models\Enrollment;
+use App\Http\Requests\Enrollment\EnrollmentNoteRequest;
 
 class EnrollmentNoteController extends Controller
 {
