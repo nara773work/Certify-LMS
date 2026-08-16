@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignUlid('enrollment_id')
                 ->constrained()
                 ->cascadeOnDelete();
-            $table->string('body');
+            $table->text('body');
             $table->foreignUlid('user_id')
                 ->constrained()
                 ->cascadeOnDelete();

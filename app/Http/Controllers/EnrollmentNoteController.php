@@ -8,7 +8,7 @@ use App\Models\Enrollment;
 
 class EnrollmentNoteController extends Controller
 {
-    public function store( Enrollment $enrollment,Request $request){
+    public function store( Enrollment $enrollment,EnrollmentNoteRequest $request){
         $this->authorize('create', [EnrollmentNote::class, $enrollment]);
 
         $note = EnrollmentNote::create([
@@ -17,7 +17,7 @@ class EnrollmentNoteController extends Controller
             'enrollment_id'=>$enrollment->id
         ]);
 
-        return redirect()->route('enrollments.show',$enrollment);
+        return redirect()->route('enrollments.show',$enrollment)->with('succses','メモを作成しました');
     }
 
     public function edit(EnrollmentNote $note){
@@ -26,7 +26,7 @@ class EnrollmentNoteController extends Controller
         return view('enrollment-note.edit',compact('note'));
     }
 
-    public function update(Request $request,EnrollmentNote $note){
+    public function update(EnrollmentNoteRequest $request,EnrollmentNote $note){
         $this->authorize('update', $note);
         $enrollment = $note->enrollment;
 
@@ -34,7 +34,7 @@ class EnrollmentNoteController extends Controller
             'body'=>$request->body,
         ]);
 
-        return redirect()->route('enrollments.show', $enrollment);
+        return redirect()->route('enrollments.show', $enrollment)->with('succses','メモの内容を更新しました');
     }
 
     public function destroy(EnrollmentNote $note){
@@ -43,6 +43,6 @@ class EnrollmentNoteController extends Controller
 
         $note->delete();
 
-        return redirect()->route('enrollments.show', $enrollment);
+        return redirect()->route('enrollments.show', $enrollment)->with('succses','メモを削除しました');
     }
 }

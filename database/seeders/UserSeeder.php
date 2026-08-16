@@ -125,7 +125,7 @@ class UserSeeder extends Seeder
             ->state([
                 'name' => '修了生一郎',
                 'email' => 'student-graduated@certify-lms.test',
-                'password' => 'password',
+                'password' => $defaultPassword,
                 'status' => UserStatus::Graduated->value,
                 'bio' => '無事に資格を取得しました。',
                 'avatar_url' => '/storage/avatars/test.png',
