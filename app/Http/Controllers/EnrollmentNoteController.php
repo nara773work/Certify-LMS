@@ -18,7 +18,7 @@ class EnrollmentNoteController extends Controller
             'enrollment_id'=>$enrollment->id
         ]);
 
-        return redirect()->route('enrollments.show',$enrollment)->with('succses','メモを作成しました');
+        return redirect()->route('enrollments.show',$enrollment)->with('success','メモを作成しました');
     }
 
     public function edit(EnrollmentNote $note){
@@ -35,7 +35,7 @@ class EnrollmentNoteController extends Controller
             'body'=>$request->body,
         ]);
 
-        return redirect()->route('enrollments.show', $enrollment)->with('succses','メモの内容を更新しました');
+        return redirect()->route('enrollments.show', $enrollment)->with('success','メモの内容を更新しました');
     }
 
     public function destroy(EnrollmentNote $note){
@@ -44,6 +44,6 @@ class EnrollmentNoteController extends Controller
 
         $note->delete();
 
-        return redirect()->route('enrollments.show', $enrollment)->with('succses','メモを削除しました');
+        return redirect()->route('enrollments.show', $enrollment)->with('success','メモを削除しました');
     }
 }
