@@ -6,7 +6,7 @@ use App\Models\Meeting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
-class MeetingReminderNotification extends Notification
+class SendMeetingReminderNotification extends Notification
 {
     use Queueable;
 
