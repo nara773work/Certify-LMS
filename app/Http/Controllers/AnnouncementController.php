@@ -9,23 +9,27 @@ use App\Models\Certification;
 use App\Enums\AnnouncementTargetType;
 use App\Enums\CertificationStatus;
 use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Notifications\AnnouncementNotification;
+use App\Http\Requests\Announcement\AnnouncementRequest;
 
 class AnnouncementController extends Controller
 {
     public function index(){
-        $announcements = Announcement::orderBy('created_at')->paginate(10);
+        $announcements = Announcement::withCount([
+        'users as dispatched_count'
+        ])->orderBy('created_at','desc')->paginate(10);
         return view('announcement.management.index',compact('announcements'));
     }
 
     public function create(){
 
         $certifications = Certification::where('status',CertificationStatus::Published)->get();
-        $students = User::all();
+        $students = User::where('status',UserStatus::InProgress)->get();
         return view('announcement.management.create',compact('certifications','students'));
     }
 
-    public function store(Request $request){
+    public function store(AnnouncementRequest $request){
 
         $announcement = Announcement::create([
             'title' => $request->title,
@@ -47,17 +51,17 @@ class AnnouncementController extends Controller
 
             // 資格指定
             $users = User::whereHas('enrollments', function ($query) use ($request) {
-            $query->where('certification_id', $request->certification_id);
+            $query->where('certification_id', $request->target_certification_id);
             })->get();
 
         } elseif ($request->target_type === AnnouncementTargetType::User->value) {
 
             // ユーザー指定
-            $users = User::whereIn('id', $request->user_ids)->get();
+            $users = User::whereIn('id', [$request->target_user_id])->get();
 
         }
 
-            $announcement->users()->sync($users->pluck('id'));
+        $announcement->users()->sync($users->pluck('id'));
 
         foreach ($users as $user) {
             $user->notify(new AnnouncementNotification($announcement));
@@ -84,16 +88,26 @@ class AnnouncementController extends Controller
         return redirect()->route('admin.announcements.index')->with('success','お知らせを配信しました');
     }
 
-    public function show(Announcement $announcement){
+    public function show(Announcement $announcement)
+{   
+        $announcement->loadCount([
+            'users as dispatched_count'
+        ]);
 
-        return view('announcement.management.show',compact('announcement'));
-    }
+        return view('announcement.management.show', compact('announcement'));
+}
 
     public function notificationshow(string $id)
 {
     $notification = auth()->user()
         ->notifications()
         ->findOrFail($id);
+
+    $announcement = Announcement::findOrFail(
+        $notification->data['announcement_id']
+    );
+
+    $this->authorize('view', $announcement);
 
     return view('notifications.show', compact('notification'));
 }
