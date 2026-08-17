@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Notifications;
+
+use App\Models\Meeting;
+use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Notification;
+
+class MeetingReminderNotification extends Notification
+{
+    use Queueable;
+
+    public function __construct(
+        public Meeting $meeting,
+        public string $timing,
+    ) {
+    }
+
+    public function via(object $notifiable): array
+    {
+        return ['database'];
+    }
+
+    public function toArray(object $notifiable): array
+{
+        return [
+            'notification_type' => 'meeting_reminder',
+            'meeting_id' => $this->meeting->id,
+            'timing' => $this->timing,
+            'title' => '面談リマインダー',
+            'body' => $this->timing === 'day_before'
+                ? '明日は面談の予定があります。'
+                : '1時間後に面談の予定があります。',
+            'scheduled_at' => $this->meeting->scheduled_at->toDateTimeString(),
+        ];
+}
+}
