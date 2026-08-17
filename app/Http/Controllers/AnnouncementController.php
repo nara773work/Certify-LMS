@@ -14,7 +14,7 @@ use App\Notifications\AnnouncementNotification;
 class AnnouncementController extends Controller
 {
     public function index(){
-        $announcements = Announcement::paginate(10);
+        $announcements = Announcement::orderBy('created_at')->paginate(10);
         return view('announcement.management.index',compact('announcements'));
     }
 
@@ -31,7 +31,8 @@ class AnnouncementController extends Controller
             'title' => $request->title,
             'body'=> $request->body,
             'target_type'=> $request->target_type,
-            'user_id'=>Auth()->user()->id,
+            'dispatched_at' => now(),
+            'created_by' => auth()->id(),
         ]);
 
         $users = collect();
@@ -56,10 +57,28 @@ class AnnouncementController extends Controller
 
         }
 
-        $announcement->users()->sync($users->pluck('id'));
+            $announcement->users()->sync($users->pluck('id'));
 
         foreach ($users as $user) {
             $user->notify(new AnnouncementNotification($announcement));
+
+            $notification = $user->notifications()
+                ->where('type', AnnouncementNotification::class)
+                ->where('data->announcement_id', $announcement->id)
+                ->latest()
+                ->first();
+
+            if ($notification) {
+                $data = $notification->data;
+
+                $data['url'] = route('notifications.show', [
+                    'notification' => $notification->id,
+                ]);
+
+                $notification->update([
+                    'data' => $data,
+                ]);
+            }
         }
 
         return redirect()->route('admin.announcements.index')->with('success','お知らせを配信しました');
@@ -70,7 +89,12 @@ class AnnouncementController extends Controller
         return view('announcement.management.show',compact('announcement'));
     }
 
-    public function notificationshow(Notifications $notification){
-        return view('notifications.show',$notification);
-    }
+    public function notificationshow(string $id)
+{
+    $notification = auth()->user()
+        ->notifications()
+        ->findOrFail($id);
+
+    return view('notifications.show', compact('notification'));
+}
 }

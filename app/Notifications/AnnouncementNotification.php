@@ -38,6 +38,7 @@ class AnnouncementNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
+            'notification_type' => 'admin_announcement',
             'announcement_id' => $this->announcement->id,
             'title' => $this->announcement->title,
             'body' => $this->announcement->body,

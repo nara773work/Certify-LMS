@@ -16,6 +16,11 @@ return new class extends Migration
             $table->string('title');
             $table->text('body');
             $table->string('target_type');
+            $table->timestamp('dispatched_at')->nullable();
+            $table->foreignUlid('created_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
             $table->timestamps();
         });
     }

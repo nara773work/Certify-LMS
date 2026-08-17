@@ -50,7 +50,7 @@ class QaThreadSeeder extends Seeder
             'user_id' => $fixedStudent->id,
             'title' => 'IPアドレスとサブネットマスクの計算方法が分かりません',
             'body' => 'サブネットマスクの計算方法が分かりません。ネットワークアドレスの求め方を教えてください。',
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
             'created_at' => $threadCreatedAt1,
             'updated_at' => $threadCreatedAt1
         ]);
@@ -74,7 +74,7 @@ class QaThreadSeeder extends Seeder
             'title' => '午後問題の勉強方法が分かりません',
             'body' => '応用情報技術者試験の勉強を始めましたが、午後問題の対策方法が分かりません。午前問題は過去問を繰り返し解いていますが、午後問題は文章量が多く、
                         どこから読み始めればよいのか迷ってしまいます。また、記述式の解答にも慣れておらず、模範解答を見ても「なぜその答えになるのか」が理解できないことがあります。過去問を何年分くらい解けばよいのか、効率的な勉強方法やおすすめの進め方があれば教えていただきたいです。',
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
             'created_at' => $threadCreatedAt3,
             'updated_at' => $threadCreatedAt3
         ]);
@@ -94,7 +94,7 @@ class QaThreadSeeder extends Seeder
                         通勤時間などの隙間時間も活用して勉強したいと考えています。
                         おすすめの教材やアプリ、実際に550点前後から700点以上までスコアを伸ばした方が実践した勉強方法があれば、ぜひ教えていただきたいです。
                         また、本番で問題を先読みするコツや、聞き取れなかったときの立て直し方についてもアドバイスをいただけると嬉しいです。',
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
             'created_at' => $threadCreatedAt4,
             'updated_at' => $threadCreatedAt4
         ]);
@@ -163,7 +163,7 @@ class QaThreadSeeder extends Seeder
                         参考書を読めば内容は理解できるのですが、午後問題になるとどのように考えればよいのか分からず、
                         いつも時間がかかってしまいます。
                         設問の読み方や、効率よく解くためのコツがあれば教えていただきたいです。',
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
             'created_at' => $threadCreatedAt8,
             'updated_at' => $threadCreatedAt8
         ]);
@@ -176,7 +176,7 @@ class QaThreadSeeder extends Seeder
             'body' => '応用情報技術者試験のネットワーク分野を勉強していますが、TCP/IPやルーティング、VPNなど覚えることが多く、知識が整理できません。
                         基本情報では用語を覚えるだけでもある程度対応できましたが、応用情報の午後問題ではネットワーク構成図やログを読み取る問題が多く、どこに注目すればよいのか分からなくなってしまいます。
                         ネットワーク分野を効率よく学習する方法や、午後問題を解く際に意識しているポイントがあれば教えていただきたいです。',
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
             'created_at' => $threadCreatedAt9,
             'updated_at' => $threadCreatedAt9
         ]);
@@ -190,7 +190,7 @@ class QaThreadSeeder extends Seeder
                         しかし、問題文が長く、攻撃手法や対策を整理しながら読むことができません。
                         また、設問では「最も適切な対策」を選ぶ問題が多く、どのような視点で判断すればよいのか迷ってしまいます。
                         セキュリティ分野を効率よく学習する方法や、午後問題を解くときに意識しているポイントがあれば教えていただきたいです。',
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
             'created_at' => $threadCreatedAt10,
             'updated_at' => $threadCreatedAt10
         ]);
@@ -217,7 +217,7 @@ class QaThreadSeeder extends Seeder
             'body' => 'スタックとキューの違いが覚えられません。
                         LIFOとFIFOの意味は理解していますが、問題になるとどちらを使うべきか迷ってしまいます。
                         実際の利用例も合わせて教えていただけると嬉しいです。',
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
             'created_at' => $threadCreatedAt12,
             'updated_at' => $threadCreatedAt12
         ]);

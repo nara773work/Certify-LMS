@@ -19,7 +19,7 @@ return new class extends Migration
                 //資格情報が削除されるとその資格の質問は削除される
             $table->string('title');
             $table->text('body');
-            $table->string('status')->default('unresolved');
+            $table->string('status')->default('open');
             $table->foreignUlid('user_id')
                 ->nullable()
                 ->constrained()

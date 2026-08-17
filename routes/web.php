@@ -267,8 +267,8 @@ Route::middleware(['auth', 'role:admin'])
     Route::middleware(['auth', 'role:admin,coach,student'])
     ->group(function () {
     
-    Route::get('/notifications/{notification}',[EnrollmentNoteController::class,'notificationshow'])
-        ->name('notifications.show');
+    Route::get('/notifications/{notification}', [AnnouncementController::class, 'notificationshow'])
+    ->name('notifications.show');
 
     });
 

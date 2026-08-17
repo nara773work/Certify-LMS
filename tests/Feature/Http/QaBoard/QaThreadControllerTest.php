@@ -126,7 +126,7 @@ class QaThreadControllerTest extends TestCase
         $user = User::where('role', UserRole::Student)->first();
 
         $response = $this->actingAs($user)
-        ->get('/qa-board?status='.QaThreadStatus::UnResolved->value);
+        ->get('/qa-board?status='.QaThreadStatus::Open->value);
 
         $response->assertStatus(200);
 
@@ -469,7 +469,7 @@ class QaThreadControllerTest extends TestCase
     {
         $this->seed();
 
-        $thread = QaThread::with('replies')->where('status','unresolved')->first();
+        $thread = QaThread::with('replies')->where('status','open')->first();
         $user = $thread->user;
 
         $response = $this->actingAs($user)
@@ -487,7 +487,7 @@ class QaThreadControllerTest extends TestCase
     /**
      * 投稿者はスレッドを未解決に変更できる
      */
-    public function test_QaThreadController_unresolved(): void
+    public function test_QaThreadController_open(): void
     {
         $this->seed();
 
@@ -501,7 +501,7 @@ class QaThreadControllerTest extends TestCase
 
         $this->assertDatabaseHas('qa_threads', [
             'id' => $thread->id,
-            'status' => 'unresolved',
+            'status' => 'open',
         ]);
     
     }

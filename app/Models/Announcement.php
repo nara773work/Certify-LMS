@@ -13,14 +13,22 @@ class Announcement extends Model
         'title',
         'body',
         'target_type',
+        'dispatched_at',
+        'created_by',
     ];
 
     protected $casts = [
         'target_type' => AnnouncementTargetType::class,
+        'dispatched_at' => 'datetime',
     ];
 
     public function users()
     {
         return $this->belongsToMany(User::class);
     }
+
+    public function createdBy()
+{
+    return $this->belongsTo(User::class, 'created_by');
+}
 }
