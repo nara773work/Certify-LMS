@@ -5,12 +5,12 @@ namespace App\Enums;
 enum QaThreadStatus: string
 {
     case Resolved = 'resolved';
-    case UnResolved = 'unresolved';
+    case Open = 'open';
 
     public function label(): string{
         return match ($this) {
             self::Resolved => '解決済み',
-            self::UnResolved => '未解決',
+            self::Open => '未解決',
         };
     }
 

@@ -50,6 +50,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\EnrollmentGoalController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\EnrollmentNoteController;
+use App\Http\Controllers\AnnouncementController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -246,6 +247,32 @@ Route::middleware(['auth', 'role:admin,coach'])
         Route::delete('/enrollment-notes/{note}',[EnrollmentNoteController::class,'destroy'])
         ->name('enrollment-notes.destroy');
     });  
+
+// ============================================================
+// S-B-08 お知らせ配信（管理者）
+// ============================================================
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('/admin')
+    ->group(function () {
+
+        Route::get('/announcements',[AnnouncementController::class,'index'])
+        ->name('admin.announcements.index');
+        Route::get('/announcements/create',[AnnouncementController::class,'create'])
+        ->name('admin.announcements.create');
+        Route::post('/announcements',[AnnouncementController::class,'store'])
+        ->name('admin.announcements.store');   
+        Route::get('/announcements/{announcement}',[AnnouncementController::class,'show'])
+        ->name('admin.announcements.show');
+    });
+    Route::middleware(['auth', 'role:admin,coach,student'])
+    ->group(function () {
+    
+    Route::get('/notifications/{notification}', [AnnouncementController::class, 'notificationshow'])
+    ->name('notifications.show');
+
+    });
+
+
 
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)

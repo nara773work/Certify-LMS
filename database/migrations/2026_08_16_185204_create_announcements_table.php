@@ -11,20 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('qa_threads', function (Blueprint $table) {
+        Schema::create('announcements', function (Blueprint $table) {
             $table->id();
-            $table->foreignUlid('certification_id')
-                ->constrained()
-                ->cascadeOnDelete();
-                //資格情報が削除されるとその資格の質問は削除される
             $table->string('title');
             $table->text('body');
-            $table->string('status')->default('open');
-            $table->foreignUlid('user_id')
+            $table->string('target_type');
+            $table->timestamp('dispatched_at')->nullable();
+            $table->foreignUlid('created_by')
                 ->nullable()
-                ->constrained()
+                ->constrained('users')
                 ->nullOnDelete();
-                //ユーザーが退出しても質問は削除されない
             $table->timestamps();
         });
     }
@@ -34,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('qa_threads');
+        Schema::dropIfExists('announcements');
     }
 };

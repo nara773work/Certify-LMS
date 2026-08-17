@@ -311,4 +311,9 @@ class User extends Authenticatable
         return $query->whereIn('status', [UserStatus::InProgress, UserStatus::Graduated]);
     }
 
+    public function announcements()
+    {
+        return $this->belongsToMany(Announcement::class);
+    }
+
 }

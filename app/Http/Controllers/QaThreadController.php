@@ -56,7 +56,7 @@ class QaThreadController extends Controller
         ]);
 
         if ($filters['status'] == 'unresolved') {
-            $query->where('status', QaThreadStatus::UnResolved);
+            $query->where('status', QaThreadStatus::Open);
         } elseif ($filters['status'] == 'resolved') {
             $query->where('status', QaThreadStatus::Resolved);
         }
@@ -106,7 +106,7 @@ class QaThreadController extends Controller
             'title' => $request->title,
             'body' => $request->body,
             'user_id' => auth()->id(),
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
         ]);
 
         return redirect()->route('qa-board.index')->with('success', '質問を作成しました。');
@@ -209,7 +209,7 @@ class QaThreadController extends Controller
         $this->authorize('unresolve', $thread);
 
         $thread->update([
-            'status' => QaThreadStatus::UnResolved,
+            'status' => QaThreadStatus::Open,
         ]);
 
         return back()->with('success', '未解決に変更しました');
