@@ -63,9 +63,9 @@ class MeetingReminderNotificationTest extends TestCase
 
     public function test_not_send_notification(): void
     {
-        Notification::fake();
-
         $this->seed();
+
+        Notification::fake();
 
         $meeting = Meeting::factory()->create([
             'scheduled_at' => now()->addDays(3),
@@ -82,9 +82,9 @@ class MeetingReminderNotificationTest extends TestCase
 
     public function test_canceled_meeting(): void
     {
-        Notification::fake();
-
         $this->seed();
+
+        Notification::fake();
 
         $meeting = Meeting::factory()->create([
             'scheduled_at' => now()->addDay()->setTime(19, 0),
@@ -100,9 +100,7 @@ class MeetingReminderNotificationTest extends TestCase
     }
 
     public function test_same_reminder_twice(): void
-    {
-        Notification::fake();
-
+{
         $this->seed();
 
         $meeting = Meeting::factory()->create([
@@ -116,16 +114,27 @@ class MeetingReminderNotificationTest extends TestCase
             ['--window' => 'eve']
         )->assertSuccessful();
 
+        // DBに通知が1件保存されていることを確認
+        $this->assertDatabaseHas('notifications', [
+            'notifiable_id' => $meeting->student->id,
+            'notifiable_type' => User::class,
+            'type' => MeetingReminderNotification::class,
+        ]);
+
         // 2回目
         $this->artisan(
             'notifications:send-meeting-reminders',
             ['--window' => 'eve']
         )->assertSuccessful();
 
-        Notification::assertSentToTimes(
-            $meeting->student,
-            MeetingReminderNotification::class,
-            1
+        // 同じ通知は1件だけ
+        $this->assertSame(
+            1,
+            $meeting->student->notifications()
+                ->where('type', MeetingReminderNotification::class)
+                ->where('data->meeting_id', $meeting->id)
+                ->where('data->timing', 'day_before')
+                ->count()
         );
     }
 }
