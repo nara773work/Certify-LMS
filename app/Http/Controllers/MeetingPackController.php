@@ -25,7 +25,7 @@ class MeetingPackController extends Controller
             $query->where('status',$status);
         }
 
-        $plans = $query->orderBy('sort_order','ASC')->paginate(10);
+        $plans = $query->orderBy('sort_order','ASC')->withCount('payments')->paginate(10);
 
         return view('meeting-pack.management.index',compact('plans','keyword','status'));
     }

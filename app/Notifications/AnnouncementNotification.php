@@ -27,7 +27,16 @@ class AnnouncementNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject($this->announcement->title)
+            ->greeting('お知らせ')
+            ->line($this->announcement->body);
     }
 
     /**

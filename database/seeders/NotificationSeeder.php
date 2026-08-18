@@ -45,7 +45,9 @@ class NotificationSeeder extends Seeder
             ->latest()
             ->first();
 
-        $notification->markAsRead();
+        if ($notification) {
+            $notification->markAsRead();
+        }
 
         //コーチ太郎
 
@@ -62,7 +64,9 @@ class NotificationSeeder extends Seeder
             ->latest()
             ->first();
 
-        $notification->markAsRead();
+        if ($notification) {
+            $notification->markAsRead();
+        }
     }
     
 }
