@@ -47,7 +47,7 @@ class SettingRequestTest extends TestCase
         $Student = User::where('role', UserRole::Student)->first();
 
         $data = [
-            'name' => str_repeat('あ', 255),
+            'name' => str_repeat('あ', 50),
             'bio'=> null
         ];
 
@@ -59,7 +59,7 @@ class SettingRequestTest extends TestCase
         $this->assertDatabaseHas('users',
         [
             'id' => $Student->id,
-            'name' => str_repeat('あ', 255),
+            'name' => str_repeat('あ', 50),
             'bio'=> null
         ]);
     }
@@ -71,7 +71,7 @@ class SettingRequestTest extends TestCase
         $Student = User::where('role', UserRole::Student)->first();
 
         $data = [
-            'name' => str_repeat('あ', 256),
+            'name' => str_repeat('あ', 51),
             'bio'=> null
         ];
 

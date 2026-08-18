@@ -154,9 +154,99 @@ sail artisan storage:link
 
 ※docs以下にそれぞれチケット番号のファイルがあり、中に詳細設計を記載しているので、そちらを参照してください。
 
-## 追加機能について
-以下のコマンドで初期データを投入し、動作確認を行ってください。
+
+## 通知機能
+
+### 通知チャネル
+
+以下の通知は、アプリ内通知とメールの両方で配信されます。
+
+- お知らせ配信
+- 面談リマインダー通知
+  - 面談前日
+  - 面談1時間前
+
+---
+
+### お知らせ配信
+
+管理者がお知らせを配信すると、対象ユーザーに以下の通知が送信されます。
+
+- アプリ内通知
+- メール
+
+---
+
+### 面談リマインダー通知
+
+予約済みの面談に対して、以下のタイミングで通知を送信します。
+
+- 面談前日
+- 面談1時間前
+
+キャンセル済みの面談には通知を送信しません。
+
+また、同一の面談・同一のタイミングのリマインダー通知は、複数回送信されません。
+
+#### 手動実行
+
+前日通知：
 
 ```bash
-sail artisan migrate:fresh --seed
+./vendor/bin/sail artisan notifications:send-meeting-reminders --window=eve
 ```
+
+一時間前通知：
+
+```bash
+./vendor/bin/sail artisan notifications:send-meeting-reminders --window=one_hour_before
+```
+
+## 自動実行
+Laravelのschedulerで自動実行されます
+
+cronで1分ごとに実行してください
+
+* * * * * cd /path/to/Certify-LMS && ./vendor/bin/sail artisan schedule:run >> /dev/null 2>&1
+
+
+##　メールの確認
+環境開発ではMailpitを使用してメールを確認する
+
+1.sailを起動する
+
+```bash
+./vendor/bin/sail up -d
+```
+
+2．ブラウザで以下にアクセスする
+
+http://localhost:8025
+
+3．メール確認
+
+Mailpitを開き、対象ユーザーへのメールが届いていること、以下の事項をを確認します。
+
+- メールが届いている
+- メールの件名がお知らせのタイトルになっている
+- メール本文にお知らせの内容が表示されている
+
+4. 面談リマインダーメールを確認
+
+以下のコマンドを実行してリマインダー通知を発火させます。
+
+前日通知：
+
+./vendor/bin/sail artisan notifications:send-meeting-reminders --window=eve
+
+1時間前通知：
+
+./vendor/bin/sail artisan notifications:send-meeting-reminders --window=one_hour_before
+
+Mailpitを開き、対象の受講生にメールが届いていることを確認します
+
+※注意事項※
+
+- Mailpitは開発環境用のメール確認ツールです。
+
+- 実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。

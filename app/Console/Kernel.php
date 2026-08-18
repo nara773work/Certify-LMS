@@ -35,7 +35,7 @@ class Kernel extends ConsoleKernel
         // 前日通知
         $schedule->command(
             'notifications:send-meeting-reminders --window=eve'
-        )->dailyAt('19:00');
+        )->dailyAt('08:00');
 
         // 1時間前通知
         $schedule->command(
