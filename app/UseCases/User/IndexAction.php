@@ -25,7 +25,10 @@ final class IndexAction
     ): LengthAwarePaginator {
         $query = User::query();
 
-        $query->withTrashed();
+        // 「退会済み」が選択されたときだけ SoftDelete 済みユーザーを対象にする
+        if ($status === UserStatus::Withdrawn) {
+            $query->onlyTrashed();
+        }
 
         if ($keyword !== null && $keyword !== '') {
             $query->where(function ($q) use ($keyword) {
