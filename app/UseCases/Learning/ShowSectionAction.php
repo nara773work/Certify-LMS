@@ -42,7 +42,7 @@ final class ShowSectionAction
 
         $siblingSections = $chapter->sections()
             ->where('status', ContentStatus::Published->value)
-            ->ordered()
+            ->ordered('order')
             ->get();
 
         $currentIndex = $siblingSections->search(fn ($s) => $s->id === $section->id);

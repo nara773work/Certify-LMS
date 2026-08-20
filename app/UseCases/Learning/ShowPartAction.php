@@ -32,11 +32,11 @@ final class ShowPartAction
 
         $chapters = $part->chapters()
             ->where('status', ContentStatus::Published->value)
-            ->ordered()
             ->withCount([
                 'sections as sections_total_count' => fn ($q) => $q
                     ->where('status', ContentStatus::Published->value),
             ])
+            ->orderBy('order', 'asc')
             ->get();
 
         $enrollment = $student->enrollments()

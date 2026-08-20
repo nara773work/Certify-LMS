@@ -40,7 +40,7 @@ final class ShowEnrollmentAction
         $parts = $enrollment->certification
             ?->parts()
             ->where('status', ContentStatus::Published->value)
-            ->ordered()
+            ->ordered('order')
             ->with([
                 'chapters' => fn ($query) => $query
                     ->where('status', ContentStatus::Published->value)

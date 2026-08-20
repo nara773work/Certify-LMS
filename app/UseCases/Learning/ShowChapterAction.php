@@ -33,7 +33,7 @@ final class ShowChapterAction
 
         $sections = $chapter->sections()
             ->where('status', ContentStatus::Published->value)
-            ->ordered()
+            ->ordered('order')
             ->get();
 
         $enrollment = $student->enrollments()
