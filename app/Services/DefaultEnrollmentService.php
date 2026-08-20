@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\EnrollmentStatus;
 use App\Models\Enrollment;
 use App\Models\User;
+use App\Enums\CertificationStatus;
 
 /**
  * 受講生のデフォルト資格(users.default_enrollment_id)の自動設定 / 自動振替 / NULL リセットを担う Service。
@@ -75,11 +76,13 @@ final class DefaultEnrollmentService
 
         $default = Enrollment::query()
             ->withTrashed()
+            ->with('certification')
             ->find($user->default_enrollment_id);
 
         $invalid = $default === null
             || $default->trashed()
-            || $default->status === EnrollmentStatus::Failed;
+            || $default->status === EnrollmentStatus::Failed
+            || $default->certification?->status !== CertificationStatus::Published;
 
         if ($invalid) {
             $user->update(['default_enrollment_id' => null]);
