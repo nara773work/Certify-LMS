@@ -9,6 +9,7 @@ use App\Models\Part;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Enums\CertificationStatus;
 
 /**
  * /learning/parts/{part} (3 階層目、Chapter 一覧) のデータを準備する Action。
@@ -30,20 +31,29 @@ final class ShowPartAction
             throw new NotFoundHttpException;
         }
 
-        $chapters = $part->chapters()
-            ->where('status', ContentStatus::Published->value)
-            ->withCount([
-                'sections as sections_total_count' => fn ($q) => $q
-                    ->where('status', ContentStatus::Published->value),
-            ])
-            ->orderBy('order', 'asc')
-            ->get();
-
         $enrollment = $student->enrollments()
             ->where('certification_id', $part->certification_id)
             ->first();
 
+        if ($enrollment === null) {
+            abort(403);
+        }
+
+        if ($part->certification?->status !== CertificationStatus::Published) {
+            throw new NotFoundHttpException;
+        }
+
+        $chapters = $part->chapters()
+            ->where('status', ContentStatus::Published->value)
+            ->ordered('order')
+            ->withCount([
+                'sections as sections_total_count' => fn ($q) => $q
+                    ->where('status', ContentStatus::Published->value),
+            ])
+            ->get();
+      
         $completedByChapter = [];
+        
         if ($enrollment !== null && $chapters->isNotEmpty()) {
             $rows = DB::table('sections')
                 ->join('section_progresses', function ($join) use ($enrollment) {

@@ -13,6 +13,7 @@ use App\Services\LearningHourTargetService;
 use App\Services\SectionQuestionScoreService;
 use App\Services\StreakService;
 use Illuminate\Support\Facades\DB;
+use App\Enums\CertificationStatus;
 
 /**
  * /learning/enrollments/{enrollment} (2 階層目、教材 Part 一覧) のデータを準備する Action。
@@ -36,6 +37,10 @@ final class ShowEnrollmentAction
     public function __invoke(Enrollment $enrollment, string $tab = 'contents'): array
     {
         $enrollment->loadMissing(['certification', 'user', 'learningHourTarget']);
+
+        if ($enrollment->certification?->status !== CertificationStatus::Published) {
+            abort(404);
+        }
 
         $parts = $enrollment->certification
             ?->parts()

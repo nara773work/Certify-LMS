@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Services\MarkdownRenderingService;
 use App\Services\SectionQuestionScoreService;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Enums\CertificationStatus;
+use App\Enums\EnrollmentStatus;
 
 /**
  * /learning/sections/{section} (5 階層目、Section 詳細) のデータを準備する Action。
@@ -40,6 +42,10 @@ final class ShowSectionAction
             throw new NotFoundHttpException;
         }
 
+        if ($part->certification?->status !== CertificationStatus::Published) {
+            throw new NotFoundHttpException;
+    }
+
         $siblingSections = $chapter->sections()
             ->where('status', ContentStatus::Published->value)
             ->ordered('order')
@@ -56,6 +62,15 @@ final class ShowSectionAction
         $enrollment = $student->enrollments()
             ->where('certification_id', $part->certification_id)
             ->first();
+        
+        if ($enrollment === null) {
+            abort(403);
+        }
+
+        if ($enrollment->status !== EnrollmentStatus::Learning
+            && $enrollment->status !== EnrollmentStatus::Passed) {
+            abort(403);
+        }
 
         $completed = false;
         if ($enrollment !== null) {

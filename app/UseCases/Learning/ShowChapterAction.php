@@ -9,6 +9,7 @@ use App\Models\Chapter;
 use App\Models\SectionProgress;
 use App\Models\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Enums\CertificationStatus;
 
 /**
  * /learning/chapters/{chapter} (4 階層目、Section 一覧) のデータを準備する Action。
@@ -28,6 +29,10 @@ final class ShowChapterAction
         if ($chapter->status !== ContentStatus::Published
             || $chapter->part === null
             || $chapter->part->status !== ContentStatus::Published) {
+            throw new NotFoundHttpException;
+        }
+
+        if ($chapter->part->certification?->status !== CertificationStatus::Published) {
             throw new NotFoundHttpException;
         }
 
