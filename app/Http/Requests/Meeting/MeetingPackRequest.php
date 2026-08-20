@@ -22,7 +22,7 @@ class MeetingPackRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'max:255'],
+            'name' => ['required', 'max:100'],
             'description' => ['nullable', 'max:2000'],
             'meeting_count' => ['required', 'integer','between:1,100'],
             'price' => ['required','integer', 'between:0,1000000'],
@@ -35,7 +35,7 @@ class MeetingPackRequest extends FormRequest
     {
         return [
             'name.required' => 'SKU名を入力してください',
-            'name.max' => '255字以内で入力してください',
+            'name.max' => '100字以内で入力してください',
             'description.max' => '2000字以内で入力してください',
             'meeting_count.required' => '面談回数を入力してください',
             'meeting_count.between' => '1~100の範囲で入力してください',

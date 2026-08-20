@@ -397,7 +397,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_stripe_price_id_200(): void
+        public function test_stripe_price_id_255(): void
     {
         $this->seed();
 
@@ -408,7 +408,7 @@ class MeetingPackRequestTest extends TestCase
             'description' => null,
             'meeting_count' => 1,
             'price' => 1000,
-            'stripe_price_id' => str_repeat('A', 200),
+            'stripe_price_id' => str_repeat('A', 255),
             'sort_order' => 0,
         ];
 
@@ -418,11 +418,11 @@ class MeetingPackRequestTest extends TestCase
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('meeting_packs', [
-            'stripe_price_id' => str_repeat('A', 200),
+            'stripe_price_id' => str_repeat('A', 255),
         ]);
     }
 
-        public function test_stripe_price_id_201(): void
+        public function test_stripe_price_id_256(): void
     {
         $this->seed();
 
@@ -433,7 +433,7 @@ class MeetingPackRequestTest extends TestCase
             'description' => null,
             'meeting_count' => 1,
             'price' => 1000,
-            'stripe_price_id' => str_repeat('あ', 201),
+            'stripe_price_id' => str_repeat('あ', 256),
             'sort_order' => 0,
         ];
 
