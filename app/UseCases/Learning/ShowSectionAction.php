@@ -63,14 +63,15 @@ final class ShowSectionAction
             ->where('certification_id', $part->certification_id)
             ->first();
         
-        if ($enrollment === null) {
-            abort(403);
+        if ($part->certification?->status === CertificationStatus::Archived) {
+            throw new NotFoundHttpException;
         }
 
-        if ($enrollment->status !== EnrollmentStatus::Learning
+        if ($enrollment !== null
+            && $enrollment->status !== EnrollmentStatus::Learning
             && $enrollment->status !== EnrollmentStatus::Passed) {
-            abort(403);
-        }
+                bort(403);
+            }
 
         $completed = false;
         if ($enrollment !== null) {
@@ -99,3 +100,8 @@ final class ShowSectionAction
         ];
     }
 }
+
+//xnomura@example.com
+
+//01m0f4rr70kptzqmv2174xb9hr/parts
+//01m0f4rra3zdp3mx9bw3g8w304

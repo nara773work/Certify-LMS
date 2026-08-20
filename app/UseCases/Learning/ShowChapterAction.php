@@ -32,7 +32,7 @@ final class ShowChapterAction
             throw new NotFoundHttpException;
         }
 
-        if ($chapter->part->certification?->status !== CertificationStatus::Published) {
+        if ($part->certification?->status !== CertificationStatus::Published) {
             throw new NotFoundHttpException;
         }
 
