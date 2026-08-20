@@ -32,8 +32,12 @@ final class IndexAction
 
         $query->keyword($keyword);
 
-        if ($status !== null) {
+        if ($status === CertificationStatus::Published) {
+            $query->where('status', CertificationStatus::Published->value);
+        }elseif($status === CertificationStatus::Draft){
             $query->where('status', CertificationStatus::Draft->value);
+        }elseif($status === CertificationStatus::Archived){
+            $query->where('status', CertificationStatus::Archived->value);
         }
 
         if ($categoryId !== null && $categoryId !== '') {
