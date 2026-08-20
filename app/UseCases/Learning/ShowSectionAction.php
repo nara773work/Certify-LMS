@@ -62,15 +62,20 @@ final class ShowSectionAction
         $enrollment = $student->enrollments()
             ->where('certification_id', $part->certification_id)
             ->first();
-        
+
         if ($enrollment === null) {
             abort(403);
         }
-
-        if ($enrollment->status !== EnrollmentStatus::Learning
-            && $enrollment->status !== EnrollmentStatus::Passed) {
-            abort(403);
+        
+        if ($part->certification?->status === CertificationStatus::Archived) {
+            throw new NotFoundHttpException;
         }
+
+        if ($enrollment !== null
+            && $enrollment->status !== EnrollmentStatus::Learning
+            && $enrollment->status !== EnrollmentStatus::Passed) {
+                abort(403);
+            }
 
         $completed = false;
         if ($enrollment !== null) {

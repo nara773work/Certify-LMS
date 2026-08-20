@@ -27,6 +27,10 @@ final class ShowPartAction
     {
         $part->loadMissing('certification');
 
+        if ($part->certification?->status === CertificationStatus::Archived) {
+            throw new NotFoundHttpException;
+        }
+
         if ($part->status !== ContentStatus::Published) {
             throw new NotFoundHttpException;
         }
@@ -34,14 +38,11 @@ final class ShowPartAction
         $enrollment = $student->enrollments()
             ->where('certification_id', $part->certification_id)
             ->first();
-
+        
         if ($enrollment === null) {
             abort(403);
         }
 
-        if ($part->certification?->status !== CertificationStatus::Published) {
-            throw new NotFoundHttpException;
-        }
 
         $chapters = $part->chapters()
             ->where('status', ContentStatus::Published->value)

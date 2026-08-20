@@ -38,7 +38,7 @@ final class ShowEnrollmentAction
     {
         $enrollment->loadMissing(['certification', 'user', 'learningHourTarget']);
 
-        if ($enrollment->certification?->status !== CertificationStatus::Published) {
+        if ($enrollment->certification?->status === CertificationStatus::Archived) {
             abort(404);
         }
 

@@ -25,6 +25,7 @@ final class ShowChapterAction
     public function __invoke(Chapter $chapter, User $student): array
     {
         $chapter->loadMissing('part.certification');
+        $part = $chapter->part;
 
         if ($chapter->status !== ContentStatus::Published
             || $chapter->part === null
@@ -32,7 +33,7 @@ final class ShowChapterAction
             throw new NotFoundHttpException;
         }
 
-        if ($chapter->part->certification?->status !== CertificationStatus::Published) {
+        if ($part->certification?->status !== CertificationStatus::Published) {
             throw new NotFoundHttpException;
         }
 
@@ -44,6 +45,10 @@ final class ShowChapterAction
         $enrollment = $student->enrollments()
             ->where('certification_id', $chapter->part->certification_id)
             ->first();
+
+        if ($enrollment === null) {
+            abort(403);
+        }
 
         $completedSectionIds = [];
         if ($enrollment !== null && $sections->isNotEmpty()) {
