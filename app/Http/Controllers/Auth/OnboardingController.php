@@ -13,6 +13,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
+use App\Exceptions\Auth\InvalidInvitationTokenException;
 
 class OnboardingController extends Controller
 {
@@ -38,9 +39,15 @@ class OnboardingController extends Controller
         Invitation $invitation,
         OnboardingRequest $request,
         OnboardAction $action,
-    ): RedirectResponse {
+    ): RedirectResponse |View {
+    {
+        try {
         $action($invitation, $request->validated());
+            } catch (InvalidInvitationTokenException) {
+                return view('auth.invitation-invalid');
+            }
 
         return redirect()->route('dashboard.index');
     }
+}
 }
