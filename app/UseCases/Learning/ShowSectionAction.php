@@ -74,7 +74,7 @@ final class ShowSectionAction
         if ($enrollment !== null
             && $enrollment->status !== EnrollmentStatus::Learning
             && $enrollment->status !== EnrollmentStatus::Passed) {
-                bort(403);
+                abort(403);
             }
 
         $completed = false;
@@ -104,8 +104,3 @@ final class ShowSectionAction
         ];
     }
 }
-
-//isugiyama@example.net
-//parts/01m0f5n18cmxw4vg8fgdy04f98
-//chapters/01m0f5n18h0v2tmacvzj5dv0rg
-//sections/01m0f5n18n8wz7j7w55ydrm2xh
