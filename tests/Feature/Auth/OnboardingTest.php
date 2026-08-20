@@ -339,4 +339,39 @@ class OnboardingTest extends TestCase
             'meeting_url' => null,
         ]);
     }
+
+    public function test_store_rejects_already_accepted_invitation(): void
+{
+    $invitation = $this->freshInvitation();
+
+    // 1回目：正常にオンボーディング完了
+    $this->post($this->postUrl($invitation), [
+        'name' => '受講太郎',
+        'password' => 'secret-pass',
+        'password_confirmation' => 'secret-pass',
+    ])->assertRedirect(route('dashboard.index'));
+
+    // 招待が使用済みになっていることを確認
+    $this->assertDatabaseHas('invitations', [
+        'id' => $invitation->id,
+        'status' => InvitationStatus::Accepted->value,
+    ]);
+
+    // 2回目：同じ招待URLを使う
+    $response = $this->post($this->postUrl($invitation), [
+        'name' => '別の名前',
+        'password' => 'another-password',
+        'password_confirmation' => 'another-password',
+    ]);
+
+    // 2回目は拒否される
+    $response->assertViewIs('auth.invitation-invalid');
+
+    // 元のユーザー情報が上書きされていない
+    $this->assertDatabaseHas('users', [
+        'id' => $invitation->user_id,
+        'name' => '受講太郎',
+        'status' => UserStatus::InProgress->value,
+    ]);
+}
 }
