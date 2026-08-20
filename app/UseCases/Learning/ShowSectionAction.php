@@ -62,6 +62,10 @@ final class ShowSectionAction
         $enrollment = $student->enrollments()
             ->where('certification_id', $part->certification_id)
             ->first();
+
+        if ($enrollment === null) {
+            abort(403);
+        }
         
         if ($part->certification?->status === CertificationStatus::Archived) {
             throw new NotFoundHttpException;
@@ -101,7 +105,7 @@ final class ShowSectionAction
     }
 }
 
-//xnomura@example.com
-
-//01m0f4rr70kptzqmv2174xb9hr/parts
-//01m0f4rra3zdp3mx9bw3g8w304
+//isugiyama@example.net
+//parts/01m0f5n18cmxw4vg8fgdy04f98
+//chapters/01m0f5n18h0v2tmacvzj5dv0rg
+//sections/01m0f5n18n8wz7j7w55ydrm2xh

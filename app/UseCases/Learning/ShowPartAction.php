@@ -38,6 +38,10 @@ final class ShowPartAction
         $enrollment = $student->enrollments()
             ->where('certification_id', $part->certification_id)
             ->first();
+        
+        if ($enrollment === null) {
+            abort(403);
+        }
 
 
         $chapters = $part->chapters()
