@@ -19,7 +19,11 @@ final class IndexAction
     public function __invoke(Certification $certification): Collection
     {
         return $certification->parts()
-            ->with(['chapters' => fn ($q) => $q->ordered()->withCount('sections')])
+            ->ordered('order')
+            ->with(['chapters' => fn ($q) => $q->ordered('order')
+            ->with(['sections' => fn ($q) => $q->ordered('order'),
+                ])
+            ->withCount('sections')])
             ->get();
     }
 }
