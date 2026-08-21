@@ -50,7 +50,7 @@ class SettingController extends Controller
 
     return redirect()
         ->route('settings.profile.edit')
-        ->with('success', 'アバターを登録しました');
+        ->with('success', 'アバター画像を登録しました');
     }
 
     public function avatardelete(){
@@ -64,7 +64,7 @@ class SettingController extends Controller
 
         return redirect()
         ->route('settings.profile.edit')
-        ->with('success','アバターを削除しました');
+        ->with('success','アバター画像を削除しました');
     }
 
     public function updatepassword(PasswordRequest $request){

@@ -22,7 +22,7 @@ class AnnouncementRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required','max:255','string'],
+            'title' => ['required','max:200','string'],
             'body' => ['required','max:5000','string'],
         ];
     }
@@ -31,7 +31,7 @@ class AnnouncementRequest extends FormRequest
     {
         return [
             'title.required' => 'タイトルを入力してください',
-            'title.max'=> '255字以下で入力してください',
+            'title.max'=> '200字以下で入力してください',
             'title.string' => '文字形式で入力してください',
             'body.required' => '本文を入力してください',
             'body.max'=>'5000字以内で入力してください',
