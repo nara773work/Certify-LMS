@@ -22,7 +22,7 @@ class EnrollmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'max:50'],
+            'title' => ['required', 'max:100'],
             'description' => ['nullable', 'max:1000'],
             'target_date' => [ 'nullable','date','after:today'],
         ];
@@ -32,7 +32,7 @@ class EnrollmentRequest extends FormRequest
     {
         return [
             'title.required' => 'タイトルを入力してください',
-            'title.max' => '50字以内で入力してください',
+            'title.max' => '100字以内で入力してください',
             'description.max' => '1000字以内で入力してください',
             'target_date.date' => '有効な日付を入力してください',
             'target_date.after' => '本日以降の日付を入力してください',

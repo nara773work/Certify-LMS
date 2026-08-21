@@ -34,14 +34,14 @@ class AnnouncementRequestTest extends TestCase
         $response->assertSessionHasErrors('title');
     }
 
-    public function test_title_255(): void
+    public function test_title_200(): void
     {
         $this->seed();
 
         $user = User::where('role',UserRole::Admin)->first();
 
         $data = [
-            'title' => str_repeat('あ', 255),
+            'title' => str_repeat('あ', 200),
             'body' => 'test',
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];
@@ -56,14 +56,14 @@ class AnnouncementRequestTest extends TestCase
         ]);
     }
 
-    public function test_title_256(): void
+    public function test_title_201(): void
     {
         $this->seed();
 
         $user = User::where('role',UserRole::Admin)->first();
 
         $data = [
-            'title' => str_repeat('あ', 256),
+            'title' => str_repeat('あ', 201),
             'body' => 'test',
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];

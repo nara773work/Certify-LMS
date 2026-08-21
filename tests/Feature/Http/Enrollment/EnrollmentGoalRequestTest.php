@@ -45,7 +45,7 @@ class EnrollmentGoalRequestTest extends TestCase
 
     }
 
-        public function test_title_50(): void
+        public function test_title_100(): void
     {
         $this->seed();
 
@@ -54,7 +54,7 @@ class EnrollmentGoalRequestTest extends TestCase
         $enrollment = $user->enrollments()->first();
 
         $goal = [
-            'title' =>str_repeat('あ', 50),
+            'title' =>str_repeat('あ', 100),
             'enrollment_id' => $enrollment->id,
             'description' => null,
             'target_date' => Carbon::today()->addDays(3),
@@ -68,7 +68,7 @@ class EnrollmentGoalRequestTest extends TestCase
         ]);
     }
 
-        public function test_title_51(): void
+        public function test_title_101(): void
     {
         $this->seed();
 
@@ -77,7 +77,7 @@ class EnrollmentGoalRequestTest extends TestCase
         $enrollment = $user->enrollments()->first();
 
         $goal = [
-            'title' => str_repeat('あ', 51),
+            'title' => str_repeat('あ', 101),
             'enrollment_id' => $enrollment->id,
             'description' => null,
             'target_date' => Carbon::today()->addDays(3),
@@ -90,7 +90,7 @@ class EnrollmentGoalRequestTest extends TestCase
         ]);
 
         $this->assertDatabaseMissing('enrollment_goals', [
-            'title' => str_repeat('あ', 51),
+            'title' => str_repeat('あ', 101),
             'enrollment_id' => $enrollment->id,
         ]);
     }
