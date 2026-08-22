@@ -41,6 +41,9 @@ return new class extends Migration
             // 受講生別履歴一覧 / 自動完了 Schedule Command 高速化のための補助 INDEX
             $table->index(['student_id', 'scheduled_at']);
             $table->index(['status', 'scheduled_at']);
+
+            // 同一コーチ・同一日時の二重予約をDBレベルで禁止
+            $table->unique(['coach_id', 'scheduled_at']);
         });
     }
 
