@@ -25,7 +25,7 @@ use App\Services\MeetingAvailabilityService;
 use App\Services\MeetingQuotaService;
 use App\UseCases\MeetingQuota\ConsumeQuotaAction;
 use App\UseCases\MeetingQuota\RefundQuotaAction;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -33,6 +33,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use App\Notifications\MeetingReservationNotification;
+use App\Services\GoogleCalendarService;
 
 /**
  * 1on1 面談予約 (Meeting) の HTTP エントリポイント。
@@ -47,6 +48,12 @@ class MeetingController extends Controller
     /**
      * 受講生本人の面談一覧。filter (upcoming/past/all) クエリで履歴を切り替える。
      */
+    public function __construct(
+        GoogleCalendarService $googleCalendarService,
+) {
+        $this->googleCalendarService = $googleCalendarService;
+}
+
     public function index(IndexRequest $request, MeetingQuotaService $meetingQuota): View
     {
         $filter = $request->validated('filter') ?? 'upcoming';
@@ -168,6 +175,7 @@ class MeetingController extends Controller
         CoachMeetingLoadService $coachLoadService,
         MeetingQuotaService $quotaService,
         ConsumeQuotaAction $consumeAction,
+        GoogleCalendarService $googleCalendarService,
     ): RedirectResponse {
         $scheduledAt = Carbon::parse($request->validated('scheduled_at'));
         $topic = $request->validated('topic');
@@ -224,6 +232,12 @@ class MeetingController extends Controller
 
             return $meeting->fresh();
         });
+        
+        $googleCalendarEventId = $googleCalendarService->createEvent($meeting);
+
+        $meeting->update([
+            'google_calendar_event_id' => $googleCalendarEventId,
+        ]);
 
         return redirect()
             ->route('meetings.show', $meeting)
@@ -237,6 +251,7 @@ class MeetingController extends Controller
     public function cancel(
         Meeting $meeting,
         RefundQuotaAction $refundAction,
+        GoogleCalendarService $googleCalendarService,
     ): RedirectResponse {
         $this->authorize('cancel', $meeting);
 
@@ -260,6 +275,8 @@ class MeetingController extends Controller
 
             $refundAction($actor, $locked->id);
         });
+
+        $googleCalendarService->deleteEvent($meeting);
 
         return redirect()
             ->route('meetings.show', $meeting)
@@ -294,6 +311,7 @@ class MeetingController extends Controller
      */
     public function fetchAvailability(Enrollment $enrollment, AvailabilityRequest $request, MeetingAvailabilityService $availabilityService): JsonResponse
     {
+
         $date = Carbon::parse($request->validated('date'));
         $slots = $availabilityService->slotsForCertification(
             $enrollment->loadMissing('certification')->certification,
@@ -316,21 +334,38 @@ class MeetingController extends Controller
      *
      * @return Collection<int, User>
      */
+    
     private function findAvailableCoaches(Certification $certification, Carbon $scheduledAt): Collection
     {
         $time = $scheduledAt->format('H:i:s');
 
-        return $certification->coaches()
-            ->whereHas('coachAvailabilities', function ($q) use ($scheduledAt, $time) {
-                $q->where('day_of_week', $scheduledAt->dayOfWeek)
-                    ->where('is_active', true)
-                    ->where('start_time', '<=', $time)
-                    ->where('end_time', '>', $time);
-            })
-            ->whereDoesntHave('meetingsAsCoach', function ($q) use ($scheduledAt) {
-                $q->where('scheduled_at', $scheduledAt)
-                    ->whereIn('status', [MeetingStatus::Reserved->value, MeetingStatus::Completed->value]);
-            })
-            ->get();
+        $coaches = $certification->coaches()
+        ->whereHas('coachAvailabilities', function ($q) use ($scheduledAt, $time) {
+            $q->where('day_of_week', $scheduledAt->dayOfWeek)
+                ->where('is_active', true)
+                ->where('start_time', '<=', $time)
+                ->where('end_time', '>', $time);
+        })
+        ->whereDoesntHave('meetingsAsCoach', function ($q) use ($scheduledAt) {
+            $q->where('scheduled_at', $scheduledAt)
+                ->whereIn('status', [
+                    MeetingStatus::Reserved->value,
+                    MeetingStatus::Completed->value,
+                ]);
+        })
+        ->get();
+
+        return $coaches->filter(function (User $coach) use ($scheduledAt) {
+            $events = $this->googleCalendarService->eventsForCoach(
+                (string) $coach->id,
+                $scheduledAt->copy()->startOfMinute(),
+                $scheduledAt->copy()->addHour(),
+            );
+
+        return collect($events)->doesntContain(function (array $event) use ($scheduledAt) {
+            return $event['start']->lt($scheduledAt->copy()->addHour())
+                && $event['end']->gt($scheduledAt);
+        });
+        })->values();
     }
 }

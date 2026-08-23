@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\GoogleCalendarToken;
+use App\Services\GoogleCalendarService;
 
 class GoogleCalendarController extends Controller
 {
@@ -80,4 +81,30 @@ class GoogleCalendarController extends Controller
         return redirect('/settings/availability')
             ->with('message', 'Google Calendarとの連携を解除しました。');
     }
+
+    public function fetchAvailability(
+        
+    Enrollment $enrollment,
+    AvailabilityRequest $request,
+    MeetingAvailabilityService $availabilityService,
+    GoogleCalendarService $googleCalendarService,
+): JsonResponse {
+    $date = Carbon::parse($request->validated('date'));
+
+    $slots = $availabilityService->slotsForCertification(
+        $enrollment->loadMissing('certification')->certification,
+        $date,
+        $googleCalendarService,
+    );
+
+    return response()->json([
+        'date' => $date->toDateString(),
+        'slots' => $slots->map(fn (array $slot) => [
+            'slot_start' => $slot['slot_start']->toIso8601String(),
+            'slot_end' => $slot['slot_end']->toIso8601String(),
+            'available_coach_count' => $slot['available_coach_count'],
+        ])->all(),
+    ]);
+}
+
 }
