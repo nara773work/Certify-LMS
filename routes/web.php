@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\OnboardingController;
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\BrowseController;
 use App\Http\Controllers\CertificationCatalogController;
 use App\Http\Controllers\CertificationCategoryController;
@@ -13,10 +14,14 @@ use App\Http\Controllers\ChatRoomController;
 use App\Http\Controllers\ContentSearchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EnrollmentController;
+use App\Http\Controllers\EnrollmentGoalController;
 use App\Http\Controllers\EnrollmentManagementController;
+use App\Http\Controllers\EnrollmentNoteController;
+use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LearningHourTargetController;
 use App\Http\Controllers\MeetingController;
+use App\Http\Controllers\MeetingPackController;
 use App\Http\Controllers\MeetingQuotaHistoryController;
 use App\Http\Controllers\MockExamAnswerController;
 use App\Http\Controllers\MockExamCatalogController;
@@ -24,10 +29,14 @@ use App\Http\Controllers\MockExamController;
 use App\Http\Controllers\MockExamQuestionController;
 use App\Http\Controllers\MockExamSessionController;
 use App\Http\Controllers\MockExamSessionMonitorController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartController;
+use App\Http\Controllers\PlanController;
 use App\Http\Controllers\QuestionCategoryController;
 use App\Http\Controllers\QuizHistoryController;
 use App\Http\Controllers\QuizStatsController;
+use App\Http\Controllers\QaThreadController;
+use App\Http\Controllers\QaReplyController;
 use App\Http\Controllers\ReceiveCertificateController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SectionImageController;
@@ -36,21 +45,13 @@ use App\Http\Controllers\SectionQuestionAnswerController;
 use App\Http\Controllers\SectionQuestionController;
 use App\Http\Controllers\SectionQuizController;
 use App\Http\Controllers\SectionQuizResultController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Settings\AvailabilityController as SettingsAvailabilityController;
 use App\Http\Controllers\Settings\SettingsDefaultEnrollmentController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeakDrillController;
 use App\Http\Controllers\WeakDrillResultController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\QaThreadController;
-use App\Http\Controllers\QaReplyController;
-use App\Http\Controllers\MeetingPackController;
-use App\Http\Controllers\PlanController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\EnrollmentGoalController;
-use App\Http\Controllers\SettingController;
-use App\Http\Controllers\EnrollmentNoteController;
-use App\Http\Controllers\AnnouncementController;
 
 Route::get('/', function () {
     return auth()->check()
@@ -272,7 +273,20 @@ Route::middleware(['auth', 'role:admin'])
 
     });
 
+// ============================================================
+// S-A-01 Google Calendar 連携（面談予約）
+// ============================================================
+Route::middleware(['auth', 'role:coach'])
+    ->group(function () {
 
+        Route::get('/settings/google-calendar/connect', [GoogleCalendarController::class, 'connect'])
+        ->name('settings.google-calendar.redirect');
+        Route::get('/settings/google-calendar/callback', [GoogleCalendarController::class, 'callback'])
+        ->name('settings.google-calendar.callback');
+        Route::delete('/settings/google-calendar', [GoogleCalendarController::class,'destroy'])
+        ->name('settings.google-calendar.destroy');
+
+    });
 
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)
