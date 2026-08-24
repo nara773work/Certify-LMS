@@ -250,3 +250,29 @@ Mailpitを開き、対象の受講生にメールが届いていることを確�
 - Mailpitは開発環境用のメール確認ツールです。
 
 - 実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
+
+## Google Calendar連携の確認
+
+### 1. 初期データ
+
+Seeder実行後、
+
+- coach@certify-lms.test：Google Calendar連携済み
+- coach2@certify-lms.test：Google Calendar未連携
+
+となる。
+
+### 2. 実際のGoogle Calendar連携を確認する場合
+
+Seederで作成されたGoogleCalendarTokenはダミー値のため、
+実際のGoogle Calendar APIとの通信確認を行う場合は、
+設定画面から一度Google Calendar連携を解除し、
+再度GoogleアカウントとのOAuth認証を行う。
+
+### 3. 確認項目
+
+- 予約画面でGoogle Calendar上の予定が空き枠に反映される
+- コーチのGoogle Calendar連携状態が表示される
+- Google Calendar連携を解除できる
+- 解除後、未連携状態になる
+- 再度Google Calendarと連携できる
