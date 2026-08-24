@@ -251,6 +251,35 @@ Mailpitを開き、対象の受講生にメールが届いていることを確�
 
 - 実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
 
+## Google Calendar API の設定
+
+Google Calendar連携を使用する場合は、以下の環境設定が必要です。
+（※Google Cloud Consoleで「Google Calendar API」を有効化する。）
+
+- 1. Google Cloud側の設定
+
+Google Cloud ConsoleでOAuth 2.0 Client IDを作成し、
+`.env` に以下を設定してください。
+
+```env
+GOOGLE_CLIENT_ID=xxxxxxxx
+GOOGLE_CLIENT_SECRET=xxxxxxxx
+GOOGLE_REDIRECT_URI=http://localhost:8000/settings/google-calendar/callback
+```
+
+- Google Cloud ConsoleのOAuth設定では、以下のリダイレクトURIを登録してください。
+
+```bash
+http://localhost:8000/settings/google-calendar/callback
+```
+
+- .env を設定したあと、設定をクリアします。
+```bash
+./vendor/bin/sail artisan config:clear
+```
+- Google Calendarを連携する
+ログイン後、calendarに連携してください
+
 ## Google Calendar連携の確認
 
 ### 1. 初期データ
@@ -276,3 +305,9 @@ Seederで作成されたGoogleCalendarTokenはダミー値のため、
 - Google Calendar連携を解除できる
 - 解除後、未連携状態になる
 - 再度Google Calendarと連携できる
+
+※ Seederで作成されるGoogleCalendarTokenは動作確認用のダミー値です。
+そのため、Seeder直後は「連携済み」の状態を確認できますが、
+Google Calendar APIとの実通信はできません。
+実際のAPI通信を確認する場合は、ダミートークンを削除し、
+設定画面からOAuth認証をやり直してください。
