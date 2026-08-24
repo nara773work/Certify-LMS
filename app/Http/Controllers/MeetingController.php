@@ -49,10 +49,8 @@ class MeetingController extends Controller
      * 受講生本人の面談一覧。filter (upcoming/past/all) クエリで履歴を切り替える。
      */
     public function __construct(
-        GoogleCalendarService $googleCalendarService,
-) {
-        $this->googleCalendarService = $googleCalendarService;
-}
+        private GoogleCalendarService $googleCalendarService,
+    ) {}
 
     public function index(IndexRequest $request, MeetingQuotaService $meetingQuota): View
     {
@@ -175,7 +173,6 @@ class MeetingController extends Controller
         CoachMeetingLoadService $coachLoadService,
         MeetingQuotaService $quotaService,
         ConsumeQuotaAction $consumeAction,
-        GoogleCalendarService $googleCalendarService,
     ): RedirectResponse {
         $scheduledAt = Carbon::parse($request->validated('scheduled_at'));
         $topic = $request->validated('topic');
@@ -233,11 +230,16 @@ class MeetingController extends Controller
             return $meeting->fresh();
         });
         
-        $googleCalendarEventId = $googleCalendarService->createEvent($meeting);
+        $coach = $meeting->coach;
 
-        $meeting->update([
-            'google_calendar_event_id' => $googleCalendarEventId,
-        ]);
+        if ($this->googleCalendarService->isConnected((string) $coach->id)) {
+            $googleCalendarEventId = $this->googleCalendarService->createEvent($meeting);
+
+            $meeting->update([
+                'google_calendar_event_id' => $googleCalendarEventId,
+            ]);
+        };
+        
 
         return redirect()
             ->route('meetings.show', $meeting)

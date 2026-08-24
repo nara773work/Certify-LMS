@@ -10,7 +10,7 @@ use Google\Service\Calendar;
 use Carbon\Carbon;
 use App\Models\Meeting;
 
-final class GoogleCalendarService
+class GoogleCalendarService
 {
     /**
      * 指定コーチのGoogle Calendar予定を取得する。
@@ -69,7 +69,7 @@ final class GoogleCalendarService
     )->first();
 
     if ($credential === null) {
-        throw new \RuntimeException('コーチのGoogle Calendarが連携されていません。');
+        return null;
     }
 
     $client = new Client();
@@ -136,5 +136,10 @@ public function deleteEvent(Meeting $meeting): void
         'primary',
         $meeting->google_calendar_event_id
     );
+}
+
+public function isConnected(string $coachId): bool
+    {
+        return GoogleCalendarToken::where('user_id', $coachId)->exists();
 }
 }
