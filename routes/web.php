@@ -305,7 +305,7 @@ Route::middleware(['auth', 'role:student', 'active-learning'])->group(function (
     Route::delete('/ai-chat/conversations/{conversation}', [AiChatController::class, 'destroy'])
     ->name('ai-chat.conversations.destroy');
     Route::post('/ai-chat/conversations/{conversation}/messages', [AiChatController::class, 'messagestore'])
-    ->name('ai-chat.messages.store');
+    ->name('ai-chat.conversations.messages.store');
 
 });
 

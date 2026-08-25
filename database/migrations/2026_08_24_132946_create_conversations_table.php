@@ -16,6 +16,13 @@ return new class extends Migration
             $table->foreignUlid('user_id')
                 ->constrained('users')
                 ->cascadeOnDelete();
+            $table->timestamp('last_message_at')->nullable();
+            $table->foreignUlid('enrollment_id')
+                ->constrained('enrollments')
+                ->cascadeOnDelete();
+            $table->foreignUlid('section_id')
+                ->constrained('sections')
+                ->cascadeOnDelete();
             $table->timestamps();
         });
     }
