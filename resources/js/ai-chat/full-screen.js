@@ -10,7 +10,9 @@ import { renderFullScreenMessage } from './message-renderer.js';
  */
 
 function initForm() {
+    console.log('AI CHAT JS LOADED');
     const form = document.querySelector('[data-ai-chat-form]');
+    console.log('FORM:', form);
     if (!form) return;
 
     const textarea = form.querySelector('[data-ai-chat-textarea]');
@@ -110,6 +112,7 @@ function initForm() {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
         const content = textarea.value.trim();
         if (!content) return;
 

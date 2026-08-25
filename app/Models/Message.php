@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\AiChatMessageStatus;
+use App\Enums\AiChatMessageRole;
 
 class Message extends Model
 {
@@ -11,11 +13,18 @@ class Message extends Model
 
     protected $fillable = [
         'conversation_id',
-        'body',
+        'content',
+        'role',
+        'status',
+    ];
+
+    protected $casts = [
+        'role' => AiChatMessageRole::class,
+        'status' => AiChatMessageStatus::class,
     ];
 
     function conversation()
     {
-        return $this->belongsTo(Conversation::class);
+        return $this->belongsTo(AiChatConversation::class);
     }
 }

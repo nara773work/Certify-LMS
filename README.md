@@ -311,3 +311,5 @@ Seederで作成されたGoogleCalendarTokenはダミー値のため、
 Google Calendar APIとの実通信はできません。
 実際のAPI通信を確認する場合は、ダミートークンを削除し、
 設定画面からOAuth認証をやり直してください。
+
+## AI

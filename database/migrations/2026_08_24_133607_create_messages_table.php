@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('conversation_id')
-            ->constrained('conversations')
+            $table->foreignId('ai_chat_conversation_id')
+            ->constrained('ai_chat_conversations')
             ->cascadeOnDelete();
-            $table->text('body');
+            $table->text('content');
+            $table->string('status')->default('pending'); // pending / sent / failed
+            $table->string('role')->default('user');// user / assistant
             $table->timestamps();
         });
     }

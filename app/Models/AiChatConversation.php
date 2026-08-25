@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Conversation extends Model
+class AiChatConversation extends Model
 {
     use HasFactory;
 
@@ -14,6 +14,8 @@ class Conversation extends Model
         'enrollment_id',
         'last_message_at',
         'section_id',
+        'title',
+
     ];
 
     function user()
