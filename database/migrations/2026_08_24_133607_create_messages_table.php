@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('ai_chat_conversation_id')
             ->constrained('ai_chat_conversations')
             ->cascadeOnDelete();
-            $table->text('content');
+            $table->text('content')->nullable();
             $table->string('status')->default('pending'); // pending / sent / failed
             $table->string('role')->default('user');// user / assistant
             $table->timestamps();

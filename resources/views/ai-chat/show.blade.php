@@ -1,7 +1,6 @@
 @extends('layouts.app')
 
 @section('title', $conversation->title)
-
 @php
     /** @var \App\Models\AiChatConversation $conversation */
     $historyToday = [];

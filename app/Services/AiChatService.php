@@ -2,28 +2,31 @@
 
 namespace App\Services;
 
+use App\Models\Section;
 use Illuminate\Support\Facades\Http;
 
 class AiChatService
 {
-    public function ask(string $message): string
+    public function ask(string $message, ?Section $section): string
     {
         $apiKey = config('services.gemini.api_key');
 
+        $prompt = $message;
+
         $response = Http::post(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' . $apiKey,
-    [
-        'contents' => [
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' . $apiKey,
             [
-                'parts' => [
+                'contents' => [
                     [
-                        'text' => $message,
+                        'parts' => [
+                            [
+                                'text' => $prompt,
+                            ],
+                        ],
                     ],
                 ],
-            ],
-        ],
-    ]
-);
+            ]
+        );
 
         if ($response->failed()) {
             throw new \RuntimeException(

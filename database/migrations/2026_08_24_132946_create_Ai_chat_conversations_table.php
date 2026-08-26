@@ -19,7 +19,12 @@ return new class extends Migration
                 ->cascadeOnDelete();
             $table->timestamp('last_message_at')->nullable();
             $table->foreignUlid('section_id')
+                ->nullable()
                 ->constrained('sections')
+                ->cascadeOnDelete();
+            $table->foreignUlid('enrollment_id')
+                ->nullable()
+                ->constrained('enrollments')
                 ->cascadeOnDelete();
             $table->timestamps();
         });
