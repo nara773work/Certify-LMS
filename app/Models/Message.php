@@ -12,7 +12,7 @@ class Message extends Model
     use HasFactory;
 
     protected $fillable = [
-        'conversation_id',
+        'ai_chat_conversation_id',
         'content',
         'role',
         'status',

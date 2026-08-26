@@ -37,7 +37,7 @@ class AiChatController extends Controller
         return view('ai-chat.empty-state');
     }
 
-    public function store(Request $request, AiChatService $aiChatService)
+    public function store(AiChatRequest $request, AiChatService $aiChatService)
 {
     $this->authorize('access', AiChatConversation::class);
 
@@ -157,7 +157,7 @@ class AiChatController extends Controller
     }
 
     public function messagestore(
-    Request $request,
+    AiChatRequest $request,
     AiChatConversation $conversation,
     AiChatService $aiChatService
 ) {

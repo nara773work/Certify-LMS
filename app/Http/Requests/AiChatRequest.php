@@ -23,7 +23,7 @@ class AiChatRequest extends FormRequest
     {
         return [
             'title' => ['nullable', 'string', 'max:200'],
-            'message' => ['nullable', 'string', 'max:2000'],
+            'content' => ['nullable', 'string', 'max:2000'],
             'section_id' => ['nullable', 'string', 'exists:sections,id'],
         ];
     }
@@ -33,8 +33,8 @@ class AiChatRequest extends FormRequest
         return [
             'title.string' => 'タイトルは文字列で入力してください。',
             'title.max' => 'タイトルは200文字以内で入力してください。',
-            'message.string' => 'メッセージは文字列で入力してください。',
-            'message.max' => 'メッセージは2000文字以内で入力してください。',
+            'content.string' => '質問は文字列で入力してください。',
+            'content.max' => '質問は2000文字以内で入力してください。',
             'section_id.exists' => '存在するセクションを選択してください。',
         ];
     }
