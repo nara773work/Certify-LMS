@@ -312,4 +312,84 @@ Google Calendar APIとの実通信はできません。
 実際のAPI通信を確認する場合は、ダミートークンを削除し、
 設定画面からOAuth認証をやり直してください。
 
-## AI
+## AI相談機能
+
+AI相談機能では Gemini API を利用しています。
+
+### 事前準備
+
+AI相談機能を利用するには、Gemini API キーが必要です。
+
+#### 1. Gemini API キーを取得
+
+Google AI Studio から Gemini API キーを取得してください。
+
+取得したAPIキーを `.env` に設定します。
+
+```env
+GEMINI_API_KEY=取得したAPIキー
+```
+
+設定を反映させるために以下のコマンドをたたいてください
+
+```bash
+./vendor/bin/sail artisan config:clear
+```
+
+## データベース
+
+AI相談機能では以下のテーブルを使用します。
+
+- ai_chat_conversations
+- messages
+
+初回セットアップ時はマイグレーションを実行してください。
+
+```bash
+./vendor/bin/sail artisan migrate
+```
+
+## Gemini API の利用制限
+
+Gemini API の無料枠には利用上限があります。
+
+上限に達した場合、AIからの回答を取得できません。
+
+その場合は時間をおいて再度実行するか、Gemini API の利用状況・料金プランを確認してください。
+
+## AI相談機能の利用条件
+
+AI相談機能を利用できるのは以下の条件を満たす受講生です。
+
+受講生であること
+学習中であること
+会話のオーナー本人であること
+
+Gemini API を使用しています。
+
+モデルは設定ファイルで指定します。
+
+config/ai-chat.php
+
+例：
+
+return [
+    'gemini' => [
+        'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+    ],
+];
+
+.env では必要に応じて変更できます。
+
+GEMINI_MODEL=gemini-3.6-flash
+動作確認
+
+Laravel Sail を起動します。
+
+./vendor/bin/sail up -d
+
+マイグレーションを実行します。
+
+./vendor/bin/sail artisan migrate
+
+その後、学習中の受講生でログインし、AI相談画面またはフローティングウィジェットからメッセージを送信してください。
