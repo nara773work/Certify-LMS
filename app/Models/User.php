@@ -322,4 +322,9 @@ class User extends Authenticatable
         return $this->hasOne(GoogleCalendarToken::class);
     }
 
+    public function aiChatConversations(): HasMany
+    {
+        return $this->hasMany(AiChatConversation::class, 'user_id');
+    }
+
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\BrowseController;
 use App\Http\Controllers\CertificationCatalogController;
 use App\Http\Controllers\CertificationCategoryController;
@@ -287,6 +288,26 @@ Route::middleware(['auth', 'role:coach'])
         ->name('settings.google-calendar.destroy');
 
     });
+
+// ============================================================
+// S-A-02 Gemini AI チャットボット
+// ============================================================
+Route::middleware(['auth', 'role:student', 'active-learning'])->group(function () {
+
+    Route::get('/ai-chat', [AiChatController::class, 'index'])
+    ->name('ai-chat.index');
+    Route::post('/ai-chat/conversations', [AiChatController::class, 'store'])
+    ->name('ai-chat.conversations.store');
+    Route::get('/ai-chat/conversations/{conversation}', [AiChatController::class, 'show'])
+    ->name('ai-chat.conversations.show');
+    Route::patch('/ai-chat/conversations/{conversation}', [AiChatController::class, 'update'])
+    ->name('ai-chat.conversations.update');
+    Route::delete('/ai-chat/conversations/{conversation}', [AiChatController::class, 'destroy'])
+    ->name('ai-chat.conversations.destroy');
+    Route::post('/ai-chat/conversations/{conversation}/messages', [AiChatController::class, 'messagestore'])
+    ->name('ai-chat.conversations.messages.store');
+
+});
 
 // ============================================================
 // 認証フロー(オンボーディング: 招待 URL 経由の初回登録)
