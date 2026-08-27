@@ -393,3 +393,73 @@ Laravel Sail を起動します。
 ./vendor/bin/sail artisan migrate
 
 その後、学習中の受講生でログインし、AI相談画面またはフローティングウィジェットからメッセージを送信してください。
+
+## 修了証ダウンロード機能の確認
+
+修了証ダウンロード機能を確認するためのテストデータは、
+`DownloadSeeder` で投入できます。
+
+### 1. ダウンロード確認用データを投入
+
+以下を実行してください。
+
+```bash
+./vendor/bin/sail artisan db:seed --class=DownloadSeeder
+```
+
+Seederでは、以下の状態を作成します。
+
+修了生一郎
+日商簿記 2 級を修了
+コーチ1を担当コーチとして設定
+修了証を発行
+修了証PDFの実体を生成
+修了生花子
+日商簿記 2 級以外の公開済み資格を修了
+コーチ2を担当コーチとして設定
+修了証を発行
+修了証PDFの実体を生成
+
+Seederを複数回実行しても、既に発行済みの修了証を重複作成せず、
+PDF実体が存在しない場合のみPDFを生成します。
+
+- PDF実体の確認
+
+修了証のPDFは、DB上の pdf_path だけではなく、
+実際にStorageへ生成されます。
+
+PDFの保存先：
+
+storage/app/certificates/
+
+Seeder実行後、以下のようなPDFファイルが生成されます。
+
+storage/app/certificates/{ULID}.pdf
+
+- PDFが生成されているか確認
+
+Tinkerを起動します。
+
+./vendor/bin/sail artisan tinker
+
+以下を実行してください。
+
+```bash
+App\Models\Certificate::all()->map(fn ($certificate) => [
+    'user' => $certificate->user->name,
+    'pdf_path' => $certificate->pdf_path,
+    'exists' => Storage::disk('local')->exists($certificate->pdf_path),
+]);
+```
+exists が true になっていれば、PDFの実体が存在します。
+
+期待する確認結果
+|ユーザー|対象|結果|
+|一郎|自分の修了証|ダウンロード可能|
+|花子|自分の修了証|ダウンロード可能|
+|コーチ1|一郎の修了証|ダウンロード可能|
+|コーチ1|花子の修了証|アクセス不可|
+|コーチ2|花子の修了証|ダウンロード可能|
+|コーチ2|一郎の修了証|アクセス不可|
+|管理者|一郎・花子の修了証|	ダウンロード可能|
+

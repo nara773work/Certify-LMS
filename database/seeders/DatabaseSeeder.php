@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             EnrollmentNoteSeeder::class,
             AnnouncementSeeder::class,
             GoogleCalendarSeeder::class,
+            DownloadSeeder::class,
         ]);
     }
 }
