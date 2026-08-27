@@ -14,6 +14,7 @@ use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\ChatRoomController;
 use App\Http\Controllers\ContentSearchController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DownloadController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EnrollmentGoalController;
 use App\Http\Controllers\EnrollmentManagementController;
@@ -306,6 +307,16 @@ Route::middleware(['auth', 'role:student', 'active-learning'])->group(function (
     ->name('ai-chat.conversations.destroy');
     Route::post('/ai-chat/conversations/{conversation}/messages', [AiChatController::class, 'messagestore'])
     ->name('ai-chat.conversations.messages.store');
+
+});
+
+// ============================================================
+// S-A-04 修了証 PDF 出力
+// ============================================================
+Route::middleware(['auth', 'role:student,admin,coach'])->group(function () {
+
+    Route::get('/certificates/{certificate}/download', [DownloadController::class, 'download'])
+    ->name('certificates.download');
 
 });
 
