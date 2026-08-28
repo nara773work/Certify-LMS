@@ -10,7 +10,7 @@ enum PaymentStatus: string
     public function label(): string{
         return match ($this) {
             self::Succeeded => '支払い済み',
-            self::false => '支払いエラー',
+            self::Failed => '支払いエラー',
         };
     }
 

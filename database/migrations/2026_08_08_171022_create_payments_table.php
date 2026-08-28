@@ -16,6 +16,9 @@ return new class extends Migration
             $table->foreignUlid('meeting_pack_id')
                 ->constrained()
                 ->cascadeOnDelete();
+            $table->string('stripe_session_id')
+                ->nullable()
+                ->unique();
             $table->foreignUlid('user_id')
                 ->constrained()
                 ->cascadeOnDelete();

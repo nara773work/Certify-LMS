@@ -1,33 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use Carbon\Carbon;
+use App\Enums\PaymentStatus;
 use App\Models\MeetingPack;
 use App\Models\Payment;
 use App\Models\User;
-use App\Enums\PaymentStatus;
+use Illuminate\Database\Seeder;
 
 class PaymentSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $meetingPack = MeetingPack::first();
-        $user = User::where('role', \App\Enums\UserRole::Student)->first();
+        $student = User::query()
+            ->where('role', 'student')
+            ->orderBy('created_at')
+            ->first();
+
+        $meetingPack = MeetingPack::query()
+            ->where('status', 'published')
+            ->orderBy('sort_order')
+            ->first();
+
+        if ($student === null || $meetingPack === null) {
+            $this->command?->warn(
+                'PaymentSeeder: student または published MeetingPack が存在しません。'
+            );
+
+            return;
+        }
 
         Payment::create([
             'meeting_pack_id' => $meetingPack->id,
-            'user_id' => $user->id,
+            'user_id' => $student->id,
             'amount' => $meetingPack->price,
             'quantity' => $meetingPack->meeting_count,
             'status' => PaymentStatus::Succeeded,
-            'paid_at' => Carbon::today()->subDays(10)
+            'paid_at' => now(),
         ]);
-
     }
 }

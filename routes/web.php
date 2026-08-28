@@ -317,15 +317,16 @@ Route::middleware(['auth', 'role:student', 'active-learning'])->group(function (
 Route::middleware(['auth', 'role:student', 'active-learning'])->group(function () {
 
     Route::get('/meeting-quota/checkout', [MeetingQuotaController::class, 'index'])
-    ->name('meeting-quota.checkout.index');
+    ->name('meeting-quota.checkout.select');
     Route::post('/meeting-quota/checkout', [MeetingQuotaController::class, 'store'])
     ->name('meeting-quota.checkout.create');
     Route::get('/meeting-quota/success', [MeetingQuotaController::class, 'success'])
     ->name('meeting-quota.success');
-    Route::post('/webhooks/stripe', [MeetingQuotaController::class, 'download'])
-    ->name('meeting-quota.download');
 
 });
+
+    Route::post('/webhooks/stripe', [MeetingQuotaController::class, 'stripe'])
+    ->name('meeting-quota.stripe');
 
 // ============================================================
 // S-A-04 修了証 PDF 出力
