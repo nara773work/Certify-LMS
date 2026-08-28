@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>修了証</title>
+    
     <style>
         body {
+            font-family: 'NotoSansJP';
             color: #0F2E2A;
             font-size: 11pt;
         }
@@ -118,6 +120,7 @@
             font-weight: bold;
             letter-spacing: 0.1em;
         }
+
     </style>
 </head>
 <body>
