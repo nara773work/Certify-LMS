@@ -25,7 +25,7 @@ return new class extends Migration
             $table->integer('amount');
             $table->integer('quantity');
             $table->string('status');
-            $table->timestamp('paid_at');
+            $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });
     }
