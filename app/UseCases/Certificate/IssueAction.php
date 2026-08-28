@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\UseCases\Certificate;
 
 use App\Enums\EnrollmentStatus;
+use App\Exceptions\Certification\CertificateAlreadyIssuedException;
 use App\Exceptions\Certification\EnrollmentNotPassedException;
 use App\Models\Certificate;
 use App\Models\Enrollment;
@@ -21,89 +22,68 @@ final class IssueAction
     }
 
     /**
-     * Certificateを発行し、必要に応じてPDFを生成・再生成する。
+     * 修了証を発行する。
      *
-     * - Certificateなし → 作成 + PDF生成
-     * - Certificateあり + 資格変更なし + PDFあり → 何もしない
-     * - Certificateあり + 資格変更あり → Certificate更新 + PDF再生成
-     * - Certificateあり + PDFなし → PDF生成
+     * Certificateが既に存在する場合は、
+     * 新しく発行せず、PDF実体がなければ生成する。
      *
      * @throws EnrollmentNotPassedException
+     * @throws CertificateAlreadyIssuedException
      */
     public function __invoke(Enrollment $enrollment): Certificate
     {
         return DB::transaction(function () use ($enrollment) {
-            $existing = Certificate::query()
+            /*
+             * 既存Certificateを確認
+             */
+            $certificate = Certificate::query()
                 ->where('enrollment_id', $enrollment->id)
                 ->lockForUpdate()
                 ->first();
 
             /*
-             * 既存Certificateがある場合
+             * Certificateが既に存在する場合
+             *
+             * 新規発行はしない。
+             * ただしPDF実体がなければ生成する。
              */
-            if ($existing !== null) {
-                $certificationChanged =
-                    $existing->certification_id !== $enrollment->certification_id;
-
-                $pdfExists =
-                    $existing->pdf_path !== null
-                    && Storage::disk('local')->exists($existing->pdf_path);
-
-                /*
-                 * Enrollmentの資格とCertificateの資格が違う場合
-                 * Certificateを現在のEnrollmentに合わせる。
-                 */
-                if ($certificationChanged) {
-                    $existing->forceFill([
-                        'certification_id' => $enrollment->certification_id,
-                    ])->save();
-
-                    $path = 'certificates/' . Str::ulid() . '.pdf';
-
-                    $this->certificatePdfService->generate(
-                        $existing->fresh(),
-                        $path
-                    );
-
-                    $existing->forceFill([
-                        'pdf_path' => $path,
-                    ])->save();
-
-                    return $existing->fresh();
-                }
-
-                /*
-                 * 資格は同じだがPDF実体がない場合
-                 */
-                if (! $pdfExists) {
-                    $path = $existing->pdf_path
+            if ($certificate !== null) {
+                if (
+                    $certificate->pdf_path === null
+                    || ! Storage::disk('local')->exists(
+                        $certificate->pdf_path
+                    )
+                ) {
+                    $path = $certificate->pdf_path
                         ?? 'certificates/' . Str::ulid() . '.pdf';
 
+                    $certificate->pdf_path = $path;
+                    $certificate->save();
+
                     $this->certificatePdfService->generate(
-                        $existing,
+                        $certificate,
                         $path
                     );
-
-                    $existing->forceFill([
-                        'pdf_path' => $path,
-                    ])->save();
-
-                    return $existing->fresh();
                 }
 
-                /*
-                 * Certificateも資格もPDFも正常なら何もしない。
-                 */
-                return $existing;
+                return $certificate->fresh();
             }
 
             /*
-             * Certificateが存在しない場合
+             * Certificateが存在しない場合のみ、
+             * 修了済みであることを確認する。
              */
-            if ($enrollment->status !== EnrollmentStatus::Passed->value) {
+            $status = $enrollment->status instanceof \BackedEnum
+            ? $enrollment->status->value
+            : $enrollment->status;
+
+            if ($status !== EnrollmentStatus::Passed->value) {
                 throw new EnrollmentNotPassedException();
             }
 
+            /*
+             * Certificateを新規作成
+             */
             $certificate = Certificate::create([
                 'user_id' => $enrollment->user_id,
                 'enrollment_id' => $enrollment->id,
@@ -112,18 +92,24 @@ final class IssueAction
                 'issued_at' => now(),
             ]);
 
+            /*
+             * PDF生成
+             *
+             * ここで失敗した場合はtransactionがrollbackされ、
+             * Certificateも発行されていない状態になる。
+             */
             $path = 'certificates/' . Str::ulid() . '.pdf';
+
+            $certificate->pdf_path = $path;
+            $certificate->save();
 
             $this->certificatePdfService->generate(
                 $certificate,
                 $path
             );
 
-            $certificate->forceFill([
-                'pdf_path' => $path,
-            ])->save();
-
             return $certificate->fresh();
         });
     }
 }
+
