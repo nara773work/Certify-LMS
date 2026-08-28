@@ -25,12 +25,12 @@ final class CertificatePolicy
             return true;
         }
 
-        if ($user->role !== UserRole::Coach) {
-            return false;
+        if ($user->role === UserRole::Student) {
+            return $certificate->user_id === $user->id;
         }
 
-        if($user->id === $certificate->user_id) {
-            return true;
+        if ($user->role !== UserRole::Coach) {
+            return false;
         }
 
         return $user->assignedCertifications()
