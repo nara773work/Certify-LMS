@@ -12,6 +12,7 @@ class Payment extends Model
     use HasFactory;
 
 protected $fillable = [
+    'meeting_pack_id',
     'user_id',
     'plan_id',
     'quantity',
@@ -38,6 +39,14 @@ protected $fillable = [
     {
         return $this->belongsTo(
             User::class
+        );
+    }
+
+    public function meetingPack(): BelongsTo
+    {
+        return $this->belongsTo(
+            MeetingPack::class,
+            'meeting_pack_id'
         );
     }
 }

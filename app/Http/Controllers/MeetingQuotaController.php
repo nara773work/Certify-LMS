@@ -11,6 +11,7 @@ use App\Models\MeetingQuotaTransaction;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MeetingQuotaController extends Controller
@@ -36,10 +37,21 @@ class MeetingQuotaController extends Controller
      */
     public function store(Request $request)
     {
-        $meetingPack = MeetingPack::query()
-            ->where('id', $request->meeting_pack_id)
-            ->where('status', 'published')
-            ->firstOrFail();
+        Log::info('Meeting pack selected', [
+        'meeting_pack_id' => $request->meeting_pack_id,
+    ]);
+
+    $meetingPack = MeetingPack::query()
+        ->where('id', $request->meeting_pack_id)
+        ->where('status', 'published')
+        ->firstOrFail();
+
+    Log::info('Meeting pack loaded', [
+        'id' => $meetingPack->id,
+        'name' => $meetingPack->name,
+        'meeting_count' => $meetingPack->meeting_count,
+        'price' => $meetingPack->price,
+    ]);
 
         \Stripe\Stripe::setApiKey(
             config('services.stripe.secret')
@@ -57,14 +69,11 @@ class MeetingQuotaController extends Controller
                 [
                     'price_data' => [
                         'currency' => 'jpy',
-
                         'product_data' => [
                             'name' => $meetingPack->name,
                         ],
-
                         'unit_amount' => (int) $meetingPack->price,
                     ],
-
                     'quantity' => 1,
                 ],
             ],
@@ -97,85 +106,131 @@ class MeetingQuotaController extends Controller
     }
 
     /**
-     * Stripe Webhook
-     *
-     * checkout.session.completed を受け取って、
-     * Payment作成 + 面談回数加算を行う。
+ * Stripe Webhook
+ *
+ * checkout.session.completed を受け取って、
+ * Stripe署名を検証したうえで、
+ * Payment作成 + 面談回数加算を行う。
+ */
+public function stripe(Request $request): Response
+{
+    $payload = $request->getContent();
+
+    /*
+     * Stripeから送られてきた署名を取得する。
      */
-    public function stripe(Request $request): Response
-    {
-        $payload = $request->getContent();
+    $signature = $request->header('Stripe-Signature');
 
-        $event = \Stripe\Event::constructFrom(
-            json_decode(
-                $payload,
-                true,
-                512,
-                JSON_THROW_ON_ERROR
-            )
+    if ($signature === null) {
+        Log::error('Stripe webhook signature missing');
+
+        return response('Bad Request', 400);
+    }
+
+    /*
+     * Stripe Webhook Secretを取得する。
+     */
+    $webhookSecret = config('services.stripe.webhook_secret');
+
+    if ($webhookSecret === null) {
+        Log::error('Stripe webhook secret is not configured');
+
+        return response('Server Error', 500);
+    }
+
+    /*
+     * Stripeの署名を検証する。
+     *
+     * 署名が不正な場合は、
+     * Stripeから正当に送信された通知ではないため処理しない。
+     */
+    try {
+        $event = \Stripe\Webhook::constructEvent(
+            $payload,
+            $signature,
+            $webhookSecret
         );
-
-        Log::info('Stripe webhook received', [
-            'type' => $event->type ?? null,
+    } catch (\UnexpectedValueException $e) {
+        Log::error('Stripe webhook invalid payload', [
+            'message' => $e->getMessage(),
         ]);
 
-        /*
-         * checkout.session.completed 以外は何もしない。
-         */
-        if (($event->type ?? null) !== 'checkout.session.completed') {
-            return response('OK', 200);
-        }
-
-        $session = $event->data->object;
-
-        Log::info('Stripe session data', [
-            'session_id' => $session->id ?? null,
-            'metadata' => $session->metadata ?? null,
+        return response('Bad Request', 400);
+    } catch (\Stripe\Exception\SignatureVerificationException $e) {
+        Log::error('Stripe webhook signature verification failed', [
+            'message' => $e->getMessage(),
         ]);
 
-        $userId = $session->metadata->user_id ?? null;
-        $meetingPackId = $session->metadata->meeting_pack_id ?? null;
+        return response('Bad Request', 400);
+    }
 
-        if ($userId === null || $meetingPackId === null) {
-            Log::error('Stripe webhook metadata missing');
+    Log::info('Stripe webhook received', [
+        'type' => $event->type ?? null,
+    ]);
 
-            return response('Bad Request', 400);
-        }
+    /*
+     * checkout.session.completed 以外は何もしない。
+     */
+    if (($event->type ?? null) !== 'checkout.session.completed') {
+        return response('OK', 200);
+    }
 
-        /*
-         * 購入した面談パックを取得する。
-         */
-        $meetingPack = MeetingPack::query()
-            ->where('id', $meetingPackId)
-            ->where('status', 'published')
-            ->first();
+    $session = $event->data->object;
 
-        if ($meetingPack === null) {
-            Log::error('Stripe webhook meeting pack not found', [
-                'meeting_pack_id' => $meetingPackId,
-            ]);
+    Log::info('Stripe session data', [
+        'session_id' => $session->id ?? null,
+        'metadata' => $session->metadata ?? null,
+    ]);
 
-            return response('Bad Request', 400);
-        }
+    $userId = $session->metadata->user_id ?? null;
+    $meetingPackId = $session->metadata->meeting_pack_id ?? null;
 
-        /*
-         * 同じStripe Checkout Sessionを
-         * 二重処理しない。
-         */
-        $existingPayment = Payment::query()
-            ->where('stripe_session_id', $session->id)
-            ->first();
+    if ($userId === null || $meetingPackId === null) {
+        Log::error('Stripe webhook metadata missing');
 
-        if ($existingPayment !== null) {
-            return response('OK', 200);
-        }
+        return response('Bad Request', 400);
+    }
 
-        /*
-         * Paymentを作成する。
-         *
-         * payments.meeting_pack_id は
-         * meeting_packs.id を参照する。
-         */
+    /*
+     * 購入した面談パックを取得する。
+     */
+    $meetingPack = MeetingPack::query()
+        ->where('id', $meetingPackId)
+        ->where('status', 'published')
+        ->first();
+
+    if ($meetingPack === null) {
+        Log::error('Stripe webhook meeting pack not found', [
+            'meeting_pack_id' => $meetingPackId,
+        ]);
+
+        return response('Bad Request', 400);
+    }
+
+    /*
+     * 同じStripe Checkout Sessionを
+     * 二重処理しない。
+     */
+    $existingPayment = Payment::query()
+        ->where('stripe_session_id', $session->id)
+        ->first();
+
+    if ($existingPayment !== null) {
+        return response('OK', 200);
+    }
+
+    /*
+     * Payment作成と面談回数加算を
+     * 1つのトランザクションとして処理する。
+     *
+     * どちらかが失敗した場合、
+     * Paymentも面談回数も保存されない。
+     */
+    DB::transaction(function () use (
+        $userId,
+        $meetingPack,
+        $session
+    ) {
         $payment = Payment::create([
             'user_id' => $userId,
             'meeting_pack_id' => $meetingPack->id,
@@ -203,7 +258,8 @@ class MeetingQuotaController extends Controller
             'quantity' => $meetingPack->meeting_count,
             'payment_id' => $payment->id,
         ]);
+    });
 
-        return response('OK', 200);
-    }
+    return response('OK', 200);
+}
 }
