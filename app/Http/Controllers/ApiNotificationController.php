@@ -14,7 +14,7 @@ class ApiNotificationController extends Controller
     {
         $notifications = $request->user()
             ->notifications()
-            ->latest()
+            ->limit(20)
             ->get();
 
         return response()->json([

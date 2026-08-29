@@ -1,10 +1,32 @@
-export function initNotifications() {
+export async function initNotifications() {
     const root = document.querySelector(
         '[data-notification-popover-root]'
     );
 
     if (!root) {
         return;
+    }
+
+    let isAdmin = false;
+
+    try {
+        const userResponse = await fetch('/api/user', {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+            },
+            credentials: 'same-origin',
+        });
+
+        if (userResponse.ok) {
+            const user = await userResponse.json();
+            isAdmin = user.role === 'admin';
+        }
+    } catch (error) {
+        console.error(
+            'ユーザー情報の取得に失敗しました',
+            error
+        );
     }
 
     const trigger = root.querySelector(
@@ -18,6 +40,17 @@ export function initNotifications() {
     if (!trigger || !panel) {
         return;
     }
+
+    // 管理者はベルを残すが、ポップオーバーは開かない
+    if (isAdmin) {
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+        });
+
+        return;
+    }
+
+    // ↓ここから今までの一般ユーザー用処理
 
     const list = root.querySelector(
         '[data-notification-popover-items]'
@@ -40,6 +73,7 @@ export function initNotifications() {
     );
 
     let notifications = [];
+    let currentTab = 'all';
 
     trigger.addEventListener('click', async () => {
         const isOpen =
@@ -54,6 +88,7 @@ export function initNotifications() {
 
         await loadNotifications();
     });
+
 
     function openPopover() {
         panel.classList.remove('hidden');
@@ -112,10 +147,27 @@ export function initNotifications() {
 
             const data = await response.json();
 
-            notifications = data.notifications ?? [];
+            console.log('通知API:', data);
+            console.log(
+                '通知API notifications:',
+                data.notifications
+            );
+
+
+            if (Array.isArray(data.notifications)) {
+                notifications = data.notifications;
+            } else {
+                notifications = [];
+            }
+
+            console.log(
+                'JS notifications:',
+                notifications
+            );
 
             updateUnreadCount();
             renderNotifications();
+
         } catch (error) {
             console.error(error);
 
@@ -123,6 +175,7 @@ export function initNotifications() {
                 '通知の取得に失敗しました。';
 
             empty.classList.remove('hidden');
+
         } finally {
             loading.classList.add('hidden');
         }
@@ -135,9 +188,26 @@ export function initNotifications() {
 
         list.innerHTML = '';
 
-        if (notifications.length === 0) {
-            empty.textContent = '通知はありません。';
+        let displayedNotifications = notifications;
+
+        // 未読タブ
+        if (currentTab === 'unread') {
+            displayedNotifications =
+                notifications.filter(
+                    (notification) =>
+                        notification.read_at === null
+                );
+        }
+
+        // 表示対象が0件
+        if (displayedNotifications.length === 0) {
+            empty.textContent =
+                currentTab === 'unread'
+                    ? '未読の通知はありません。'
+                    : '通知はありません。';
+
             empty.classList.remove('hidden');
+
             return;
         }
 
@@ -151,72 +221,178 @@ export function initNotifications() {
             return;
         }
 
-        notifications.forEach((notification) => {
-            const row =
-                template.content.cloneNode(true);
+        displayedNotifications.forEach(
+            (notification) => {
 
-            const link = row.querySelector(
-                '[data-notification-popover-row]'
-            );
+                const row =
+                    template.content.cloneNode(true);
 
-            const title = row.querySelector(
-                '[data-notification-popover-row-title]'
-            );
+                const link = row.querySelector(
+                    '[data-notification-popover-row]'
+                );
 
-            const message = row.querySelector(
-                '[data-notification-popover-row-message]'
-            );
+                const title = row.querySelector(
+                    '[data-notification-popover-row-title]'
+                );
 
-            const time = row.querySelector(
-                '[data-notification-popover-row-time]'
-            );
+                const message = row.querySelector(
+                    '[data-notification-popover-row-message]'
+                );
 
-            const dot = row.querySelector(
-                '[data-notification-popover-row-dot]'
-            );
+                const time = row.querySelector(
+                    '[data-notification-popover-row-time]'
+                );
 
-            const isUnread =
-                notification.read_at === null;
+                const dot = row.querySelector(
+                    '[data-notification-popover-row-dot]'
+                );
 
-            if (title) {
-                title.textContent =
-                    notification.data?.title ?? '通知';
+                const isUnread =
+                    notification.read_at === null;
+
+                if (title) {
+                    title.textContent =
+                        notification.data?.title ??
+                        '通知';
+                }
+
+                if (message) {
+                    message.textContent =
+                        notification.data?.body ??
+                        notification.data?.message ??
+                        '';
+                }
+
+                if (time) {
+                    time.textContent =
+                        formatDate(
+                            notification.created_at
+                        );
+                }
+
+                if (link) {
+                    link.href =
+                        `/notifications/${notification.id}`;
+
+                    link.dataset.unread =
+                        String(isUnread);
+
+                if (isUnread) {
+                    link.classList.add('bg-primary-50/30');
+                } else {
+                    link.classList.remove('bg-primary-50/30');
+                }
+}
+
+                if (dot) {
+                    dot.classList.toggle(
+                        'invisible',
+                        !isUnread
+                    );
+                }
+
+                list.appendChild(row);
             }
-
-            if (message) {
-                message.textContent =
-                    notification.data?.body ?? '';
-            }
-
-            if (time) {
-                time.textContent =
-                    formatDate(notification.created_at);
-            }
-
-            if (link) {
-                link.href =
-                    `/notifications/${notification.id}`;
-
-                link.dataset.unread =
-                    String(isUnread);
-            }
-
-            if (dot && !isUnread) {
-                dot.classList.add('invisible');
-            }
-
-            list.appendChild(row);
-        });
+        );
     }
 
-    function updateUnreadCount() {
-        const count = notifications.filter(
-            (notification) =>
-                notification.read_at === null
-        ).length;
 
-        if (unreadCount) {
-            unreadCount.textContent = count;
+    const tabs = root.querySelectorAll(
+        '[data-notification-popover-tab]'
+    );
+
+    tabs.forEach((tab) => {
+        tab.addEventListener('click', () => {
+
+            currentTab =
+                tab.dataset.notificationPopoverTab;
+
+            tabs.forEach((item) => {
+                item.setAttribute(
+                    'aria-selected',
+                    String(item === tab)
+                );
+            });
+
+            renderNotifications();
+        });
+    });
+
+
+    function updateUnreadCount() {
+        const count =
+            Array.isArray(notifications)
+                ? notifications.filter(
+                    (notification) =>
+                        notification.read_at === null
+                ).length
+                : 0;
+
+        if (!unreadCount) {
+            return;
+        }
+
+        unreadCount.textContent = count;
+
+        if (count === 0) {
+            unreadCount.classList.add('hidden');
+        } else {
+            unreadCount.classList.remove('hidden');
+        }
+    }
+
+
+    async function markAsRead(id) {
+        try {
+            const response = await fetch(
+                `/api/v1/notifications/${id}/read`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-CSRF-TOKEN':
+                            document
+                                .querySelector(
+                                    'meta[name="csrf-token"]'
+                                )
+                                ?.getAttribute('content'),
+                    },
+                    credentials: 'same-origin',
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(
+                    `既読処理に失敗しました: ${response.status}`
+                );
+            }
+
+            notifications =
+                notifications.map(
+                    (notification) => {
+
+                        if (
+                            notification.id !== id
+                        ) {
+                            return notification;
+                        }
+
+                        return {
+                            ...notification,
+                            read_at:
+                                new Date().toISOString(),
+                            status: 'read',
+                        };
+                    }
+                );
+
+            updateUnreadCount();
+
+        } catch (error) {
+            console.error(
+                '通知の既読処理に失敗しました',
+                error
+            );
         }
     }
 
@@ -226,37 +402,88 @@ export function initNotifications() {
         }
 
         const date = new Date(dateString);
+        const now = new Date();
 
-        return date.toLocaleString('ja-JP', {
-            timeZone: 'Asia/Tokyo',
-            month: 'numeric',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
+        const diffSeconds =
+            Math.floor(
+                (now.getTime() -
+                    date.getTime()) /
+                    1000
+            );
+
+        if (diffSeconds < 60) {
+            return 'たった今';
+        }
+
+        const diffMinutes =
+            Math.floor(
+                diffSeconds / 60
+            );
+
+        if (diffMinutes < 60) {
+            return `${diffMinutes}分前`;
+        }
+
+        const diffHours =
+            Math.floor(
+                diffMinutes / 60
+            );
+
+        if (diffHours < 24) {
+            return `${diffHours}時間前`;
+        }
+
+        const diffDays =
+            Math.floor(
+                diffHours / 24
+            );
+
+        if (diffDays === 1) {
+            return '昨日';
+        }
+
+        if (diffDays < 7) {
+            return `${diffDays}日前`;
+        }
+
+        return date.toLocaleDateString(
+            'ja-JP',
+            {
+                timeZone: 'Asia/Tokyo',
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+            }
+        );
     }
 
     if (markAllButton) {
         markAllButton.addEventListener(
             'click',
             async () => {
+
                 try {
-                    const response = await fetch(
-                        '/api/v1/notifications/read-all',
-                        {
-                            method: 'POST',
-                            headers: {
-                                Accept: 'application/json',
-                                'X-CSRF-TOKEN':
-                                    document
-                                        .querySelector(
-                                            'meta[name="csrf-token"]'
-                                        )
-                                        ?.getAttribute('content'),
-                            },
-                            credentials: 'same-origin',
-                        }
-                    );
+                    const response =
+                        await fetch(
+                            '/api/v1/notifications/read-all',
+                            {
+                                method: 'POST',
+                                headers: {
+                                    Accept:
+                                        'application/json',
+                                    'X-CSRF-TOKEN':
+                                        document
+                                            .querySelector(
+                                                'meta[name="csrf-token"]'
+                                            )
+                                            ?.getAttribute(
+                                                'content'
+                                            ),
+                                },
+                                credentials:
+                                    'same-origin',
+                            }
+                        );
 
                     if (!response.ok) {
                         throw new Error(
@@ -276,6 +503,7 @@ export function initNotifications() {
 
                     updateUnreadCount();
                     renderNotifications();
+
                 } catch (error) {
                     console.error(error);
                 }

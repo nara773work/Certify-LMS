@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // ============================================================
 // S-A-05　Sanctum Cookie 認証 + JS フロント通知表示
 // ============================================================
-Route::middleware(['auth:sanctum'])->group(function () {
+Route::middleware(['auth:sanctum,role:student,coach'])->group(function () {
 
     Route::get('/v1/notifications', [ApiNotificationController::class, 'index'])
     ->name('notifications.index');

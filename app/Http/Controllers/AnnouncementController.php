@@ -75,10 +75,6 @@ class AnnouncementController extends Controller
             if ($notification) {
                 $data = $notification->data;
 
-                $data['url'] = route('notifications.show', [
-                    'notification' => $notification->id,
-                ]);
-
                 $notification->update([
                     'data' => $data,
                 ]);
@@ -97,17 +93,23 @@ class AnnouncementController extends Controller
         return view('announcement.management.show', compact('announcement'));
 }
 
-    public function notificationshow(string $id)
+public function notificationshow(string $id)
 {
     $notification = auth()->user()
         ->notifications()
         ->findOrFail($id);
 
-    $announcement = Announcement::findOrFail(
-        $notification->data['announcement_id']
-    );
+    if ($notification->type === AnnouncementNotification::class) {
+        $announcementId = $notification->data['announcement_id'] ?? null;
 
-    $this->authorize('view', $announcement);
+        if (!$announcementId) {
+            abort(404);
+        }
+
+        $announcement = Announcement::findOrFail($announcementId);
+
+        $this->authorize('view', $announcement);
+    }
 
     return view('notifications.show', compact('notification'));
 }
