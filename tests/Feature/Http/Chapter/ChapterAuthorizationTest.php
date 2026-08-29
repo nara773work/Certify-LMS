@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Enums\UserRole;
 use App\Models\Certification;
 
-class AuthorizationTest extends TestCase
+class ChapterAuthorizationTest extends TestCase
 {
     use RefreshDatabase;
    //chapter

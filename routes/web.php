@@ -24,6 +24,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LearningHourTargetController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\MeetingPackController;
+use App\Http\Controllers\MeetingQuotaController;
 use App\Http\Controllers\MeetingQuotaHistoryController;
 use App\Http\Controllers\MockExamAnswerController;
 use App\Http\Controllers\MockExamCatalogController;
@@ -309,6 +310,23 @@ Route::middleware(['auth', 'role:student', 'active-learning'])->group(function (
     ->name('ai-chat.conversations.messages.store');
 
 });
+
+// ============================================================
+// S-A-03 Stripe 連携（追加面談購入）
+// ============================================================
+Route::middleware(['auth', 'role:student', 'active-learning'])->group(function () {
+
+    Route::get('/meeting-quota/checkout', [MeetingQuotaController::class, 'index'])
+    ->name('meeting-quota.checkout.select');
+    Route::post('/meeting-quota/checkout', [MeetingQuotaController::class, 'store'])
+    ->name('meeting-quota.checkout.create');
+    Route::get('/meeting-quota/success', [MeetingQuotaController::class, 'success'])
+    ->name('meeting-quota.success');
+
+});
+
+    Route::post('/webhooks/stripe', [MeetingQuotaController::class, 'stripe'])
+    ->name('meeting-quota.stripe');
 
 // ============================================================
 // S-A-04 修了証 PDF 出力
