@@ -32,8 +32,8 @@ class NotificationController extends Controller
         return view('notifications.index',compact('unreadCount','tab','notifications'));
     }
 
-        public function read(string $id)
-    {
+    public function read(string $id)
+{
         $notification = auth()->user()
             ->notifications()
             ->findOrFail($id);
@@ -42,8 +42,14 @@ class NotificationController extends Controller
 
         $data = $notification->data;
 
-        return redirect($data['url']);
-    }
+        if (!empty($data['url'])) {
+            return redirect($data['url']);
+        }
+
+        return redirect()->route('notifications.show', [
+            'notification' => $notification->id,
+        ]);
+}
 
         public function readall()
     {
