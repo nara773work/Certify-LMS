@@ -463,3 +463,492 @@ exists が true になっていれば、PDFの実体が存在します。
 |コーチ2|一郎の修了証|アクセス不可|
 |管理者|一郎・花子の修了証|	ダウンロード可能|
 
+
+# 面談パック購入機能
+
+## 1. Composerパッケージのインストール
+
+Stripe PHP SDKをComposerでインストールする。
+
+```bash
+composer require stripe/stripe-php
+```
+
+インストール後、依存関係を更新する。
+
+```bash
+composer dump-autoload
+```
+
+Laravel Sailを使用している場合は、コンテナ内で実行することもできる。
+
+```bash
+./vendor/bin/sail composer require stripe/stripe-php
+```
+
+---
+
+## 2. Stripe APIキーの設定
+
+`.env` にStripeの秘密鍵を設定する。
+
+```env
+STRIPE_SECRET=sk_test_xxxxxxxxxxxxxxxxx
+
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxx
+```
+
+`config/services.php` にStripeの設定を追加する。
+
+```php
+'stripe' => [
+    'secret' => env('STRIPE_SECRET'),
+    'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+],
+```
+
+設定変更後はLaravelの設定キャッシュをクリアする。
+
+```bash
+./vendor/bin/sail artisan config:clear
+```
+
+---
+
+## 3. 面談パックの初期データ
+
+`MeetingPackSeeder` で公開中の面談パックを登録する。
+
+例：
+
+* 1回パック
+
+  * 面談回数：1回
+  * 価格：3,000円
+* 5回パック
+
+  * 面談回数：5回
+  * 価格：12,000円
+* 10回パック
+
+  * 面談回数：10回
+  * 価格：21,000円
+
+公開中の面談パックのみ購入画面に表示する。
+
+```php
+MeetingPack::query()
+    ->where('status', 'published')
+    ->orderBy('sort_order')
+    ->get();
+```
+
+---
+
+## 4. Paymentテーブル
+
+面談パックの購入情報を `payments` テーブルに保存する。
+
+主な保存項目：
+
+* `meeting_pack_id`
+* `user_id`
+* `amount`
+* `quantity`
+* `status`
+* `paid_at`
+* `stripe_session_id`
+
+`meeting_pack_id` によって、どの面談パックを購入したかを記録する。
+
+---
+
+## 5. PaymentStatus
+
+決済状態は `PaymentStatus` enum で管理する。
+
+```php
+enum PaymentStatus: string
+{
+    case Succeeded = 'succeeded';
+    case Failed = 'failed';
+}
+```
+
+決済成功の場合は `succeeded` とする。
+
+決済失敗の場合は `failed` とする。
+
+保留の場合は`Pending` とする。
+
+---
+
+## 6. 面談回数の管理
+
+面談回数は `MeetingQuotaTransaction` で履歴を管理する。
+
+購入成功時には、以下のTransactionを作成する。
+
+```php
+MeetingQuotaTransaction::create([
+    'user_id' => $userId,
+    'type' => MeetingQuotaTransactionType::Purchased,
+    'amount' => $meetingPack->meeting_count,
+    'occurred_at' => now(),
+    'related_payment_id' => $payment->id,
+]);
+```
+
+決済成功時だけ `Purchased` を作成する。
+
+決済失敗・キャンセルの場合は `Purchased` を作成しないため、残面談回数には反映されない。
+
+---
+
+## 7. 残面談回数の集計
+
+`MeetingQuotaService` で残面談回数を計算する。
+
+```php
+return $user->max_meetings + $sum;
+```
+
+`Consumed`、`Refunded`、`Purchased`、`AdminGrant` のTransactionを集計し、`max_meetings` と合算する。
+
+`granted_initial` は `max_meetings` と二重計上になるため集計対象から除外する。
+
+---
+
+## 8. 面談パック選択画面
+
+以下のURLで公開中の面談パックを表示する。
+
+```text
+GET /meeting-quota/checkout
+```
+
+ルート名：
+
+```text
+meeting-quota.checkout.select
+```
+
+画面には以下を表示する。
+
+* 面談パック名
+* 面談回数
+* 価格
+* 購入ボタン
+
+購入する面談パックのIDをPOSTする。
+
+```text
+POST /meeting-quota/checkout
+```
+
+ルート名：
+
+```text
+meeting-quota.checkout.create
+```
+
+---
+
+## 9. Stripe Checkoutの作成
+
+選択された `meeting_pack_id` を使って `MeetingPack` を取得する。
+
+```php
+$meetingPack = MeetingPack::query()
+    ->where('id', $request->meeting_pack_id)
+    ->where('status', 'published')
+    ->firstOrFail();
+```
+
+Stripe Checkout Sessionを作成する。
+
+このとき、購入者と面談パックをmetadataに保存する。
+
+```php
+'metadata' => [
+    'user_id' => (string) auth()->id(),
+    'meeting_pack_id' => (string) $meetingPack->id,
+],
+```
+
+これにより、StripeからWebhookを受け取ったときに、
+
+「誰が」
+
+「どの面談パックを」
+
+購入したのかを特定できる。
+
+---
+
+## 10. Stripe決済画面
+
+Checkout Sessionを作成したら、Stripeが発行したURLへリダイレクトする。
+
+```php
+return redirect()->away($session->url);
+```
+
+アプリ側でカード情報を直接処理せず、Stripe Checkoutを利用して決済する。
+
+---
+
+## 11. 決済完了画面
+
+決済成功後は以下のURLへ戻る。
+
+```text
+GET /meeting-quota/success
+```
+
+ルート名：
+
+```text
+meeting-quota.success
+```
+
+Stripe Checkout Session IDをQuery Parameterとして受け取る。
+
+```text
+?session_id={CHECKOUT_SESSION_ID}
+```
+
+完了画面からダッシュボードへ戻れる導線を用意する。
+
+---
+
+## 12. 決済キャンセル
+
+Stripe Checkoutでキャンセルした場合は、
+
+```text
+meeting-quota.checkout.select
+```
+
+へ戻す。
+
+キャンセル時には、
+
+* Paymentを成功扱いにしない
+* `Purchased` Transactionを作成しない
+* 残面談回数を加算しない
+
+ようにする。
+
+---
+
+## 13. Stripe Webhook
+
+Stripeから決済結果を受け取る公開エンドポイントを用意する。
+
+```text
+POST /webhooks/stripe
+```
+
+ルート名：
+
+```text
+meeting-quota.stripe
+```
+
+WebhookではStripe-Signatureを取得する。
+
+```php
+$signature = $request->header('Stripe-Signature');
+```
+
+Stripe Webhook Secretを使用して署名を検証する。
+
+```php
+$event = \Stripe\Webhook::constructEvent(
+    $payload,
+    $signature,
+    $webhookSecret
+);
+```
+
+署名が不正な場合は処理を行わず、400を返す。
+
+---
+
+## 14. checkout.session.completedの処理
+
+Webhookで、
+
+```text
+checkout.session.completed
+```
+
+を受信した場合のみ購入処理を行う。
+
+Stripe Sessionのmetadataから、
+
+```text
+user_id
+meeting_pack_id
+```
+
+を取得する。
+
+そのIDを使って購入対象の受講生と面談パックを特定する。
+
+---
+
+## 15. Paymentと面談回数の加算
+
+決済成功時には、以下を1つのDBトランザクションで実行する。
+
+1. Paymentを作成
+2. `Purchased` Transactionを作成
+
+```php
+DB::transaction(function () {
+    // Payment作成
+
+    // MeetingQuotaTransaction作成
+});
+```
+
+どちらかの処理が失敗した場合、両方をロールバックする。
+
+---
+
+## 16. Webhookの二重処理防止
+
+同じStripe Checkout Sessionが複数回通知される可能性があるため、処理前に、
+
+```php
+Payment::query()
+    ->where('stripe_session_id', $session->id)
+    ->first();
+```
+
+で既に処理済みか確認する。
+
+既にPaymentが存在する場合は、再度面談回数を加算せず、
+
+```text
+200 OK
+```
+
+を返す。
+
+これにより、Webhookが重複して送信されても面談回数が二重加算されない。
+
+---
+
+## 17. Webhookの動作確認
+
+ローカル環境ではStripe CLIを使用してWebhookを転送する。
+
+Stripe CLIを起動する。
+
+```bash
+stripe listen --forward-to localhost:8000/webhooks/stripe
+```
+
+起動すると、
+
+```text
+whsec_xxxxxxxxxxxxxxxxx
+```
+
+形式のWebhook Signing Secretが表示される。
+
+この値を `.env` の、
+
+```env
+STRIPE_WEBHOOK_SECRET=
+```
+
+に設定する。
+
+設定後は、
+
+```bash
+./vendor/bin/sail artisan config:clear
+```
+
+を実行する。
+
+---
+
+## 18. Webhookの動作確認手順
+
+1. Stripe CLIを起動する。
+
+```bash
+stripe listen --forward-to localhost:8000/webhooks/stripe
+```
+
+2. 表示された `whsec_...` を `.env` に設定する。
+
+3. Laravelの設定キャッシュをクリアする。
+
+```bash
+./vendor/bin/sail artisan config:clear
+```
+
+4. アプリから面談パック購入画面を開く。
+
+5. 購入する面談パックを選択する。
+
+6. Stripe Checkoutでテスト決済する。
+
+7. Stripe CLIに、
+
+```text
+checkout.session.completed
+```
+
+が表示されることを確認する。
+
+8. Laravelログを確認する。
+
+```bash
+./vendor/bin/sail exec laravel.test sh -c "grep 'Stripe webhook received' storage/logs/laravel.log | tail -n 20"
+```
+
+9. `checkout.session.completed` が記録されていることを確認する。
+
+---
+
+## 19. Seederによる初期データ
+
+`PaymentSeeder` では固定の受講生を使用して決済履歴を作成する。
+
+例：
+
+### [student@certify-lms.test](mailto:student@certify-lms.test)
+
+* 失敗した面談パック購入
+* `PaymentStatus::Failed`
+* `Purchased` Transactionは作成しない
+* 残面談回数には反映されない
+
+### デモ受講生
+
+* 成功した面談パック購入
+
+* `PaymentStatus::Succeeded`
+
+* `Purchased` Transactionを作成
+
+* 購入した面談回数が残数に反映される
+
+* 失敗した面談パック購入
+
+* `PaymentStatus::Failed`
+
+* 残数には反映されない
+
+保留状態を使用する場合は、`PaymentStatus` に `Pending` を追加したうえでSeederに登録する。
+
+---
+
+
