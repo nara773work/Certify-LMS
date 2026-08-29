@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\MeetingQuotaTransactionType;
 use App\Enums\PaymentStatus;
+use App\Enums\UserStatus;
 use App\Models\MeetingPack;
 use App\Models\MeetingQuotaTransaction;
 use App\Models\Payment;
@@ -36,26 +37,28 @@ class MeetingQuotaController extends Controller
      * Stripe Checkoutへ遷移する。
      */
     public function store(Request $request)
-    {
-        Log::info('Meeting pack selected', [
-        'meeting_pack_id' => $request->meeting_pack_id,
-    ]);
+{
+    $user = $request->user();
+
+    /*
+     * 学習中の受講生のみ購入できる。
+     */
+    if (
+        $user === null
+        || $user->role !== 'student'
+        || $user->status !== 'in_progress'
+    ) {
+        abort(403);
+    }
 
     $meetingPack = MeetingPack::query()
         ->where('id', $request->meeting_pack_id)
         ->where('status', 'published')
         ->firstOrFail();
 
-    Log::info('Meeting pack loaded', [
-        'id' => $meetingPack->id,
-        'name' => $meetingPack->name,
-        'meeting_count' => $meetingPack->meeting_count,
-        'price' => $meetingPack->price,
-    ]);
-
-        \Stripe\Stripe::setApiKey(
-            config('services.stripe.secret')
-        );
+    \Stripe\Stripe::setApiKey(
+        config('services.stripe.secret')
+    );
 
         $session = \Stripe\Checkout\Session::create([
             'mode' => 'payment',
