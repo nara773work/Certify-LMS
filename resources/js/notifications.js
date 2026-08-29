@@ -271,17 +271,36 @@ export async function initNotifications() {
                 }
 
                 if (link) {
-                    link.href =
-                        `/notifications/${notification.id}`;
+    link.href = `/notifications/${notification.id}`;
+    link.dataset.unread = String(isUnread);
 
-                    link.dataset.unread =
-                        String(isUnread);
-
-                if (isUnread) {
-                    link.classList.add('bg-primary-50/30');
-                } else {
-                    link.classList.remove('bg-primary-50/30');
-                }
+    if (isUnread) {
+        link.addEventListener('click', async () => {
+            try {
+                await fetch(
+                    `/api/v1/notifications/${notification.id}/read`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN':
+                                document
+                                    .querySelector(
+                                        'meta[name="csrf-token"]'
+                                    )
+                                    ?.getAttribute('content'),
+                        },
+                        credentials: 'same-origin',
+                    }
+                );
+            } catch (error) {
+                console.error(
+                    '通知の既読処理に失敗しました',
+                    error
+                );
+            }
+        });
+    }
 }
 
                 if (dot) {
