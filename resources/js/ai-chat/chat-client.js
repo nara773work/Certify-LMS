@@ -44,6 +44,7 @@ export class AiChatClient {
             credentials: 'same-origin',
             body: JSON.stringify({ content }),
         });
+        
 
         if (response.status === 429) {
             this.onError({ type: 'rate-limit', status: 429 });

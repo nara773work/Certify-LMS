@@ -4,35 +4,49 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Enums\MeetingPackStatus;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Enums\PaymentStatus;
 
 class Payment extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'meeting_pack_id',
-        'user_id',
-        'amount',
-        'meeting_count',
-        'status',
-        'paid_at',
-    ];
+protected $fillable = [
+    'meeting_pack_id',
+    'user_id',
+    'plan_id',
+    'quantity',
+    'amount',
+    'status',
+    'paid_at',
+    'stripe_session_id',
+];
 
     protected $casts = [
         'status' => PaymentStatus::class,
         'paid_at' => 'datetime',
     ];
 
-    public function meetingPack(): BelongsTo
+    public function plan(): BelongsTo
     {
-        return $this->belongsTo(MeetingPack::class,'meeting_pack_id');
+        return $this->belongsTo(
+            Plan::class,
+            'plan_id'
+        );
     }
 
-    public function user()
-{
-    return $this->belongsTo(User::class);
-}
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class
+        );
+    }
 
+    public function meetingPack(): BelongsTo
+    {
+        return $this->belongsTo(
+            MeetingPack::class,
+            'meeting_pack_id'
+        );
+    }
 }

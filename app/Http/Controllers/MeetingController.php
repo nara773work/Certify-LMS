@@ -39,10 +39,9 @@ use App\UseCases\Meeting\ShowAction;
 use App\UseCases\Meeting\CreateAction;
 use App\UseCases\Meeting\StoreAction;
 use App\UseCases\Meeting\CreateFallbackAction;
-use App\UseCases\Meeting\Cancel;
+use App\UseCases\Meeting\CancelAction;
 use App\UseCases\Meeting\UpsertMemoAction;
 use App\UseCases\Meeting\FindAvailableAction;
-
 /**
  * 1on1 面談予約 (Meeting) の HTTP エントリポイント。
  *
@@ -151,11 +150,11 @@ class MeetingController extends Controller
         $request->user(),
         $request->validated(),
     );
-
     return redirect()
         ->route('meetings.show', $meeting)
         ->with('success', '面談を予約しました。');
 }
+
 
     /**
      * 当事者(受講生 or コーチ)による面談キャンセル。

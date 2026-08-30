@@ -36,6 +36,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained('meeting_quota_transactions')
                 ->nullOnDelete();
+            $table->string('google_calendar_event_id')->nullable();
             $table->timestamps();
 
             // 受講生別履歴一覧 / 自動完了 Schedule Command 高速化のための補助 INDEX

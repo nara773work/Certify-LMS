@@ -77,7 +77,7 @@ class AnswerTest extends TestCase
         $mockExam = MockExam::factory()->published()->create();
         $question = MockExamQuestion::factory()->forMockExam($mockExam)->withOptions()->create();
         $session = MockExamSession::factory()
-tests/Feature/Http/MockExamCatalog            ->forUser($student)
+            ->forUser($student)
             ->forMockExam($mockExam)
             ->notStarted()
             ->create([

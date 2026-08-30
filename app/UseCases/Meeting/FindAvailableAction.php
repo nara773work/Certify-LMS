@@ -6,7 +6,7 @@ namespace App\UseCases\Meeting;
 
 use App\Models\Enrollment;
 use App\Services\MeetingAvailabilityService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 
 class FindAvailableAction
 {

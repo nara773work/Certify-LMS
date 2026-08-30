@@ -249,6 +249,7 @@ Mailpitを開き、対象の受講生にメールが届いていることを確�
 
 - Mailpitは開発環境用のメール確認ツールです。
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 - 実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
 =======
@@ -463,6 +464,9 @@ APIは `auth:sanctum` により認証ユーザーのみアクセス可能です�
 10. 未読件数が0になり、未読マークが消えることを確認
 11. 管理者でログインし、通知ベルが表示されないことを確認
 
+=======
+- 実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
+>>>>>>> origin/main
 
 ## Google Calendar API の設定
 
@@ -1165,8 +1169,11 @@ checkout.session.completed
 ---
 
 
+<<<<<<< HEAD
 
 <<<<<<< Updated upstream
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> origin/main
