@@ -7,22 +7,19 @@ namespace Tests\Unit\UseCases\Meeting;
 use App\Enums\MeetingStatus;
 use App\Models\Certification;
 use App\Models\CertificationCoachAssignment;
-use App\Models\Category;
+use App\Models\CertificationCategory;
 use App\Models\Enrollment;
 use App\Models\Meeting;
 use App\Models\User;
-use App\UseCases\Meeting\IndexAction;
+use App\UseCases\Meeting\IndexAsCoachAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
-class IndexTest extends TestCase
+class IndexAsCoachTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * テスト用ユーザーを直接作成する。
-     */
     private function createUser(
         string $name,
         string $email,
@@ -40,44 +37,47 @@ class IndexTest extends TestCase
         ]);
     }
 
-    /**
-     * 面談に必要な基本データを作成する。
-     */
     private function createTestData(): array
     {
         $admin = $this->createUser(
             'テスト管理者',
-            'admin-index-test@example.com',
+            'admin-index-coach-test@example.com',
             'admin',
-        );
-
-        $student = $this->createUser(
-            'テスト受講生',
-            'student-index-test@example.com',
-            'student',
-        );
-
-        $otherStudent = $this->createUser(
-            '別の受講生',
-            'other-student-index-test@example.com',
-            'student',
         );
 
         $coach = $this->createUser(
             'テストコーチ',
-            'coach-index-test@example.com',
+            'coach-index-coach-test@example.com',
             'coach',
         );
 
-        $category = Category::create([
-            'name' => 'IndexTestカテゴリ',
-            'slug' => 'index-test-category',
-        ]);
+        $otherCoach = $this->createUser(
+            '別コーチ',
+            'other-coach-index-coach-test@example.com',
+            'coach',
+        );
+
+        $student = $this->createUser(
+            'テスト受講生',
+            'student-index-coach-test@example.com',
+            'student',
+        );
+
+        $student2 = $this->createUser(
+            '別の受講生',
+            'student2-index-coach-test@example.com',
+            'student',
+        );
+
+        $category = CertificationCategory::create([
+    'name' => 'IndexAsCoachTestカテゴリ',
+    'slug' => 'index-as-coach-test-category',
+]);
 
         $certification = Certification::create([
             'category_id' => $category->id,
-            'name' => 'IndexTest資格',
-            'description' => 'IndexActionテスト用資格',
+            'name' => 'IndexAsCoachTest資格',
+            'description' => 'IndexAsCoachActionテスト用資格',
             'difficulty' => 'beginner',
             'status' => 'published',
             'created_by_user_id' => $admin->id,
@@ -89,8 +89,8 @@ class IndexTest extends TestCase
             'certification_id' => $certification->id,
         ]);
 
-        $otherEnrollment = Enrollment::create([
-            'user_id' => $otherStudent->id,
+        $enrollment2 = Enrollment::create([
+            'user_id' => $student2->id,
             'certification_id' => $certification->id,
         ]);
 
@@ -102,20 +102,26 @@ class IndexTest extends TestCase
             'unassigned_at' => null,
         ]);
 
+        CertificationCoachAssignment::create([
+            'certification_id' => $certification->id,
+            'user_id' => $otherCoach->id,
+            'assigned_by_user_id' => $admin->id,
+            'assigned_at' => now(),
+            'unassigned_at' => null,
+        ]);
+
         return [
             'admin' => $admin,
-            'student' => $student,
-            'otherStudent' => $otherStudent,
             'coach' => $coach,
+            'otherCoach' => $otherCoach,
+            'student' => $student,
+            'student2' => $student2,
             'certification' => $certification,
             'enrollment' => $enrollment,
-            'otherEnrollment' => $otherEnrollment,
+            'enrollment2' => $enrollment2,
         ];
     }
 
-    /**
-     * 面談を直接作成する。
-     */
     private function createMeeting(
         Enrollment $enrollment,
         User $student,
@@ -136,9 +142,9 @@ class IndexTest extends TestCase
     }
 
     /**
-     * upcomingでは未来の予約済み面談だけ取得できる。
+     * upcomingでは担当コーチの未来の予約済み面談だけ取得できる。
      */
-    public function test_upcomingでは未来の予約済み面談だけ取得できる(): void
+    public function test_upcomingでは担当コーチの未来の予約済み面談だけ取得できる(): void
     {
         $data = $this->createTestData();
 
@@ -156,33 +162,38 @@ class IndexTest extends TestCase
             $data['student'],
             $data['coach'],
             Carbon::now()->subDay(),
-            MeetingStatus::Reserved,
-            '過去の予約済み面談',
+            MeetingStatus::Completed,
+            '過去の面談',
         );
 
-        $this->createMeeting(
+        $otherCoachMeeting = $this->createMeeting(
             $data['enrollment'],
             $data['student'],
-            $data['coach'],
+            $data['otherCoach'],
             Carbon::now()->addDay(),
-            MeetingStatus::Canceled,
-            'キャンセル済み面談',
+            MeetingStatus::Reserved,
+            '別コーチの面談',
         );
 
-        $action = new IndexAction();
+        $action = new IndexAsCoachAction();
 
-        $result = $action($data['student'], 'upcoming');
+        $result = $action($data['coach'], 'upcoming');
 
         $this->assertSame(1, $result->total());
+
         $this->assertTrue(
             $result->getCollection()->contains('id', $futureMeeting->id)
+        );
+
+        $this->assertFalse(
+            $result->getCollection()->contains('id', $otherCoachMeeting->id)
         );
     }
 
     /**
-     * pastではキャンセル済み・完了済みだけ取得できる。
+     * pastでは担当コーチのキャンセル済み・完了済み面談だけ取得できる。
      */
-    public function test_pastではキャンセル済みと完了済みだけ取得できる(): void
+    public function test_pastでは担当コーチの過去面談だけ取得できる(): void
     {
         $data = $this->createTestData();
 
@@ -196,8 +207,8 @@ class IndexTest extends TestCase
         );
 
         $completedMeeting = $this->createMeeting(
-            $data['enrollment'],
-            $data['student'],
+            $data['enrollment2'],
+            $data['student2'],
             $data['coach'],
             Carbon::now()->subDay(),
             MeetingStatus::Completed,
@@ -210,12 +221,12 @@ class IndexTest extends TestCase
             $data['coach'],
             Carbon::now()->addDay(),
             MeetingStatus::Reserved,
-            '未来の予約済み面談',
+            '未来の面談',
         );
 
-        $action = new IndexAction();
+        $action = new IndexAsCoachAction();
 
-        $result = $action($data['student'], 'past');
+        $result = $action($data['coach'], 'past');
 
         $this->assertSame(2, $result->total());
 
@@ -229,9 +240,9 @@ class IndexTest extends TestCase
     }
 
     /**
-     * allでは対象受講生の面談をすべて取得できる。
+     * allでは担当コーチの面談をすべて取得できる。
      */
-    public function test_allでは対象受講生の面談をすべて取得できる(): void
+    public function test_allでは担当コーチの面談をすべて取得できる(): void
     {
         $data = $this->createTestData();
 
@@ -254,17 +265,17 @@ class IndexTest extends TestCase
         );
 
         $this->createMeeting(
-            $data['otherEnrollment'],
-            $data['otherStudent'],
-            $data['coach'],
+            $data['enrollment'],
+            $data['student'],
+            $data['otherCoach'],
             Carbon::now()->addDay(),
             MeetingStatus::Reserved,
-            '別受講生の面談',
+            '別コーチの面談',
         );
 
-        $action = new IndexAction();
+        $action = new IndexAsCoachAction();
 
-        $result = $action($data['student'], 'all');
+        $result = $action($data['coach'], 'all');
 
         $this->assertSame(2, $result->total());
 
@@ -278,38 +289,92 @@ class IndexTest extends TestCase
     }
 
     /**
-     * 不正なfilterはupcomingとして扱われる。
+     * studentIdを指定すると受講生で絞り込める。
      */
-    public function test_不正なfilterはupcomingとして扱われる(): void
+    public function test_studentIdで受講生を絞り込める(): void
     {
         $data = $this->createTestData();
 
-        $futureMeeting = $this->createMeeting(
+        $meeting1 = $this->createMeeting(
             $data['enrollment'],
             $data['student'],
             $data['coach'],
             Carbon::now()->addDay(),
             MeetingStatus::Reserved,
-            '未来の面談',
+            '受講生1の面談',
         );
 
-        $this->createMeeting(
-            $data['enrollment'],
-            $data['student'],
+        $meeting2 = $this->createMeeting(
+    $data['enrollment2'],
+    $data['student2'],
+    $data['coach'],
+    Carbon::now()->addDay()->addHour(),
+    MeetingStatus::Reserved,
+    '受講生2の面談',
+);
+
+        $action = new IndexAsCoachAction();
+
+        $result = $action(
             $data['coach'],
-            Carbon::now()->subDay(),
-            MeetingStatus::Completed,
-            '過去の面談',
+            'all',
+            $data['student']->id,
         );
-
-        $action = new IndexAction();
-
-        $result = $action($data['student'], 'invalid');
 
         $this->assertSame(1, $result->total());
 
         $this->assertTrue(
-            $result->getCollection()->contains('id', $futureMeeting->id)
+            $result->getCollection()->contains('id', $meeting1->id)
+        );
+
+        $this->assertFalse(
+            $result->getCollection()->contains('id', $meeting2->id)
+        );
+    }
+
+    /**
+     * enrollmentIdを指定するとEnrollmentで絞り込める。
+     */
+    public function test_enrollmentIdで受講登録を絞り込める(): void
+    {
+        $data = $this->createTestData();
+
+        $meeting1 = $this->createMeeting(
+            $data['enrollment'],
+            $data['student'],
+            $data['coach'],
+            Carbon::now()->addDay(),
+            MeetingStatus::Reserved,
+            'Enrollment1の面談',
+        );
+
+        $meeting2 = $this->createMeeting(
+    $data['enrollment2'],
+    $data['student2'],
+    $data['coach'],
+    Carbon::now()->addDay()->addHour(),
+    MeetingStatus::Reserved,
+    'Enrollment2の面談',
+);
+
+        $action = new IndexAsCoachAction();
+
+        $result = $action(
+            $data['coach'],
+            'all',
+            null,
+            $data['enrollment']->id,
+        );
+
+        $this->assertSame(1, $result->total());
+
+        $this->assertTrue(
+            $result->getCollection()->contains('id', $meeting1->id)
+        );
+
+        $this->assertFalse(
+            $result->getCollection()->contains('id', $meeting2->id)
         );
     }
 }
+

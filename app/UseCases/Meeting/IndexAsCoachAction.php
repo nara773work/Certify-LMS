@@ -13,7 +13,7 @@ class IndexAsCoachAction{
     public function __invoke(
         User $user,
         string $filter = 'upcoming',
-        ?int $studentId = null,
+        ?string $studentId = null,
         ?string $enrollmentId = null
         ):LengthAwarePaginator{
         

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\UseCases\Meeting;
 
 use App\Enums\MeetingStatus;
-use App\Exceptions\InsufficientMeetingQuotaException;
+use App\Exceptions\MeetingQuota\InsufficientMeetingQuotaException;
 use App\Exceptions\Mentoring\MeetingNoAvailableCoachException;
 use App\Models\Certification;
 use App\Models\Enrollment;
