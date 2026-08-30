@@ -8,17 +8,22 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\ChatMessage;
 
-class ChatMessageNotification extends Notification
+class ChatMessageNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public array $backoff = [10, 30, 60];
 
     /**
      * Create a new notification instance.
      */
     public function __construct(
-        public ChatMessage $chatMessage,
-    ) {
-    }
+    public ChatMessage $chatMessage,
+) {
+    $this->afterCommit();
+}
 
     /**
      * Get the notification's delivery channels.
