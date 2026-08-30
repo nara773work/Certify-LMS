@@ -8,9 +8,14 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\QaReply;
 
-class QaReplyNotification extends Notification
+class QaReplyNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    
+    public int $tries = 3;
+
+    public array $backoff = [10, 30, 60];
 
     /**
      * Create a new notification instance.
@@ -18,6 +23,7 @@ class QaReplyNotification extends Notification
     public function __construct(
         public QaReply $qaReply,
     ) {
+        $this->afterCommit();
     }
 
     /**

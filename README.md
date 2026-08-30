@@ -1168,12 +1168,63 @@ checkout.session.completed
 
 ---
 
+## 通知・メール送信の非同期化
 
-<<<<<<< HEAD
+通知・メール送信はLaravelのQueueを利用して非同期処理する。
 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> origin/main
+### Queue設定
+
+`.env` に以下を設定する。
+
+```env
+QUEUE_CONNECTION=database
+```
+
+Queue用の jobs テーブルと、失敗したジョブを記録する failed_jobs テーブルを使用する。
+
+### Workerの起動
+
+以下のコマンドでQueue Workerを起動する。
+
+```bash
+./vendor/bin/sail artisan queue:work
+```
+
+Workerは別ターミナルで起動したままにする。
+
+### 通知の動作確認
+
+面談予約、チャットメッセージ、質問掲示板への回答、管理者からのお知らせなど、通知が発生する操作を行う。
+
+通知はリクエスト内で直接処理せず、Queueに投入され、Workerによってバックグラウンドで処理される。
+
+一斉配信のお知らせについても、対象ユーザーごとに通知ジョブがQueueへ投入される。
+
+### リトライ
+
+通知には以下のリトライ設定を行っている。
+
+public int $tries = 3;
+
+public array $backoff = [10, 30, 60];
+
+一時的な処理失敗が発生した場合、10秒、30秒、60秒の間隔で最大3回まで再試行する。
+
+### 失敗ジョブの確認
+
+リトライ上限を超えたジョブは failed_jobs に記録される。
+
+./vendor/bin/sail artisan queue:failed
+失敗ジョブの再投入
+
+失敗したジョブは queue:retry で再度Queueへ投入できる。
+
+```bash
+./vendor/bin/sail artisan queue:retry <failed-job-id>
+```
+
+すべての失敗ジョブを再投入する場合：
+
+./vendor/bin/sail artisan queue:retry all
+
+

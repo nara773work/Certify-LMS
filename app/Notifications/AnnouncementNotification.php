@@ -8,17 +8,21 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Announcement;
 
-class AnnouncementNotification extends Notification
+class AnnouncementNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public int $tries = 3;
+
+    public array $backoff = [10, 30, 60];
     /**
      * Create a new notification instance.
      */
-    public function __construct(
-        public Announcement $announcement
-    ) {
-    }
+public function __construct(
+    public Announcement $announcement
+) {
+    $this->afterCommit();
+}
 
     /**
      * Get the notification's delivery channels.

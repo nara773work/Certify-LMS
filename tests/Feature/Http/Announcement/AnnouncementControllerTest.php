@@ -11,6 +11,7 @@ use App\Enums\UserRole;
 use App\Enums\AnnouncementTargetType;
 use App\Models\Certification;
 use App\Notifications\AnnouncementNotification;
+use Illuminate\Support\Facades\Queue;
 
 class AnnouncementControllerTest extends TestCase
 {
@@ -191,5 +192,38 @@ class AnnouncementControllerTest extends TestCase
         ->get("/notifications/{$notification->id}");
 
     $response->assertStatus(404);
+}
+
+public function test_storeで通知がキューに投入される(): void
+{
+    Queue::fake();
+
+    $this->seed();
+
+    $admin = User::where('role', UserRole::Admin)->first();
+
+    $studentCount = User::where('role', UserRole::Student)->count();
+
+    $before = Queue::pushed(
+    \Illuminate\Notifications\SendQueuedNotifications::class
+)->count();
+
+$response = $this->actingAs($admin)
+    ->post('/admin/announcements', [
+        'title' => 'キューテスト',
+        'body' => 'キューに投入されるか確認',
+        'target_type' => AnnouncementTargetType::AllStudents->value,
+    ]);
+
+$response->assertStatus(302);
+
+$after = Queue::pushed(
+    \Illuminate\Notifications\SendQueuedNotifications::class
+)->count();
+
+$this->assertSame(
+    $studentCount * 2,
+    $after - $before
+);
 }
 }
