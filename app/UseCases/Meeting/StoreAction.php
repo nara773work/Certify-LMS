@@ -82,6 +82,19 @@ class StoreAction
                     'topic' => $topic,
                     'meeting_url_snapshot' => $coach->meeting_url,
                 ]);
+
+                        if ($this->googleCalendarService->isConnected(
+            (string) $meeting->coach_id
+        )) {
+            $eventId = $this->googleCalendarService->createEvent($meeting);
+
+            if ($eventId !== null) {
+                $meeting->update([
+                    'google_calendar_event_id' => $eventId,
+                ]);
+            }
+        }
+          
             } catch (UniqueConstraintViolationException $e) {
                 throw new MeetingNoAvailableCoachException($e);
             }
@@ -105,21 +118,6 @@ class StoreAction
 
             return $meeting->fresh();
         });
-
-        /*
-         * DB transaction 完了後に Google Calendar へ登録
-         */
-        if ($this->googleCalendarService->isConnected(
-            (string) $meeting->coach_id
-        )) {
-            $eventId = $this->googleCalendarService->createEvent($meeting);
-
-            if ($eventId !== null) {
-                $meeting->update([
-                    'google_calendar_event_id' => $eventId,
-                ]);
-            }
-        }
 
         return $meeting->fresh();
     }
