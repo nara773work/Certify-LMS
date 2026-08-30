@@ -2,12 +2,28 @@
 
 declare(strict_types=1);
 
-namespace App\UseCases\MockExam;
+namespace App\Actions\Meeting;
 
-final class IndexAction
+use App\Models\Enrollment;
+use App\Services\Meeting\MeetingAvailabilityService;
+use Carbon\Carbon;
+
+class FindAvailableAction
 {
-    public function __invoke(): void
-    {
-        //
+    public function __construct(
+        private MeetingAvailabilityService $availabilityService,
+    ) {
+    }
+
+    public function __invoke(
+        Enrollment $enrollment,
+        string $date,
+    ) {
+        $date = Carbon::parse($date);
+
+        return $this->availabilityService->slotsForCertification(
+            $enrollment->loadMissing('certification')->certification,
+            $date,
+        );
     }
 }

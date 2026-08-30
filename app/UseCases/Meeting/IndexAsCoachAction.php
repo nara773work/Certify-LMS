@@ -2,12 +2,32 @@
 
 declare(strict_types=1);
 
-namespace App\UseCases\MockExam;
+namespace App\Actions\Meeting;
 
-final class IndexAction
-{
-    public function __invoke(): void
-    {
-        //
+use App\Models\Meeting;
+use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+class IndexAsCoachAction{
+
+    public function __invoke(
+        User $user,
+        string $filter = 'upcoming',
+        ?int $studentId = null,
+        ?string $enrollmentId = null
+        ):LengthAwarePaginator{
+        
+        $query = Meeting::query()
+            ->with(['enrollment.certification', 'student'])
+            ->forCoach($user)
+            ->when($studentId, fn ($q, $id) => $q->where('student_id', $id))
+            ->when($enrollmentId, fn ($q, $id) => $q->where('enrollment_id', $id));
+
+        return  match ($filter) {
+            'past' => $query->past()->orderByDesc('scheduled_at')->paginate(20),
+            'all' => $query->orderByDesc('scheduled_at')->paginate(20),
+            default => $query->upcoming()->orderBy('scheduled_at')->paginate(20),
+        };
+
     }
 }
