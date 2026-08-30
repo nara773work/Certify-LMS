@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Actions\Meeting;
+namespace App\UseCases\Meeting;
 
 use App\Models\Enrollment;
-use App\Services\Meeting\MeetingAvailabilityService;
+use App\Services\MeetingAvailabilityService;
 use Carbon\Carbon;
 
 class FindAvailableAction

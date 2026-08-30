@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Actions\Meeting;
+namespace App\UseCases\Meeting;
 
 use App\Models\Meeting;
 use App\Models\User;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Actions\Meeting;
+namespace App\UseCases\Meeting;
 
-use App\Actions\Meeting\ConsumeMeetingQuotaAction;
+use App\UseCases\MeetingQuota\ConsumeQuotaAction;
 use App\Enums\MeetingStatus;
 use App\Exceptions\InsufficientMeetingQuotaException;
 use App\Exceptions\MeetingNoAvailableCoachException;
@@ -13,10 +13,8 @@ use App\Models\Enrollment;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Notifications\MeetingReservationNotification;
-use App\Services\GoogleCalendarService;
-use App\Services\Meeting\MeetingAvailabilityService;
-use App\Services\Meeting\MeetingCoachLoadService;
-use App\Services\Meeting\MeetingQuotaService;
+use App\Services\MeetingAvailabilityService;
+use App\Services\MeetingQuotaService;
 use Carbon\Carbon;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
@@ -25,21 +23,20 @@ use Illuminate\Support\Facades\DB;
 class StoreAction
 {
     public function __construct(
-        private MeetingAvailabilityService $availabilityService,
-        private MeetingCoachLoadService $coachLoadService,
-        private MeetingQuotaService $quotaService,
-        private ConsumeMeetingQuotaAction $consumeAction,
-        private GoogleCalendarService $googleCalendarService,
-    ) {
+    private MeetingAvailabilityService $availabilityService,
+    private MeetingQuotaService $quotaService,
+    private ConsumeQuotaAction $consumeAction,
+) {
     }
 
     public function __invoke(
-        Enrollment $enrollment,
-        User $student,
-        Carbon $scheduledAt,
-        ?string $topic = null,
-    ): Meeting {
-        $meeting = DB::transaction(function () use (
+    Enrollment $enrollment,
+    User $student,
+    array $validated,
+): Meeting {
+            $scheduledAt = Carbon::parse($validated['scheduled_at']);
+            $topic = $validated['topic'] ?? null;
+            $meeting = DB::transaction(function () use (
             $enrollment,
             $student,
             $scheduledAt,
@@ -63,8 +60,11 @@ class StoreAction
                 throw new MeetingNoAvailableCoachException;
             }
 
-            $coach = $this->coachLoadService
-                ->leastLoadedCoach($candidates);
+            $coach = $candidates->first();
+
+            if (! $coach) {
+                throw new MeetingNoAvailableCoachException;
+            }
 
             try {
                 $meeting = Meeting::create([
@@ -102,15 +102,6 @@ class StoreAction
 
         $coach = $meeting->coach;
 
-        if ($this->googleCalendarService->isConnected((string) $coach->id)) {
-            $googleCalendarEventId =
-                $this->googleCalendarService->createEvent($meeting);
-
-            $meeting->update([
-                'google_calendar_event_id' => $googleCalendarEventId,
-            ]);
-        }
-
         return $meeting->fresh();
     }
 
@@ -120,11 +111,26 @@ class StoreAction
      * @return Collection<int, User>
      */
     private function findAvailableCoaches(
-        Certification $certification,
-        Carbon $scheduledAt
-    ): Collection {
-        // ここに元Controllerの
-        // findAvailableCoaches() の検索ロジックを移す
-    }
+    Certification $certification,
+    Carbon $scheduledAt
+): Collection {
+    $time = $scheduledAt->format('H:i:s');
+
+    return $certification->coaches()
+        ->whereHas('coachAvailabilities', function ($q) use ($scheduledAt, $time) {
+            $q->where('day_of_week', $scheduledAt->dayOfWeek)
+                ->where('is_active', true)
+                ->where('start_time', '<=', $time)
+                ->where('end_time', '>', $time);
+        })
+        ->whereDoesntHave('meetingsAsCoach', function ($q) use ($scheduledAt) {
+            $q->where('scheduled_at', $scheduledAt)
+                ->whereIn('status', [
+                    MeetingStatus::Reserved->value,
+                    MeetingStatus::Completed->value,
+                ]);
+        })
+        ->get();
+}
 }
 

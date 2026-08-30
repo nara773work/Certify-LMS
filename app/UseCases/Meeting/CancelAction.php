@@ -2,36 +2,43 @@
 
 declare(strict_types=1);
 
-namespace App\Actions\Meeting;
+namespace App\UseCases\Meeting;
 
 use App\Models\Meeting;
 use App\Models\User;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Actions\Meeting\RefundQuotaAction;
+use Illuminate\Support\Facades\DB;
 
-class ShowAction{
+class CancelAction
+{
+    public function __construct(
+        private RefundQuotaAction $refundAction,
+    ) {
+    }
 
-    public function __invoke(){
-        $actor = auth()->user();
+    public function __invoke(
+        Meeting $meeting,
+        User $actor,
+    ): void {
+        DB::transaction(function () use ($meeting, $actor) {
 
-        DB::transaction(function () use ($meeting, $actor,$refundAction) {
-            $locked = Meeting::query()->whereKey($meeting->id)->lockForUpdate()->first();
-            if ($locked === null || $locked->status !== MeetingStatus::Reserved) {
-                throw MeetingStatusTransitionException::forCancel();
-            }
-
-            if ($locked->scheduled_at->lessThanOrEqualTo(now())) {
-                throw new MeetingAlreadyStartedException;
-            }
-
-            $locked->update([
-                'status' => MeetingStatus::Canceled->value,
+            // キャンセル処理
+            $meeting->update([
+                'status' => 'canceled',
                 'canceled_by_user_id' => $actor->id,
                 'canceled_at' => now(),
             ]);
 
-            $refundAction($actor, $locked->id);
+            // 面談回数を返却
+            ($this->refundAction)($meeting);
         });
 
-        return $googleCalendarService->deleteEvent($meeting);
+        // Google Calendar から削除
+        if ($meeting->google_calendar_event_id) {
+            $this->deleteEvent(
+                (string) $meeting->coach_id,
+                $meeting->google_calendar_event_id,
+            );
+        }
     }
 }
