@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\GoogleCalendarToken;
+use App\Services\GoogleCalendarService;
 use Google\Client;
 use Google\Service\Calendar;
 use Carbon\Carbon;
@@ -61,7 +62,7 @@ class GoogleCalendarService
             ->all();
     }
 
-    public function createEvent(Meeting $meeting): string
+    public function createEvent(Meeting $meeting): ?string
 {
     $credential = GoogleCalendarToken::where(
         'user_id',

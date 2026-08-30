@@ -84,9 +84,9 @@ class Certification extends Model
             'user_id',
         )
             ->using(CertificationCoachAssignment::class)
-            ->withPivot(['id', 'assigned_by_user_id', 'assigned_at', 'unassigned_at'])
+            ->withPivot(['assigned_by_user_id', 'assigned_at', 'unassigned_at'])
             ->withTimestamps()
-            ->wherePivot('unassigned_at', null);
+            ->wherePivot('unassigned_at');
     }
 
     /**
