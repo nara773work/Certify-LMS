@@ -326,6 +326,7 @@ final class ProgressSummaryService
         return $result;
     }
 
+
     private function ratio(int $completed, int $total): float
     {
         return $total === 0
