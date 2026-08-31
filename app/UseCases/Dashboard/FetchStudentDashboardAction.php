@@ -28,6 +28,7 @@ use App\UseCases\Dashboard\ViewModels\StudentEnrollmentCard;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use App\Services\Learning\ProgressSummaryService;
 
 /**
  * 受講生ダッシュボードの ViewModel を組み立てる Action。
@@ -53,6 +54,7 @@ final class FetchStudentDashboardAction
         private readonly CompletionEligibilityService $completion,
         private readonly MeetingQuotaService $meetingQuota,
         private readonly PlanExpirationService $planExpiration,
+        private readonly ProgressSummaryService $progressSummaryService,
     ) {}
 
     public function __invoke(User $student): StudentDashboardViewModel
@@ -98,151 +100,23 @@ final class FetchStudentDashboardAction
      * @return Collection<int, StudentEnrollmentCard>
      */
     private function buildEnrollmentCards($learningEnrollments): Collection
-    {
-        $progressMap = $this->safe(fn () => $this->batchCalculateProgress($learningEnrollments)) ?? [];
+{
+    $progressMap = $this->safe(
+        fn () => $this->progressSummaryService
+            ->batchSummarize($learningEnrollments)
+    ) ?? [];
 
-        return $learningEnrollments
-            ->map(fn (Enrollment $enrollment) => $this->buildCard($enrollment, $progressMap[$enrollment->id] ?? null))
-            ->values();
-    }
+    return $learningEnrollments
+        ->map(fn (Enrollment $enrollment) =>
+            $this->buildCard(
+                $enrollment,
+                $progressMap[$enrollment->id] ?? null
+            )
+        )
+        ->values();
+}
 
-    /**
-     * 受講中の各 Enrollment の Section 単位完了率を 1 クエリでまとめて算出する (N+1 回避)。
-     * 戻り値のキーは Enrollment.id、値は Section 単位の完了率(0.0〜1.0、未集計時 0.0)。
-     *
-     * @param \Illuminate\Database\Eloquent\Collection<int, Enrollment> $enrollments
-     *
-     * @return array<string, float>
-     */
-    private function batchCalculateProgress($enrollments): array
-    {
-        if ($enrollments->isEmpty()) {
-            return [];
-        }
-
-        $enrollmentIds = $enrollments->pluck('id')->all();
-        $certificationIds = $enrollments->pluck('certification_id')->unique()->values()->all();
-
-        $rows = DB::table('sections')
-            ->join('chapters', 'chapters.id', '=', 'sections.chapter_id')
-            ->join('parts', 'parts.id', '=', 'chapters.part_id')
-            ->join('enrollments', 'enrollments.certification_id', '=', 'parts.certification_id')
-            ->leftJoin('section_progresses', function ($join): void {
-                $join->on('section_progresses.section_id', '=', 'sections.id')
-                    ->on('section_progresses.enrollment_id', '=', 'enrollments.id');
-            })
-            ->whereIn('enrollments.id', $enrollmentIds)
-            ->whereIn('parts.certification_id', $certificationIds)
-            ->where('parts.status', ContentStatus::Published->value)
-            ->where('chapters.status', ContentStatus::Published->value)
-            ->where('sections.status', ContentStatus::Published->value)
-            ->groupBy('enrollments.id')
-            ->selectRaw('enrollments.id AS enrollment_id, COUNT(sections.id) AS total, COUNT(section_progresses.id) AS done')
-            ->get();
-
-        $result = [];
-        foreach ($enrollmentIds as $id) {
-            $result[$id] = 0.0;
-        }
-
-        foreach ($rows as $row) {
-            $total = (int) $row->total;
-            $done = (int) $row->done;
-            $result[(string) $row->enrollment_id] = $total === 0 ? 0.0 : round($done / $total, 4);
-        }
-
-        return $result;
-    }
-
-    private function buildCard(Enrollment $enrollment, ?float $progressRatio): StudentEnrollmentCard
-    {
-        $daysUntilExam = $enrollment->exam_date !== null
-            ? (int) ceil(now()->startOfDay()->floatDiffInDays($enrollment->exam_date->startOfDay(), false))
-            : null;
-
-        return new StudentEnrollmentCard(
-            enrollmentId: $enrollment->id,
-            certificationName: $enrollment->certification->name,
-            status: $enrollment->status,
-            examDate: $enrollment->exam_date,
-            daysUntilExam: $daysUntilExam,
-            progressRatio: $progressRatio,
-            currentTerm: $enrollment->current_term,
-            learningHourTarget: $this->safe(fn () => $this->hourTarget->compute($enrollment)),
-            passProbabilityBand: $this->safe(fn () => $this->weakness->getPassProbabilityBand($enrollment)),
-            weakCategories: $this->safe(fn () => $this->weakness->getWeakCategories($enrollment)->take(3)) ?? collect(),
-            canReceiveCertificate: $this->completion->isEligible($enrollment),
-        );
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, Enrollment>
-     */
-    private function buildPassedEnrollments(User $student): \Illuminate\Database\Eloquent\Collection
-    {
-        return Enrollment::query()
-            ->where('user_id', $student->id)
-            ->where('status', EnrollmentStatus::Passed)
-            ->whereNotNull('passed_at')
-            ->with(['certification', 'certificate'])
-            ->orderByDesc('passed_at')
-            ->get();
-    }
-
-    /**
-     * 「前回の続き」カードを組み立てる。最後に開いた Section を起点に、読了済なら同資格内の
-     * 次の未読 Section へ進ませる(未読が無ければ最後に開いた Section をそのまま続きとする)。
-     * 学習履歴が無い受講生は null を返し、Blade 側はカードを描画しない。
-     *
-     * 滞在記録の最新 1 件 + 階層名 + 当該 Section の読了フラグを 1 クエリで引き、過剰なクエリ本数を避ける。
-     */
-    private function buildResumeCard(User $student): ?ResumeCard
-    {
-        $last = DB::table('learning_sessions as ls')
-            ->join('sections as s', 's.id', '=', 'ls.section_id')
-            ->join('chapters as c', 'c.id', '=', 's.chapter_id')
-            ->join('parts as p', 'p.id', '=', 'c.part_id')
-            ->join('certifications as cert', 'cert.id', '=', 'p.certification_id')
-            ->leftJoin('section_progresses as sp', function ($join): void {
-                $join->on('sp.section_id', '=', 's.id')
-                    ->on('sp.enrollment_id', '=', 'ls.enrollment_id');
-            })
-            ->where('ls.user_id', $student->id)
-            ->whereNotNull('ls.started_at')
-            ->where('s.status', ContentStatus::Published->value)
-            ->where('c.status', ContentStatus::Published->value)
-            ->where('p.status', ContentStatus::Published->value)
-            ->where('cert.status', CertificationStatus::Published->value)
-            ->orderByDesc('ls.started_at')
-            ->select([
-                's.id as section_id',
-                's.title as section_title',
-                'c.title as chapter_title',
-                'p.title as part_title',
-                'cert.name as certification_name',
-                'p.certification_id as certification_id',
-                'ls.enrollment_id as enrollment_id',
-                'sp.id as progress_id',
-            ])
-            ->first();
-
-        if ($last === null) {
-            return null;
-        }
-
-        // 最後に開いた Section が読了済なら次の未読へ。未読が無ければ最後の Section を続きとする。
-        $target = $last->progress_id !== null
-            ? ($this->findNextUnreadSection($last->certification_id, $last->enrollment_id, $last->section_id) ?? $last)
-            : $last;
-
-        return new ResumeCard(
-            certificationName: $last->certification_name,
-            partTitle: $target->part_title,
-            chapterTitle: $target->chapter_title,
-            sectionTitle: $target->section_title,
-            sectionUrl: route('learning.sections.show', $target->section_id),
-        );
-    }
+    
 
     /**
      * 同資格の公開 Section を Part → Chapter → Section の表示順に並べ、指定 Section 以降で最初の未読を返す。

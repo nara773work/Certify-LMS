@@ -7,9 +7,9 @@ namespace App\UseCases\Learning;
 use App\Enums\ContentStatus;
 use App\Models\Part;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use App\Enums\CertificationStatus;
+use App\Services\Learning\ProgressSummaryService;
 
 /**
  * /learning/parts/{part} (3 階層目、Chapter 一覧) のデータを準備する Action。
@@ -20,9 +20,13 @@ use App\Enums\CertificationStatus;
  */
 final class ShowPartAction
 {
+    public function __construct(
+        private readonly ProgressSummaryService $progressSummaryService,
+    ) {}
     /**
      * @return array<string, mixed>
      */
+    
     public function __invoke(Part $part, User $student): array
     {
         $part->loadMissing('certification');
@@ -53,29 +57,14 @@ final class ShowPartAction
             ])
             ->get();
       
-        $completedByChapter = [];
-        
-        if ($enrollment !== null && $chapters->isNotEmpty()) {
-            $rows = DB::table('sections')
-                ->join('section_progresses', function ($join) use ($enrollment) {
-                    $join->on('section_progresses.section_id', '=', 'sections.id')
-                        ->where('section_progresses.enrollment_id', '=', $enrollment->id);
-                })
-                ->whereIn('sections.chapter_id', $chapters->pluck('id'))
-                ->where('sections.status', ContentStatus::Published->value)
-                ->groupBy('sections.chapter_id')
-                ->selectRaw('sections.chapter_id AS chapter_id, COUNT(*) AS done')
-                ->get();
-
-            foreach ($rows as $row) {
-                $completedByChapter[(string) $row->chapter_id] = (int) $row->done;
-            }
-        }
+        $completedByChapter =
+            $this->progressSummaryService
+                ->completedSectionsByChapter($enrollment, $chapters);
 
         return [
-            'part' => $part->load('certification'),
-            'chapters' => $chapters,
-            'completedByChapter' => $completedByChapter,
-        ];
+    'part' => $part->load('certification'),
+    'chapters' => $chapters,
+    'completedByChapter' => $completedByChapter,
+];
     }
 }
