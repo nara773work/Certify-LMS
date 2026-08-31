@@ -23,27 +23,27 @@ class EnrollmentStatsService
      *
      * @return array{learning_count: int, passed_count: int, failed_count: int, total: int, by_certification: array<int, array{certification_id: string, certification_name: string, learning: int, passed: int, failed: int, total: int}>}
      */
-    public function adminKpi(): array
-    {
-        $counts = DB::table('enrollments')
-            ->whereNull('deleted_at')
-            ->selectRaw('status, COUNT(*) as cnt')
-            ->groupBy('status')
-            ->pluck('cnt', 'status')
-            ->all();
+public function adminKpi(): array
+{
+    $counts = DB::table('enrollments')
+        ->whereNull('deleted_at')
+        ->selectRaw('status, COUNT(*) as cnt')
+        ->groupBy('status')
+        ->pluck('cnt', 'status')
+        ->all();
 
-        $learning = (int) ($counts[EnrollmentStatus::Learning->value] ?? 0);
-        $passed = (int) ($counts[EnrollmentStatus::Passed->value] ?? 0);
-        $failed = (int) ($counts[EnrollmentStatus::Failed->value] ?? 0);
+    $learning = (int) ($counts[EnrollmentStatus::Learning->value] ?? 0);
+    $passed = (int) ($counts[EnrollmentStatus::Passed->value] ?? 0);
+    $failed = (int) ($counts[EnrollmentStatus::Failed->value] ?? 0);
 
-        return [
-            'learning_count' => $learning,
-            'passed_count' => $passed,
-            'failed_count' => $failed,
-            'total' => $learning + $passed + $failed,
-            'by_certification' => $this->byCertification(),
-        ];
-    }
+    return [
+        'learning_count' => $learning,
+        'passed_count' => $passed,
+        'failed_count' => $failed,
+        'total' => $learning + $passed + $failed,
+        'by_certification' => $this->byCertification(),
+    ];
+}
 
     /**
      * 資格別の受講生数(status 別の内訳付き)。
@@ -76,50 +76,57 @@ class EnrollmentStatsService
      * @return Collection<int, array{certification_id: string, certification_name: string, learning: int, passed: int, failed: int, total: int, completion_rate: float}>
      */
     public function completionRateByCertification(): Collection
-    {
-        return collect($this->byCertification())
-            ->filter(fn (array $row): bool => $row['total'] > 0)
-            ->map(function (array $row): array {
-                $row['completion_rate'] = round($row['passed'] / $row['total'], 4);
+{
+    return collect($this->byCertification())
+        ->filter(fn (array $row): bool => $row['total'] > 0)
+        ->map(function (array $row): array {
+            $row['completion_rate'] = round($row['passed'] / $row['total'], 4);
 
-                return $row;
-            })
-            ->sortByDesc('total')
-            ->values();
-    }
+            return $row;
+        })
+        ->sortByDesc('total')
+        ->values();
+}
 
     /**
      * 資格別の集計を「資格 ID + 名前 + status 別件数」の配列で返す内部ヘルパー。
      *
      * @return array<int, array{certification_id: string, certification_name: string, learning: int, passed: int, failed: int, total: int}>
      */
-    private function byCertification(): array
-    {
-        $rows = DB::table('enrollments')
-            ->join('certifications', 'enrollments.certification_id', '=', 'certifications.id')
-            ->whereNull('enrollments.deleted_at')
-            ->selectRaw('enrollments.certification_id, certifications.name as certification_name, enrollments.status, COUNT(*) as cnt')
-            ->groupBy('enrollments.certification_id', 'certifications.name', 'enrollments.status')
-            ->get();
+private function byCertification(): array
+{
+    $rows = DB::table('enrollments')
+        ->join('certifications', 'enrollments.certification_id', '=', 'certifications.id')
+        ->whereNull('enrollments.deleted_at')
+        ->selectRaw('enrollments.certification_id, certifications.name as certification_name, enrollments.status, COUNT(*) as cnt')
+        ->groupBy('enrollments.certification_id', 'certifications.name', 'enrollments.status')
+        ->get();
 
-        $byCertification = [];
-        foreach ($rows as $row) {
-            $certId = (string) $row->certification_id;
-            $byCertification[$certId] ??= [
-                'certification_id' => $certId,
-                'certification_name' => (string) $row->certification_name,
-                'learning' => 0,
-                'passed' => 0,
-                'failed' => 0,
-                'total' => 0,
-            ];
-            $byCertification[$certId][(string) $row->status] = (int) $row->cnt;
-            $byCertification[$certId]['total'] += (int) $row->cnt;
-        }
+    $byCertification = [];
 
-        $list = array_values($byCertification);
-        usort($list, fn (array $a, array $b): int => $b['total'] <=> $a['total']);
+    foreach ($rows as $row) {
+        $certId = (string) $row->certification_id;
 
-        return $list;
+        $byCertification[$certId] ??= [
+            'certification_id' => $certId,
+            'certification_name' => (string) $row->certification_name,
+            'learning' => 0,
+            'passed' => 0,
+            'failed' => 0,
+            'total' => 0,
+        ];
+
+        $byCertification[$certId][(string) $row->status] = (int) $row->cnt;
+        $byCertification[$certId]['total'] += (int) $row->cnt;
     }
+
+    $list = array_values($byCertification);
+
+    usort(
+        $list,
+        fn (array $a, array $b): int => $b['total'] <=> $a['total']
+    );
+
+    return $list;
+}
 }

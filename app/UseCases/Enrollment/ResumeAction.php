@@ -10,6 +10,7 @@ use App\Models\Enrollment;
 use App\Models\User;
 use App\Services\EnrollmentStatusChangeService;
 use Illuminate\Support\Facades\DB;
+use App\Services\AdminDashboardCacheService;
 
 /**
  * 学習中止(failed) → 学習中(learning) への再挑戦遷移 Action。受講生本人 or admin が実行する。
@@ -19,8 +20,9 @@ use Illuminate\Support\Facades\DB;
 final class ResumeAction
 {
     public function __construct(
-        private readonly EnrollmentStatusChangeService $statusChanger,
-    ) {}
+    private readonly EnrollmentStatusChangeService $statusChanger,
+    private readonly AdminDashboardCacheService $adminDashboardCache,
+) {}
 
     /**
      * @throws EnrollmentInvalidTransitionException
@@ -31,18 +33,22 @@ final class ResumeAction
             throw EnrollmentInvalidTransitionException::forResume();
         }
 
-        return DB::transaction(function () use ($enrollment, $actor) {
-            $enrollment->update(['status' => EnrollmentStatus::Learning->value]);
+        $enrollment = DB::transaction(function () use ($enrollment, $actor) {
+    $enrollment->update(['status' => EnrollmentStatus::Learning->value]);
 
-            $this->statusChanger->recordStatusChange(
-                $enrollment,
-                fromStatus: EnrollmentStatus::Failed,
-                toStatus: EnrollmentStatus::Learning,
-                changedBy: $actor,
-                reason: '再挑戦',
-            );
+    $this->statusChanger->recordStatusChange(
+        $enrollment,
+        fromStatus: EnrollmentStatus::Failed,
+        toStatus: EnrollmentStatus::Learning,
+        changedBy: $actor,
+        reason: '再挑戦',
+    );
 
-            return $enrollment->refresh();
-        });
+    return $enrollment->refresh();
+});
+
+$this->adminDashboardCache->forget();
+
+return $enrollment;
     }
 }

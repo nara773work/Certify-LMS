@@ -29,6 +29,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use App\Services\Learning\ProgressSummaryService;
+use App\Models\LearningSession;
 
 /**
  * 受講生ダッシュボードの ViewModel を組み立てる Action。
@@ -81,6 +82,27 @@ final class FetchStudentDashboardAction
         );
     }
 
+    /**
+ * 受講生の修了済み Enrollment を取得する。
+ *
+ * 修了済みは受講中カードとは分離し、修了日時の新しい順に並べる。
+ * 修了証 PDF リンク描画のため certificate も eager load する。
+ *
+ * @return Collection<int, Enrollment>
+ */
+private function buildPassedEnrollments(User $student): Collection
+{
+    return Enrollment::query()
+        ->where('user_id', $student->id)
+        ->where('status', EnrollmentStatus::Passed)
+        ->with([
+            'certification',
+            'certificate',
+        ])
+        ->orderByDesc('passed_at')
+        ->get()
+        ->values();
+}
     private function buildPlanInfo(User $student): PlanInfoPanel
     {
         return new PlanInfoPanel(
@@ -93,6 +115,40 @@ final class FetchStudentDashboardAction
                 ->get(),
         );
     }
+
+    private function buildCard(
+    Enrollment $enrollment,
+    ?float $progressRatio,
+): StudentEnrollmentCard {
+    return new StudentEnrollmentCard(
+        enrollmentId: $enrollment->id,
+        certificationName: $enrollment->certification->name,
+        status: $enrollment->status,
+        examDate: $enrollment->exam_date,
+        daysUntilExam: $enrollment->exam_date
+            ? now()->startOfDay()->diffInDays(
+                $enrollment->exam_date->startOfDay(),
+                false
+            )
+            : null,
+        progressRatio: $progressRatio,
+        currentTerm: $enrollment->current_term,
+        learningHourTarget: $this->safe(
+            fn () => $this->hourTarget->compute($enrollment)
+        ),
+        passProbabilityBand: $this->safe(
+            fn () => $this->weakness->getPassProbabilityBand($enrollment)
+        ),
+        weakCategories: $this->safe(
+            fn () => $this->weakness
+                ->getWeakCategories($enrollment)
+                ->take(3)
+        ) ?? collect(),
+        canReceiveCertificate: $this->safe(
+            fn () => $this->completion->isEligible($enrollment)
+        ) ?? false,
+    );
+}
 
     /**
      * @param \Illuminate\Database\Eloquent\Collection<int, Enrollment> $learningEnrollments
@@ -192,4 +248,66 @@ final class FetchStudentDashboardAction
             ->get()
             ->values();
     }
+
+    private function buildResumeCard(User $student): ?ResumeCard
+{
+    $session = LearningSession::query()
+        ->whereHas('enrollment', function ($query) use ($student): void {
+            $query
+                ->where('user_id', $student->id)
+                ->where('status', EnrollmentStatus::Learning->value);
+        })
+        ->with([
+            'enrollment.certification',
+            'section.chapter.part',
+        ])
+        ->orderByDesc('started_at')
+        ->first();
+
+    if ($session === null || $session->section === null) {
+        return null;
+    }
+
+    $enrollment = $session->enrollment;
+    $section = $session->section;
+
+    $isCompleted = $enrollment->sectionProgresses()
+        ->where('section_id', $section->id)
+        ->exists();
+
+    if (! $isCompleted) {
+        return new ResumeCard(
+            certificationName: $enrollment->certification->name,
+            partTitle: $section->chapter->part->title,
+            chapterTitle: $section->chapter->title,
+            sectionTitle: $section->title,
+            sectionUrl: route(
+                'learning.sections.show',
+                ['section' => $section->id],
+            ),
+        );
+    }
+
+    $nextSection = $this->findNextUnreadSection(
+        $enrollment->certification_id,
+        $enrollment->id,
+        $section->id,
+    );
+
+    if ($nextSection === null) {
+        return null;
+    }
+
+    return new ResumeCard(
+        certificationName: $enrollment->certification->name,
+        partTitle: $nextSection->part_title,
+        chapterTitle: $nextSection->chapter_title,
+        sectionTitle: $nextSection->section_title,
+        sectionUrl: route(
+            'learning.sections.show',
+            ['section' => $nextSection->section_id],
+        ),
+    );
+}
+
 }

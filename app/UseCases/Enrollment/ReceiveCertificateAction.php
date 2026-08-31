@@ -31,10 +31,11 @@ use Illuminate\Support\Facades\DB;
 final class ReceiveCertificateAction
 {
     public function __construct(
-        private readonly CompletionEligibilityService $eligibility,
-        private readonly EnrollmentStatusChangeService $statusChanger,
-        private readonly IssueCertificateAction $issueCertificate,
-    ) {}
+    private readonly CompletionEligibilityService $eligibility,
+    private readonly EnrollmentStatusChangeService $statusChanger,
+    private readonly IssueCertificateAction $issueCertificate,
+    private readonly AdminDashboardCacheService $adminDashboardCache,
+) {}
 
     /**
      * @throws CompletionNotEligibleException 公開模試すべてに合格していない
@@ -50,23 +51,25 @@ final class ReceiveCertificateAction
             throw new CompletionNotEligibleException;
         }
 
-        return DB::transaction(function () use ($enrollment) {
-            $enrollment->update([
-                'status' => EnrollmentStatus::Passed->value,
-                'passed_at' => now(),
-            ]);
+        $certificate = DB::transaction(function () use ($enrollment) {
+    $enrollment->update([
+        'status' => EnrollmentStatus::Passed->value,
+        'passed_at' => now(),
+    ]);
 
-            $this->statusChanger->recordStatusChange(
-                $enrollment,
-                fromStatus: EnrollmentStatus::Learning,
-                toStatus: EnrollmentStatus::Passed,
-                changedBy: $enrollment->user,
-                reason: '受講生による修了証受領',
-            );
+    $this->statusChanger->recordStatusChange(
+        $enrollment,
+        fromStatus: EnrollmentStatus::Learning,
+        toStatus: EnrollmentStatus::Passed,
+        changedBy: $enrollment->user,
+        reason: '受講生による修了証受領',
+    );
 
-            $certificate = ($this->issueCertificate)($enrollment->refresh());
+    return ($this->issueCertificate)($enrollment->refresh());
+});
 
-            return $certificate;
-        });
+$this->adminDashboardCache->forget();
+
+return $certificate;
     }
 }
