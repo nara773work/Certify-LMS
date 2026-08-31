@@ -150,6 +150,7 @@ class MeetingController extends Controller
         $request->user(),
         $request->validated(),
     );
+
     return redirect()
         ->route('meetings.show', $meeting)
         ->with('success', '面談を予約しました。');

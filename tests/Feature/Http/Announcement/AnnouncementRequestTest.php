@@ -50,7 +50,7 @@ class AnnouncementRequestTest extends TestCase
 
         $response->assertStatus(302);
         $this->assertDatabaseHas('announcements',[
-            'title' => str_repeat('あ', 255),
+            'title' => str_repeat('あ', 200),
             'body' => 'test',
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ]);

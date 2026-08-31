@@ -7,7 +7,7 @@ namespace Tests\Unit\UseCases\Meeting;
 use App\Enums\MeetingStatus;
 use App\Models\Certification;
 use App\Models\CertificationCoachAssignment;
-use App\Models\Category;
+use App\Models\CertificationCategory;
 use App\Models\Enrollment;
 use App\Models\Meeting;
 use App\Models\User;
@@ -69,7 +69,7 @@ class IndexTest extends TestCase
             'coach',
         );
 
-        $category = Category::create([
+        $category = CertificationCategory::create([
             'name' => 'IndexTestカテゴリ',
             'slug' => 'index-test-category',
         ]);
@@ -143,13 +143,13 @@ class IndexTest extends TestCase
         $data = $this->createTestData();
 
         $futureMeeting = $this->createMeeting(
-            $data['enrollment'],
-            $data['student'],
-            $data['coach'],
-            Carbon::now()->addDay(),
-            MeetingStatus::Reserved,
-            '未来の面談',
-        );
+    $data['enrollment'],
+    $data['student'],
+    $data['coach'],
+    Carbon::now()->addDay(),
+    MeetingStatus::Reserved,
+    '未来の面談',
+);
 
         $this->createMeeting(
             $data['enrollment'],
@@ -161,13 +161,13 @@ class IndexTest extends TestCase
         );
 
         $this->createMeeting(
-            $data['enrollment'],
-            $data['student'],
-            $data['coach'],
-            Carbon::now()->addDay(),
-            MeetingStatus::Canceled,
-            'キャンセル済み面談',
-        );
+    $data['enrollment'],
+    $data['student'],
+    $data['coach'],
+    Carbon::now()->addDays(2),
+    MeetingStatus::Canceled,
+    'キャンセル済み面談',
+);
 
         $action = new IndexAction();
 
@@ -236,13 +236,13 @@ class IndexTest extends TestCase
         $data = $this->createTestData();
 
         $upcomingMeeting = $this->createMeeting(
-            $data['enrollment'],
-            $data['student'],
-            $data['coach'],
-            Carbon::now()->addDay(),
-            MeetingStatus::Reserved,
-            '未来の面談',
-        );
+    $data['enrollment'],
+    $data['student'],
+    $data['coach'],
+    Carbon::now()->addDay(),
+    MeetingStatus::Reserved,
+    '未来の面談',
+);
 
         $pastMeeting = $this->createMeeting(
             $data['enrollment'],
@@ -254,13 +254,13 @@ class IndexTest extends TestCase
         );
 
         $this->createMeeting(
-            $data['otherEnrollment'],
-            $data['otherStudent'],
-            $data['coach'],
-            Carbon::now()->addDay(),
-            MeetingStatus::Reserved,
-            '別受講生の面談',
-        );
+    $data['otherEnrollment'],
+    $data['otherStudent'],
+    $data['coach'],
+    Carbon::now()->addDays(1)->addHour(),
+    MeetingStatus::Reserved,
+    '別受講生の面談',
+);
 
         $action = new IndexAction();
 

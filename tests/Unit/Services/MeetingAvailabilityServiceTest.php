@@ -10,7 +10,7 @@ use App\Models\CoachAvailability;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Services\MeetingAvailabilityService;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;

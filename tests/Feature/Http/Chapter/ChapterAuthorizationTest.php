@@ -42,6 +42,7 @@ public function test_Admin_can_see_chapter(): void
     {
         $this -> seed();
         $Coach = User::where('email','coach@certify-lms.test')->first();
+        
         $certification = Certification::where(
             'name',
             '基本情報技術者試験'

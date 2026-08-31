@@ -98,12 +98,10 @@ class StoreAction
             } catch (UniqueConstraintViolationException $e) {
                 throw new MeetingNoAvailableCoachException($e);
             }
-
             $transaction = ($this->consumeAction)(
                 $student,
                 $meeting->id,
             );
-
             $meeting->update([
                 'meeting_quota_transaction_id' => $transaction->id,
             ]);

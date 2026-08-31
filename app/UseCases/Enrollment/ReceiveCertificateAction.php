@@ -13,6 +13,7 @@ use App\Services\CompletionEligibilityService;
 use App\Services\EnrollmentStatusChangeService;
 use App\UseCases\Certificate\IssueAction as IssueCertificateAction;
 use Illuminate\Support\Facades\DB;
+use App\Services\AdminDashboardCacheService;
 
 /**
  * 受講生本人による「修了証を受け取る」自己発火 Action。

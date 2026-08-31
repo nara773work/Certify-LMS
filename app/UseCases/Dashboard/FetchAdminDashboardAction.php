@@ -8,7 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Models\User;
 use App\Services\EnrollmentStatsService;
 use App\UseCases\Dashboard\ViewModels\AdminDashboardViewModel;
-use Illuminate\Support\Facades\Cache;
+
 /**
  * 管理者ダッシュボードの ViewModel を組み立てる Action。
  *
@@ -30,17 +30,13 @@ final class FetchAdminDashboardAction
 
     public function __invoke(User $admin): AdminDashboardViewModel
 {
-    $kpi = $this->safe(fn () => Cache::remember(
-        config('dashboard.admin_kpi_cache_key'),
-        config('dashboard.cache_ttl'),
-        fn () => $this->stats->adminKpi(),
-    ));
+    $kpi = $this->safe(
+        fn () => $this->stats->adminKpi()
+    );
 
-    $completionRate = $this->safe(fn () => Cache::remember(
-        config('dashboard.admin_completion_rate_cache_key'),
-        config('dashboard.cache_ttl'),
-        fn () => $this->stats->completionRateByCertification(),
-    ));
+    $completionRate = $this->safe(
+        fn () => $this->stats->completionRateByCertification()
+    );
 
     $byCertificationTop10 = $kpi !== null
         ? collect($kpi['by_certification'])->take(10)

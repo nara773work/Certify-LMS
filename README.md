@@ -118,6 +118,9 @@ sail artisan test                  # 全テスト実行
 sail artisan test --filter=Xxx    # クラス名・メソッド名で絞り込み
 ```
 
+※テスト実行結果
+
+
 ## コード整形
 
 Laravel Pint を使用しています。コミット前に実行してください。

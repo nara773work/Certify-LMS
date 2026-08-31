@@ -9,7 +9,6 @@ use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Illuminate\Support\Facades\Storage;
 
 final class CertificateDownloadTest extends TestCase
 {
@@ -28,12 +27,14 @@ final class CertificateDownloadTest extends TestCase
 
     /**
      * 受講生は自身の修了証をダウンロードできる。
+     *
+     * 花子 → 日商簿記2級
      */
     public function test_student_can_download_own_certificate(): void
     {
         $student = User::where(
             'email',
-            'student-graduated@certify-lms.test'
+            'student-graduated2@certify-lms.test'
         )->firstOrFail();
 
         $enrollment = Enrollment::where(
@@ -67,17 +68,20 @@ final class CertificateDownloadTest extends TestCase
 
     /**
      * 担当コーチは担当資格の修了証をダウンロードできる。
+     *
+     * coach2 → 日商簿記2級
+     * 花子 → 日商簿記2級
      */
     public function test_assigned_coach_can_download_certificate(): void
     {
         $coach = User::where(
             'email',
-            'coach@certify-lms.test'
+            'coach2@certify-lms.test'
         )->firstOrFail();
 
         $student = User::where(
             'email',
-            'student-graduated@certify-lms.test'
+            'student-graduated2@certify-lms.test'
         )->firstOrFail();
 
         $certification = $coach->assignedCertifications()
@@ -115,39 +119,45 @@ final class CertificateDownloadTest extends TestCase
     }
 
     /**
- * 担当外コーチは修了証をダウンロードできない。
- */
-public function test_unassigned_coach_cannot_download_certificate(): void
-{
-    $coach1 = User::where(
-        'email',
-        'coach@certify-lms.test'
-    )->firstOrFail();
-
-    $student2 = User::where(
-        'email',
-        'student-graduated2@certify-lms.test'
-    )->firstOrFail();
-
-    /*
-     * 花子の修了証を取得する。
-     * コーチ1は資格Bを担当していない。
+     * 担当外コーチは修了証をダウンロードできない。
+     *
+     * coach1 → 日商簿記2級は担当外
+     * 花子 → 日商簿記2級
      */
-    $certificate = Certificate::where(
-        'user_id',
-        $student2->id
-    )->firstOrFail();
+    public function test_unassigned_coach_cannot_download_certificate(): void
+    {
+        $coach = User::where(
+            'email',
+            'coach@certify-lms.test'
+        )->firstOrFail();
 
-    $response = $this->actingAs($coach1)
-        ->get(
-            route(
-                'certificates.download',
-                $certificate
-            )
-        );
+        $student = User::where(
+            'email',
+            'student-graduated2@certify-lms.test'
+        )->firstOrFail();
 
-    $response->assertForbidden();
-}
+        $enrollment = Enrollment::where(
+            'user_id',
+            $student->id
+        )->whereHas('certification', function ($query) {
+            $query->where('name', '日商簿記 2 級');
+        })->firstOrFail();
+
+        $certificate = Certificate::where(
+            'enrollment_id',
+            $enrollment->id
+        )->firstOrFail();
+
+        $response = $this->actingAs($coach)
+            ->get(
+                route(
+                    'certificates.download',
+                    $certificate
+                )
+            );
+
+        $response->assertForbidden();
+    }
 
     /**
      * 管理者は全ての修了証をダウンロードできる。
@@ -168,13 +178,13 @@ public function test_unassigned_coach_cannot_download_certificate(): void
         )->pluck('id');
 
         $certificates = Certificate::whereIn(
-            'user_id',
-            $students
-        )->get()->filter(function (Certificate $certificate) {
-            return $certificate->pdf_path !== null
-            && \Illuminate\Support\Facades\Storage::disk('local')
+    'user_id',
+    $students
+)->get()->filter(function (Certificate $certificate) {
+    return $certificate->pdf_path !== null
+        && \Illuminate\Support\Facades\Storage::disk('local')
             ->exists($certificate->pdf_path);
-        })->values();
+})->values();
 
         $this->assertGreaterThanOrEqual(
             2,
@@ -202,12 +212,14 @@ public function test_unassigned_coach_cannot_download_certificate(): void
 
     /**
      * 学習中以外のステータスでも修了証をダウンロードできる。
+     *
+     * 花子 → 日商簿記2級 → Passed
      */
     public function test_certificate_can_be_downloaded_when_enrollment_is_not_learning(): void
     {
         $student = User::where(
             'email',
-            'student-graduated@certify-lms.test'
+            'student-graduated2@certify-lms.test'
         )->firstOrFail();
 
         $enrollment = Enrollment::where(

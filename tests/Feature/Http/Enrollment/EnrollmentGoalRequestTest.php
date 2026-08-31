@@ -63,7 +63,7 @@ class EnrollmentGoalRequestTest extends TestCase
         ->post("/enrollments/{$enrollment->id}/goals",$goal);
 
         $this->assertDatabaseHas('enrollment_goals', [
-            'title' =>str_repeat('あ', 50),
+            'title' =>str_repeat('あ', 100),
             'enrollment_id' => $enrollment->id,
         ]);
     }

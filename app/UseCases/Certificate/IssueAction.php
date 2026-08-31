@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\UseCases\Certificate;
 
 use App\Enums\EnrollmentStatus;
-use App\Exceptions\Certification\CertificateAlreadyIssuedException;
 use App\Exceptions\Certification\EnrollmentNotPassedException;
 use App\Models\Certificate;
 use App\Models\Enrollment;
@@ -28,7 +27,6 @@ final class IssueAction
      * 新しく発行せず、PDF実体がなければ生成する。
      *
      * @throws EnrollmentNotPassedException
-     * @throws CertificateAlreadyIssuedException
      */
     public function __invoke(Enrollment $enrollment): Certificate
     {
@@ -74,34 +72,28 @@ final class IssueAction
              * 修了済みであることを確認する。
              */
             $status = $enrollment->status instanceof \BackedEnum
-            ? $enrollment->status->value
-            : $enrollment->status;
+                ? $enrollment->status->value
+                : $enrollment->status;
 
-            if ($status !== EnrollmentStatus::Passed->value) {
+            if (
+                $status !== EnrollmentStatus::Passed->value
+                || $enrollment->passed_at === null
+            ) {
                 throw new EnrollmentNotPassedException();
             }
 
             /*
              * Certificateを新規作成
              */
+            $path = 'certificates/' . Str::ulid() . '.pdf';
+
             $certificate = Certificate::create([
                 'user_id' => $enrollment->user_id,
                 'enrollment_id' => $enrollment->id,
                 'certification_id' => $enrollment->certification_id,
-                'pdf_path' => null,
+                'pdf_path' => $path,
                 'issued_at' => now(),
             ]);
-
-            /*
-             * PDF生成
-             *
-             * ここで失敗した場合はtransactionがrollbackされ、
-             * Certificateも発行されていない状態になる。
-             */
-            $path = 'certificates/' . Str::ulid() . '.pdf';
-
-            $certificate->pdf_path = $path;
-            $certificate->save();
 
             $this->certificatePdfService->generate(
                 $certificate,
@@ -112,4 +104,3 @@ final class IssueAction
         });
     }
 }
-
