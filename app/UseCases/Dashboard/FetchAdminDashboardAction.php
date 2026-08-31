@@ -8,7 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Models\User;
 use App\Services\EnrollmentStatsService;
 use App\UseCases\Dashboard\ViewModels\AdminDashboardViewModel;
-
+use Illuminate\Support\Facades\Cache;
 /**
  * 管理者ダッシュボードの ViewModel を組み立てる Action。
  *
@@ -29,23 +29,32 @@ final class FetchAdminDashboardAction
     ) {}
 
     public function __invoke(User $admin): AdminDashboardViewModel
-    {
-        $kpi = $this->safe(fn () => $this->stats->adminKpi());
-        $completionRate = $this->safe(fn () => $this->stats->completionRateByCertification());
+{
+    $kpi = $this->safe(fn () => Cache::remember(
+        config('dashboard.admin_kpi_cache_key'),
+        config('dashboard.cache_ttl'),
+        fn () => $this->stats->adminKpi(),
+    ));
 
-        $byCertificationTop10 = $kpi !== null
-            ? collect($kpi['by_certification'])->take(10)
-            : collect();
+    $completionRate = $this->safe(fn () => Cache::remember(
+        config('dashboard.admin_completion_rate_cache_key'),
+        config('dashboard.cache_ttl'),
+        fn () => $this->stats->completionRateByCertification(),
+    ));
 
-        $isEmptyState = $kpi === null
-            ? true
-            : ($kpi['learning_count'] + $kpi['passed_count'] + $kpi['failed_count'] === 0);
+    $byCertificationTop10 = $kpi !== null
+        ? collect($kpi['by_certification'])->take(10)
+        : collect();
 
-        return new AdminDashboardViewModel(
-            kpi: $kpi,
-            byCertificationTop10: $byCertificationTop10,
-            completionRateByCertification: $completionRate,
-            isEmptyState: $isEmptyState,
-        );
-    }
+    $isEmptyState = $kpi === null
+        ? true
+        : ($kpi['learning_count'] + $kpi['passed_count'] + $kpi['failed_count'] === 0);
+
+    return new AdminDashboardViewModel(
+        kpi: $kpi,
+        byCertificationTop10: $byCertificationTop10,
+        completionRateByCertification: $completionRate,
+        isEmptyState: $isEmptyState,
+    );
+}
 }

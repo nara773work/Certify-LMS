@@ -13,7 +13,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
-
+/**
+ * @group external-api
+ */
 class MeetingQuotaControllerTest extends TestCase
 {
     use RefreshDatabase;

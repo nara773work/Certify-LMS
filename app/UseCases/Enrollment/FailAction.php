@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\DefaultEnrollmentService;
 use App\Services\EnrollmentStatusChangeService;
 use Illuminate\Support\Facades\DB;
+use App\Services\AdminDashboardCacheService;
 
 /**
  * admin が Enrollment を学習中止(failed) に手動更新する Action。
@@ -24,9 +25,10 @@ use Illuminate\Support\Facades\DB;
 final class FailAction
 {
     public function __construct(
-        private readonly EnrollmentStatusChangeService $statusChanger,
-        private readonly DefaultEnrollmentService $defaultEnrollmentService,
-    ) {}
+    private readonly EnrollmentStatusChangeService $statusChanger,
+    private readonly DefaultEnrollmentService $defaultEnrollmentService,
+    private readonly AdminDashboardCacheService $adminDashboardCache,
+) {}
 
     /**
      * @throws EnrollmentAlreadyPassedException
@@ -42,23 +44,27 @@ final class FailAction
             throw EnrollmentInvalidTransitionException::forFail();
         }
 
-        return DB::transaction(function () use ($enrollment, $admin, $reason) {
-            $enrollment->update(['status' => EnrollmentStatus::Failed->value]);
+        $enrollment = DB::transaction(function () use ($enrollment, $admin, $reason) {
+    $enrollment->update(['status' => EnrollmentStatus::Failed->value]);
 
-            $this->statusChanger->recordStatusChange(
-                $enrollment,
-                fromStatus: EnrollmentStatus::Learning,
-                toStatus: EnrollmentStatus::Failed,
-                changedBy: $admin,
-                reason: $reason ?? 'admin による学習中止',
-            );
+    $this->statusChanger->recordStatusChange(
+        $enrollment,
+        fromStatus: EnrollmentStatus::Learning,
+        toStatus: EnrollmentStatus::Failed,
+        changedBy: $admin,
+        reason: $reason ?? 'admin による学習中止',
+    );
 
-            $this->defaultEnrollmentService->resolveAfterStatusChange(
-                $enrollment->user,
-                $enrollment,
-            );
+    $this->defaultEnrollmentService->resolveAfterStatusChange(
+        $enrollment->user,
+        $enrollment,
+    );
 
-            return $enrollment->refresh();
-        });
+    return $enrollment->refresh();
+});
+
+$this->adminDashboardCache->forget();
+
+return $enrollment;
     }
 }

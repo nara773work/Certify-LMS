@@ -1227,4 +1227,25 @@ public array $backoff = [10, 30, 60];
 
 ./vendor/bin/sail artisan queue:retry all
 
+## テスト
 
+### 通常のテスト実行
+
+```bash
+./vendor/bin/sail artisan test
+```
+
+### 外部API関連テスト
+
+外部APIに依存するテストには `external-api` グループを付与しています。
+
+対象：
+- Gemini API
+- Google Calendar API
+- Stripe API
+
+外部API関連テストのみ実行：
+
+```bash
+./vendor/bin/sail artisan test --group=external-api
+```
