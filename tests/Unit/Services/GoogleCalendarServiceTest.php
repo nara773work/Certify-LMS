@@ -13,7 +13,9 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
-
+/**
+ * @group external-api
+ */
 final class GoogleCalendarServiceTest extends TestCase
 {
     use RefreshDatabase;
@@ -341,4 +343,6 @@ final class GoogleCalendarServiceTest extends TestCase
                 ?? now()->addDays(30),
         ]);
     }
+
+
 }
