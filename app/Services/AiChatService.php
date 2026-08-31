@@ -13,7 +13,11 @@ class AiChatService
 
         $prompt = $message;
 
-        $response = Http::post(
+        $response = Http::retry(
+            2,
+            100,
+            throw: false,
+        )->post(
             'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' . $apiKey,
             [
                 'contents' => [
