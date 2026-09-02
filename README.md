@@ -605,6 +605,7 @@ Google AI Studio から Gemini API キーを取得してください。
 
 ```env
 GEMINI_API_KEY=取得したAPIキー
+AI_CHAT_ENABLED=true
 ```
 
 設定を反映させるために以下のコマンドを実行してください。
@@ -617,11 +618,13 @@ GEMINI_API_KEY=取得したAPIキー
 
 使用するGeminiモデルは config/ai-chat.php で設定します。
 
+```bash
 return [
     'gemini' => [
         'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
     ],
 ];
+```
 
 .env では必要に応じて使用するモデルを変更できます。
 
@@ -765,6 +768,63 @@ Stripeとの通信にはStripe PHP SDKを使用しています。
 初回セットアップ時の composer install でインストールされます。
 
 ### Stripe APIキーの設定
+
+※APIキーははhttps://dashboard.stripe.comにアクセスし、開発者タブからAPIキーを選択してください。
+whsecは、Stripe CLIをインストールして確認してください。
+
+※テスト環境で実行する場合はpk_test_××××を選択してください。
+
+### Stripe CLIの設定（ローカル開発）
+
+ローカル環境でStripe Webhookを受信するため、Stripe CLIを使用します。
+
+#### 1. Stripe CLIをインストール
+
+Ubuntuの場合、以下を実行します。
+
+```bash
+sudo rm -f /usr/share/keyrings/stripe.gpg
+sudo rm -f /etc/apt/sources.list.d/stripe.list
+```
+```bash
+curl -s https://packages.stripe.dev/api/security/keypair/stripe-cli-gpg/public | gpg --dearmor | sudo tee /usr/share/keyrings/stripe.gpg > /dev/null
+```
+```bash
+echo "deb [signed-by=/usr/share/keyrings/stripe.gpg] https://packages.stripe.dev/stripe-cli-debian-local stable main" | sudo tee /etc/apt/sources.list.d/stripe.list
+```
+```bash
+sudo apt update
+sudo apt install stripe
+```
+
+インストール確認のコマンドです。
+バージョンが表示されたらOKです。
+
+```bash
+stripe --version
+```
+
+次に、Stripeにログインしてください
+
+```bash
+stripe login
+```
+
+表示されたURLをブラウザで開き、Stripeアカウントを認証します。
+
+Laravelを起動した状態で、別ターミナルから以下を実行します。
+
+```bash
+stripe listen --forward-to http://localhost:8000/webhooks/stripe
+```
+
+以下のような文字列が表示されればOKです。
+ここに表示されたキーを設定してください。
+```bash
+Ready! Your webhook signing secret is whsec_xxxxxxxxxxxxx
+```
+
+こちらのターミナルは起動したままにしておいてください。
 
 `.env` にStripeの秘密鍵を設定します。
 

@@ -144,6 +144,6 @@ class PlanController extends Controller
             'status' => PlanStatus::Draft,
         ]);
 
-        return redirect()->route('admin.plans.index')->with('success','下書きにしました');
+        return redirect()->route('admin.plans.index')->with('success', '下書きにしました');
     }
 }

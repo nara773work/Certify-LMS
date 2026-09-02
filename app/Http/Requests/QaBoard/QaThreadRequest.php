@@ -27,9 +27,9 @@ class QaThreadRequest extends FormRequest
     {
         return [
             'certification_id' => [
-    Rule::requiredIf($this->isMethod('POST')),
-    'exists:certifications,id',
-],
+                Rule::requiredIf($this->isMethod('POST')),
+                'exists:certifications,id',
+            ],
             'title' => ['required', 'max:200', 'string'],
             'body' => ['required', 'max:5000', 'string'],
         ];

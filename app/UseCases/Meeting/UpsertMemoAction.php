@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\UseCases\Meeting;
 
 use App\Enums\MeetingStatus;
-use App\Exceptions\MeetingStatusTransitionException;
+use App\Exceptions\Mentoring\MeetingStatusTransitionException;
 use App\Models\Meeting;
 use App\Models\MeetingMemo;
 
@@ -15,8 +15,8 @@ class UpsertMemoAction
         Meeting $meeting,
         string $body,
     ): MeetingMemo {
-        if ($meeting->status === MeetingStatus::Canceled->value) {
-            throw new MeetingStatusTransitionException;
+        if ($meeting->status === MeetingStatus::Canceled) {
+            throw MeetingStatusTransitionException::forMemo();
         }
 
         return MeetingMemo::updateOrCreate(

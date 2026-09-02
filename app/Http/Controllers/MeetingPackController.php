@@ -151,6 +151,6 @@ class MeetingPackController extends Controller
             'status' => MeetingPackStatus::Draft,
         ]);
 
-        return redirect()->route('admin.meeting-packs.index')->with('success','下書きにしました');
+        return redirect()->route('admin.meeting-packs.index')->with('success', '下書きにしました');
     }
 }

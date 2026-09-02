@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\MeetingQuotaTransactionType;
 use App\Enums\PaymentStatus;
+use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Models\MeetingPack;
 use App\Models\MeetingQuotaTransaction;
 use App\Models\Payment;
@@ -48,8 +50,8 @@ class MeetingQuotaController extends Controller
          */
         if (
             $user === null
-            || $user->role !== 'student'
-            || $user->status !== 'in_progress'
+            || $user->role !== UserRole::Student
+            || $user->status !== UserStatus::InProgress
         ) {
             abort(403);
         }
