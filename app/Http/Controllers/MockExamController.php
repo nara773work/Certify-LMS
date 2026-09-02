@@ -26,8 +26,6 @@ class MockExamController extends Controller
 {
     public function index(IndexRequest $request, IndexAction $action): View
     {
-        $this->authorize('viewany', $mockExam);
-
         $validated = $request->validated();
         $isPublished = isset($validated['is_published'])
             ? in_array($validated['is_published'], ['1', 'true', true], true)
@@ -69,8 +67,6 @@ class MockExamController extends Controller
 
     public function store(StoreRequest $request, StoreAction $action): RedirectResponse
     {
-        $this->authorize('viewAny', MockExam::class);
-
         $mockExam = $action($request->user(), $request->validated());
 
         return redirect()
@@ -80,7 +76,7 @@ class MockExamController extends Controller
 
     public function edit(MockExam $mockExam): View
     {
-        $this->authorize('view', $mockExam);
+        $this->authorize('update', $mockExam);
 
         return view('mock-exam.management.edit', [
             'mockExam' => $mockExam,
@@ -89,8 +85,6 @@ class MockExamController extends Controller
 
     public function update(MockExam $mockExam, UpdateRequest $request, UpdateAction $action): RedirectResponse
     {
-        $this->authorize('update', $mockExam);
-
         $action($mockExam, $request->user(), $request->validated());
 
         return redirect()
