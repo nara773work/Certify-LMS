@@ -453,6 +453,10 @@ Queue Workerを起動し、起動したままにしておいてください。
 ```bash
 ./vendor/bin/sail artisan queue:work
 ```
+キャッシュをクリアしてください。
+```bash
+./vendor/bin/sail artisan config:clear
+```
 
 通知が発生する操作を行うと、通知・メールの処理はQueueに投入され、Workerによってバックグラウンドで実行されます。
 

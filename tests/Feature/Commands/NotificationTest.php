@@ -13,6 +13,7 @@ use App\Notifications\ChatMessageNotification;
 use App\Notifications\MeetingReservationNotification;
 use App\Notifications\QaReplyNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -115,11 +116,13 @@ class NotificationTest extends TestCase
         $enrollment = $student->enrollments()
             ->firstOrFail();
 
+        $scheduledAt = Carbon::tomorrow()->setTime(19, 0, 0);
+
         $response = $this->actingAs($student)
             ->post(
                 route('meetings.store', $enrollment),
                 [
-                    'scheduled_at' => '2026-09-02 19:00',
+                    'scheduled_at' => $scheduledAt->format('Y-m-d H:i:s'),
                     'topic' => '面談について',
                 ]
             );
@@ -128,7 +131,6 @@ class NotificationTest extends TestCase
 
         $meeting = Meeting::latest()->firstOrFail();
         $coach = User::findOrFail($meeting->coach_id);
-
         Notification::assertSentTo(
             $coach,
             MeetingReservationNotification::class

@@ -572,7 +572,10 @@ class MeetingQuotaControllerTest extends TestCase
             'HTTP_STRIPE_SIGNATURE' => $signature,
             'CONTENT_TYPE' => 'application/json',
         ];
-
+        $quotaCountBefore = MeetingQuotaTransaction::query()
+            ->where('user_id', $student->id)
+            ->where('type', 'purchased')
+            ->count();
         // 1回目
         $firstResponse = $this->call(
             'POST',
@@ -613,7 +616,7 @@ class MeetingQuotaControllerTest extends TestCase
         );
 
         $this->assertSame(
-            1,
+            $quotaCountBefore + 1,
             $quotaCountAfterFirst
         );
 
@@ -625,7 +628,7 @@ class MeetingQuotaControllerTest extends TestCase
         );
 
         $this->assertSame(
-            1,
+            $quotaCountBefore + 1,
             MeetingQuotaTransaction::query()
                 ->where('user_id', $student->id)
                 ->where('type', 'purchased')
