@@ -146,8 +146,9 @@ sail artisan storage:link
 - league/commonmark（教材本文の Markdown レンダリング）
 - Pusher（チャットのリアルタイム配信）
 - Docker（Laravel Sail）
-- google/apiclient": "^2.19
+- Google API Client (`google/apiclient ^2.19`)
 - Guzzle HTTP Client
+- stripe/stripe-php
 
 ## 環境変数
 
@@ -390,8 +391,6 @@ APIは `auth:sanctum` により認証ユーザーのみアクセス可能です�
 通知APIでは、認証ユーザー本人の通知のみを操作できます。
 
 他ユーザーの通知IDを指定して既読化しようとした場合も、本人の通知として扱われないよう制御しています。
-
-実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
 
 ### APIの動作確認
 APIはSanctum認証が必要です。
@@ -641,7 +640,7 @@ AI相談機能では以下のテーブルを使用します。
 ./vendor/bin/sail artisan migrate
 ```
 
-conversations に会話情報を保存し、ai_chats に会話内のメッセージを保存します。
+ai_chat_conversations に会話情報を保存し、messages に会話内のメッセージを保存します。
 
 ### AI相談機能の利用条件
 
@@ -731,6 +730,10 @@ Tinkerを起動します。
 以下を実行してください。
 
 ```bash
+use Illuminate\Support\Facades\Storage;
+```
+
+```bash
 App\Models\Certificate::all()->map(fn ($certificate) => [
     'user' => $certificate->user->name,
     'pdf_path' => $certificate->pdf_path,
@@ -752,31 +755,18 @@ exists が true になっていれば、PDFの実体が存在します。
 
 ## 6. 面談パック購入機能
 
-以下の環境を準備する。
+### Stripe PHP SDK
 
-1. Composerパッケージのインストール
+Stripeとの通信にはStripe PHP SDKを使用しています。
 
-Stripe PHP SDKをComposerでインストールする。
+使用パッケージ：stripe/stripe-php
 
-```bash
-composer require stripe/stripe-php
-```
-
-2. インストール後、依存関係を更新する。
-
-```bash
-composer dump-autoload
-```
-
-3. Laravel Sailを使用している場合は、コンテナ内で実行することもできる。
-
-```bash
-./vendor/bin/sail composer require stripe/stripe-php
-```
+依存パッケージは composer.json に登録されているため、
+初回セットアップ時の composer install でインストールされます。
 
 ### Stripe APIキーの設定
 
-`.env` にStripeの秘密鍵を設定する。
+`.env` にStripeの秘密鍵を設定します。
 
 ```env
 STRIPE_SECRET=sk_test_xxxxxxxxxxxxxxxxx
@@ -784,7 +774,7 @@ STRIPE_SECRET=sk_test_xxxxxxxxxxxxxxxxx
 STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxx
 ```
 
-`config/services.php` にStripeの設定を追加する。
+`config/services.php` にStripeの設定を追加します。
 
 ```php
 'stripe' => [
@@ -793,7 +783,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxx
 ],
 ```
 
-設定変更後はLaravelの設定キャッシュをクリアする。
+設定変更後はLaravelの設定キャッシュをクリアします。
 
 ```bash
 ./vendor/bin/sail artisan config:clear
@@ -801,7 +791,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxx
 
 ### 面談パックの初期データ
 
-`MeetingPackSeeder` で公開中の面談パックを登録する。
+`MeetingPackSeeder` で公開中の面談パックを登録します。
 
 例：
 
@@ -818,7 +808,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxx
   * 面談回数：10回
   * 価格：21,000円
 
-公開中の面談パックのみ購入画面に表示する。
+公開中の面談パックのみ購入画面に表示します。
 
 ```php
 MeetingPack::query()
@@ -827,9 +817,9 @@ MeetingPack::query()
     ->get();
 ```
 
-###  Paymentテーブル
+- Paymentテーブル
 
-面談パックの購入情報を `payments` テーブルに保存する。
+面談パックの購入情報を `payments` テーブルに保存します。
 
 主な保存項目：
 
@@ -841,11 +831,11 @@ MeetingPack::query()
 * `paid_at`
 * `stripe_session_id`
 
-`meeting_pack_id` によって、どの面談パックを購入したかを記録する。
+`meeting_pack_id` によって、どの面談パックを購入したかを記録します。
 
 ### PaymentStatus
 
-決済状態は `PaymentStatus` enum で管理する。
+決済状態は `PaymentStatus` enum で管理します。
 
 ```php
 enum PaymentStatus: string
@@ -855,17 +845,17 @@ enum PaymentStatus: string
 }
 ```
 
-決済成功の場合は `succeeded` とする。
+決済成功の場合は `succeeded` とします。
 
-決済失敗の場合は `failed` とする。
+決済失敗の場合は `failed` とします。
 
-保留の場合は`Pending` とする。
+保留の場合は`Pending`　とします。
 
 ### 面談回数の管理
 
-面談回数は `MeetingQuotaTransaction` で履歴を管理する。
+面談回数は `MeetingQuotaTransaction` で履歴を管理します。
 
-購入成功時には、以下のTransactionを作成する。
+購入成功時には、以下のTransactionを作成します。
 
 ```php
 MeetingQuotaTransaction::create([
@@ -877,26 +867,26 @@ MeetingQuotaTransaction::create([
 ]);
 ```
 
-決済成功時だけ `Purchased` を作成する。
+決済成功時だけ `Purchased` を作成します。
 
-決済失敗・キャンセルの場合は `Purchased` を作成しないため、残面談回数には反映されない。
+決済失敗・キャンセルの場合は `Purchased` を作成しないため、残面談回数には反映されません。
 
 
-### 残面談回数の集計
+- 残面談回数の集計
 
-`MeetingQuotaService` で残面談回数を計算する。
+`MeetingQuotaService` で残面談回数を計算します。
 
 ```php
 return $user->max_meetings + $sum;
 ```
 
-`Consumed`、`Refunded`、`Purchased`、`AdminGrant` のTransactionを集計し、`max_meetings` と合算する。
+`Consumed`、`Refunded`、`Purchased`、`AdminGrant` のTransactionを集計し、`max_meetings` と合算します。
 
-`granted_initial` は `max_meetings` と二重計上になるため集計対象から除外する。
+`granted_initial` は `max_meetings` と二重計上になるため集計対象から除外します。
 
 ### Stripe Checkoutの作成
 
-選択された `meeting_pack_id` を使って `MeetingPack` を取得する。
+選択された `meeting_pack_id` を使って `MeetingPack` を取得します。
 
 ```php
 $meetingPack = MeetingPack::query()
@@ -905,9 +895,9 @@ $meetingPack = MeetingPack::query()
     ->firstOrFail();
 ```
 
-Stripe Checkout Sessionを作成する。
+Stripe Checkout Sessionを作成します。
 
-このとき、購入者と面談パックをmetadataに保存する。
+このとき、購入者と面談パックをmetadataに保存します。
 
 ```php
 'metadata' => [
@@ -922,21 +912,21 @@ Stripe Checkout Sessionを作成する。
 
 「どの面談パックを」
 
-購入したのかを特定できる。
+購入したのかを特定できます。
 
 ### Stripe決済画面
 
-Checkout Sessionを作成したら、Stripeが発行したURLへリダイレクトする。
+Checkout Sessionを作成したら、Stripeが発行したURLへリダイレクトします。
 
 ```php
 return redirect()->away($session->url);
 ```
 
-アプリ側でカード情報を直接処理せず、Stripe Checkoutを利用して決済する。
+アプリ側でカード情報を直接処理せず、Stripe Checkoutを利用して決済します。
 
 ### 決済完了画面
 
-決済成功後は以下のURLへ戻る。
+決済成功後は以下のURLへ戻ります。
 
 ```text
 GET /meeting-quota/success
@@ -948,13 +938,13 @@ GET /meeting-quota/success
 meeting-quota.success
 ```
 
-Stripe Checkout Session IDをQuery Parameterとして受け取る。
+Stripe Checkout Session IDをQuery Parameterとして受け取ります。
 
 ```text
 ?session_id={CHECKOUT_SESSION_ID}
 ```
 
-完了画面からダッシュボードへ戻れる導線を用意する。
+完了画面からダッシュボードへ戻れる導線を用意します。
 
 ### 決済キャンセル
 
@@ -964,7 +954,7 @@ Stripe Checkoutでキャンセルした場合は、
 meeting-quota.checkout.select
 ```
 
-へ戻す。
+へ戻します。
 
 キャンセル時には、
 
@@ -972,11 +962,11 @@ meeting-quota.checkout.select
 * `Purchased` Transactionを作成しない
 * 残面談回数を加算しない
 
-ようにする。
+ようにします。
 
 ### Stripe Webhook
 
-Stripeから決済結果を受け取る公開エンドポイントを用意する。
+Stripeから決済結果を受け取る公開エンドポイントを用意します。
 
 ```text
 POST /webhooks/stripe
@@ -988,13 +978,13 @@ POST /webhooks/stripe
 meeting-quota.stripe
 ```
 
-WebhookではStripe-Signatureを取得する。
+WebhookではStripe-Signatureを取得します。
 
 ```php
 $signature = $request->header('Stripe-Signature');
 ```
 
-Stripe Webhook Secretを使用して署名を検証する。
+Stripe Webhook Secretを使用して署名を検証します。
 
 ```php
 $event = \Stripe\Webhook::constructEvent(
@@ -1004,7 +994,7 @@ $event = \Stripe\Webhook::constructEvent(
 );
 ```
 
-署名が不正な場合は処理を行わず、400を返す。
+署名が不正な場合は処理を行わず、400を返します。
 
 ### checkout.session.completedの処理
 
@@ -1014,7 +1004,7 @@ Webhookで、
 checkout.session.completed
 ```
 
-を受信した場合のみ購入処理を行う。
+を受信した場合のみ購入処理を行います。
 
 Stripe Sessionのmetadataから、
 
@@ -1023,13 +1013,13 @@ user_id
 meeting_pack_id
 ```
 
-を取得する。
+を取得します。
 
-そのIDを使って購入対象の受講生と面談パックを特定する。
+そのIDを使って購入対象の受講生と面談パックを特定します。
 
 ###  Paymentと面談回数の加算
 
-決済成功時には、以下を1つのDBトランザクションで実行する。
+決済成功時には、以下を1つのDBトランザクションで実行します。
 
 1. Paymentを作成
 2. `Purchased` Transactionを作成
@@ -1042,7 +1032,7 @@ DB::transaction(function () {
 });
 ```
 
-どちらかの処理が失敗した場合、両方をロールバックする。
+どちらかの処理が失敗した場合、両方をロールバックします。
 
 ### Webhookの二重処理防止
 
@@ -1054,7 +1044,7 @@ Payment::query()
     ->first();
 ```
 
-で既に処理済みか確認する。
+で既に処理済みか確認します。
 
 既にPaymentが存在する場合は、再度面談回数を加算せず、
 
@@ -1062,15 +1052,15 @@ Payment::query()
 200 OK
 ```
 
-を返す。
+を返します。
 
-これにより、Webhookが重複して送信されても面談回数が二重加算されない。
+これにより、Webhookが重複して送信されても面談回数が二重加算されません。
 
 ### Webhookの動作確認
 
-ローカル環境ではStripe CLIを使用してWebhookを転送する。
+ローカル環境ではStripe CLIを使用してWebhookを転送します。
 
-Stripe CLIを起動する。
+Stripe CLIを起動します。
 
 ```bash
 stripe listen --forward-to localhost:8000/webhooks/stripe
@@ -1082,7 +1072,7 @@ stripe listen --forward-to localhost:8000/webhooks/stripe
 whsec_xxxxxxxxxxxxxxxxx
 ```
 
-形式のWebhook Signing Secretが表示される。
+形式のWebhook Signing Secretが表示されます。
 
 この値を `.env` の、
 
@@ -1090,7 +1080,7 @@ whsec_xxxxxxxxxxxxxxxxx
 STRIPE_WEBHOOK_SECRET=
 ```
 
-に設定する。
+に設定します。
 
 設定後は、
 
@@ -1098,7 +1088,7 @@ STRIPE_WEBHOOK_SECRET=
 ./vendor/bin/sail artisan config:clear
 ```
 
-を実行する。
+を実行してください。
 
 ### Webhookの動作確認手順
 
@@ -1108,19 +1098,26 @@ STRIPE_WEBHOOK_SECRET=
 stripe listen --forward-to localhost:8000/webhooks/stripe
 ```
 
-2. 表示された `whsec_...` を `.env` に設定する。
+2. 表示された `whsec_...` を `.env` に設定します。
 
-3. Laravelの設定キャッシュをクリアする。
+3. Laravelの設定キャッシュをクリアします。
 
 ```bash
 ./vendor/bin/sail artisan config:clear
 ```
 
-4. アプリから面談パック購入画面を開く。
+4. アプリから面談パック購入画面を開いてください。
 
-5. 購入する面談パックを選択する。
+5. 購入する面談パックを選択してください。
 
-6. Stripe Checkoutでテスト決済する。
+6. Stripe Checkoutでテスト決済します。
+
+(例)
+カード番号：4242 4242 4242 4242
+有効期限：12/34
+セキュリティナンバー：123
+
+※氏名等はなんでも大丈夫です。
 
 7. Stripe CLIに、
 
@@ -1128,19 +1125,19 @@ stripe listen --forward-to localhost:8000/webhooks/stripe
 checkout.session.completed
 ```
 
-が表示されることを確認する。
+が表示されることを確認します。
 
-8. Laravelログを確認する。
+8. Laravelログを確認します。
 
 ```bash
 ./vendor/bin/sail exec laravel.test sh -c "grep 'Stripe webhook received' storage/logs/laravel.log | tail -n 20"
 ```
 
-9. `checkout.session.completed` が記録されていることを確認する。
+9. `checkout.session.completed` が記録されていることを確認します。
 
 ### Seederによる初期データ
 
-`PaymentSeeder` では固定の受講生を使用して決済履歴を作成する。
+`PaymentSeeder` では固定の受講生を使用して決済履歴を作成します。
 
 例：
 
