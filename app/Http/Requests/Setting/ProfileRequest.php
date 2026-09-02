@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Setting;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProfileRequest extends FormRequest
@@ -17,13 +20,13 @@ class ProfileRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'name'=>['required','max:50','string'],
-            'bio'=>['nullable','max:1000','string'],
+            'name' => ['required', 'max:50', 'string'],
+            'bio' => ['nullable', 'max:1000', 'string'],
         ];
     }
 
@@ -31,10 +34,10 @@ class ProfileRequest extends FormRequest
     {
         return [
             'name.required' => '氏名を入力してください',
-            'name.max'=> '50字以内で入力してください',
-            'name.string'=>'文字形式で入力してください',
-            'bio.max'=>'1000字以内で入力してください',
-            'bio.string'=>'文字形式で入力してください',
+            'name.max' => '50字以内で入力してください',
+            'name.string' => '文字形式で入力してください',
+            'bio.max' => '1000字以内で入力してください',
+            'bio.string' => '文字形式で入力してください',
         ];
     }
 }

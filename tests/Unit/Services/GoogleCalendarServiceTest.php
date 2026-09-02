@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
+
 /**
  * @group external-api
  */
@@ -196,7 +197,7 @@ final class GoogleCalendarServiceTest extends TestCase
         $this->assertSame([], $events);
     }
 
-    public function test連携済みならGoogleCalendarに面談を作成する(): void
+    public function test連携済みなら_google_calendarに面談を作成する(): void
     {
         $coach = User::factory()->coach()->create();
 
@@ -235,7 +236,7 @@ final class GoogleCalendarServiceTest extends TestCase
         );
     }
 
-    public function test未連携ならGoogleCalendarイベントを作成しない(): void
+    public function test未連携なら_google_calendarイベントを作成しない(): void
     {
         $coach = User::factory()->coach()->create();
 
@@ -255,7 +256,7 @@ final class GoogleCalendarServiceTest extends TestCase
         $this->assertNull($eventId);
     }
 
-    public function testGoogleCalendarイベントを削除する(): void
+    public function test_google_calendarイベントを削除する(): void
     {
         $coach = User::factory()->coach()->create();
 
@@ -288,7 +289,7 @@ final class GoogleCalendarServiceTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testイベントIDがなければ削除しない(): void
+    public function testイベント_i_dがなければ削除しない(): void
     {
         $coach = User::factory()->coach()->create();
 
@@ -309,7 +310,7 @@ final class GoogleCalendarServiceTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function testisConnectedは連携状態を返す(): void
+    public function testis_connectedは連携状態を返す(): void
     {
         $connectedCoach = User::factory()->coach()->create();
         $unconnectedCoach = User::factory()->coach()->create();
@@ -338,11 +339,8 @@ final class GoogleCalendarServiceTest extends TestCase
             'access_token' => 'access-token',
             'refresh_token' => 'refresh-token',
             'expires_at' => $expiresAt,
-            'refresh_token_expires_at' =>
-                $refreshTokenExpiresAt
+            'refresh_token_expires_at' => $refreshTokenExpiresAt
                 ?? now()->addDays(30),
         ]);
     }
-
-
 }

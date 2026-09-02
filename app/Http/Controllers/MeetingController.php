@@ -5,43 +5,28 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\EnrollmentStatus;
-use App\Enums\MeetingStatus;
-use App\Exceptions\MeetingQuota\InsufficientMeetingQuotaException;
-use App\Exceptions\Mentoring\MeetingAlreadyStartedException;
-use App\Exceptions\Mentoring\MeetingNoAvailableCoachException;
-use App\Exceptions\Mentoring\MeetingStatusTransitionException;
 use App\Http\Requests\Meeting\AvailabilityRequest;
 use App\Http\Requests\Meeting\IndexAsCoachRequest;
 use App\Http\Requests\Meeting\IndexRequest;
 use App\Http\Requests\Meeting\StoreRequest;
 use App\Http\Requests\Meeting\UpsertMemoRequest;
-use App\Models\Certification;
 use App\Models\Enrollment;
 use App\Models\Meeting;
-use App\Models\MeetingMemo;
-use App\Models\User;
-use App\Services\MeetingAvailabilityService;
 use App\Services\MeetingQuotaService;
-use App\Services\CoachMeetingLoadService;
-use App\UseCases\MeetingQuota\ConsumeQuotaAction;
-use App\UseCases\MeetingQuota\RefundQuotaAction;
-use Illuminate\Support\Carbon;
-use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
-use App\Notifications\MeetingReservationNotification;
+use App\UseCases\Meeting\CancelAction;
+use App\UseCases\Meeting\CreateAction;
+use App\UseCases\Meeting\CreateFallbackAction;
+use App\UseCases\Meeting\FindAvailableAction;
 use App\UseCases\Meeting\IndexAction;
 use App\UseCases\Meeting\IndexAsCoachAction;
 use App\UseCases\Meeting\ShowAction;
-use App\UseCases\Meeting\CreateAction;
 use App\UseCases\Meeting\StoreAction;
-use App\UseCases\Meeting\CreateFallbackAction;
-use App\UseCases\Meeting\CancelAction;
 use App\UseCases\Meeting\UpsertMemoAction;
-use App\UseCases\Meeting\FindAvailableAction;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Carbon;
+use Illuminate\View\View;
+
 /**
  * 1on1 面談予約 (Meeting) の HTTP エントリポイント。
  *
@@ -55,8 +40,7 @@ class MeetingController extends Controller
     /**
      * 受講生本人の面談一覧。filter (upcoming/past/all) クエリで履歴を切り替える。
      */
-
-    public function index(IndexRequest $request, MeetingQuotaService $meetingQuota,IndexAction $action): View
+    public function index(IndexRequest $request, MeetingQuotaService $meetingQuota, IndexAction $action): View
     {
         $filter = $request->validated('filter') ?? 'upcoming';
 
@@ -72,14 +56,14 @@ class MeetingController extends Controller
     /**
      * コーチ宛の面談一覧。担当受講生 / 受講登録での絞り込みを併せて提供する。
      */
-    public function indexAsCoach(IndexAsCoachRequest $request,indexAsCoachAction $action): View
+    public function indexAsCoach(IndexAsCoachRequest $request, IndexAsCoachAction $action): View
     {
         $filters = $request->validated();
         $filter = $filters['filter'] ?? 'upcoming';
         $studentId = $filters['student'] ?? null;
         $enrollmentId = $filters['enrollment'] ?? null;
 
-        $meetings = $action($request->user(), $filter,$studentId,$enrollmentId);
+        $meetings = $action($request->user(), $filter, $studentId, $enrollmentId);
 
         return view('meeting.coach.index', [
             'meetings' => $meetings,
@@ -92,20 +76,21 @@ class MeetingController extends Controller
     /**
      * 面談詳細(当事者共通)。Policy で coach/student の閲覧範囲を絞る。
      */
-    public function show(Meeting $meeting,ShowAction $action): View {
-    $this->authorize('view', $meeting);
+    public function show(Meeting $meeting, ShowAction $action): View
+    {
+        $this->authorize('view', $meeting);
 
-    $meeting = $action($meeting);
+        $meeting = $action($meeting);
 
-    return view('meeting.show', [
-        'meeting' => $meeting,
-    ]);
-}
+        return view('meeting.show', [
+            'meeting' => $meeting,
+        ]);
+    }
 
     /**
      * 予約画面(受講生): URL に Enrollment を含む正規ルートで表示する。
      */
-    public function create(Enrollment $enrollment, MeetingQuotaService $meetingQuota,CreateAction $action): View
+    public function create(Enrollment $enrollment, MeetingQuotaService $meetingQuota, CreateAction $action): View
     {
         $this->authorize('create', Meeting::class);
 
@@ -128,7 +113,7 @@ class MeetingController extends Controller
     public function createFallback(CreateFallbackAction $action): View
     {
         $user = auth()->user();
-        
+
         $enrollments = $action($user);
 
         return view('meeting.empty-state', [
@@ -141,76 +126,77 @@ class MeetingController extends Controller
      * 同時刻 race condition は (coach_id, scheduled_at) UNIQUE 違反として検知し 409 へ変換する。
      */
     public function store(
-    Enrollment $enrollment,
-    StoreRequest $request,
-    StoreAction $action,
-): RedirectResponse {
-    $meeting = $action(
-        $enrollment,
-        $request->user(),
-        $request->validated(),
-    );
+        Enrollment $enrollment,
+        StoreRequest $request,
+        StoreAction $action,
+    ): RedirectResponse {
+        $meeting = $action(
+            $enrollment,
+            $request->user(),
+            $request->validated(),
+        );
 
-    return redirect()
-        ->route('meetings.show', $meeting)
-        ->with('success', '面談を予約しました。');
-}
-
+        return redirect()
+            ->route('meetings.show', $meeting)
+            ->with('success', '面談を予約しました。');
+    }
 
     /**
      * 当事者(受講生 or コーチ)による面談キャンセル。
      * reserved かつ開始前のみキャンセル可。消費済の面談回数 1 回分を返却する。
      */
-    public function cancel(Meeting $meeting,CancelAction $action): RedirectResponse {
-    $this->authorize('cancel', $meeting);
+    public function cancel(Meeting $meeting, CancelAction $action): RedirectResponse
+    {
+        $this->authorize('cancel', $meeting);
 
-    $actor = auth()->user();
+        $actor = auth()->user();
 
-    $action(
-        $meeting,
-        $actor
-    );
+        $action(
+            $meeting,
+            $actor
+        );
 
-    return redirect()
-        ->route('meetings.show', $meeting)
-        ->with('success', '面談をキャンセルしました。面談回数を返却しました。');
-}
+        return redirect()
+            ->route('meetings.show', $meeting)
+            ->with('success', '面談をキャンセルしました。面談回数を返却しました。');
+    }
 
     /**
      * 担当コーチによる面談メモ作成・更新。canceled の面談にはメモを残せない。
      */
+    public function upsertMemo(Meeting $meeting, UpsertMemoRequest $request, UpsertMemoAction $action): RedirectResponse
+    {
+        $body = $request->validated('body');
 
-    public function upsertMemo(Meeting $meeting,UpsertMemoRequest $request,UpsertMemoAction $action): RedirectResponse {
-    $body = $request->validated('body');
+        $this->authorize('upsertMemo', $meeting);
 
-    $this->authorize('upsertMemo', $meeting);
+        $action($meeting, $body);
 
-    $action($meeting, $body);
-
-    return redirect()
-        ->route('meetings.show', $meeting)
-        ->with('success', '面談メモを保存しました。');
-}
+        return redirect()
+            ->route('meetings.show', $meeting)
+            ->with('success', '面談メモを保存しました。');
+    }
 
     /**
      * 予約画面が呼ぶ空き枠取得 JSON エンドポイント。
      */
-    public function fetchAvailability(Enrollment $enrollment,AvailabilityRequest $request,FindAvailableAction $action): JsonResponse {
-    $slots = $action(
-        $enrollment,
-        $request->validated('date')
-    );
-
-    return response()->json([
-        'date' => Carbon::parse(
+    public function fetchAvailability(Enrollment $enrollment, AvailabilityRequest $request, FindAvailableAction $action): JsonResponse
+    {
+        $slots = $action(
+            $enrollment,
             $request->validated('date')
-        )->toDateString(),
+        );
 
-        'slots' => $slots->map(fn (array $slot) => [
-            'slot_start' => $slot['slot_start']->toIso8601String(),
-            'slot_end' => $slot['slot_end']->toIso8601String(),
-            'available_coach_count' => $slot['available_coach_count'],
-        ])->all(),
-    ]);
-}
+        return response()->json([
+            'date' => Carbon::parse(
+                $request->validated('date')
+            )->toDateString(),
+
+            'slots' => $slots->map(fn (array $slot) => [
+                'slot_start' => $slot['slot_start']->toIso8601String(),
+                'slot_end' => $slot['slot_end']->toIso8601String(),
+                'available_coach_count' => $slot['available_coach_count'],
+            ])->all(),
+        ]);
+    }
 }

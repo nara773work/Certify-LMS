@@ -86,7 +86,7 @@ class CertificationController extends Controller
 
     public function edit(Certification $certification): View
     {
-        
+
         $this->authorize('update', $certification);
 
         return view('certification.management.edit', [

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\UseCases\Learning;
 
+use App\Enums\CertificationStatus;
 use App\Enums\EnrollmentStatus;
 use App\Models\Enrollment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
-use App\Enums\CertificationStatus;
 
 /**
  * 教材ブラウジング 1 階層目 (/learning) のフォールバック UI 用データを準備する Action。
@@ -34,12 +34,12 @@ final class IndexAction
                 EnrollmentStatus::Learning->value,
                 EnrollmentStatus::Passed->value,
             ])
-        ->whereHas('certification', function ($query) {
-            $query->where(
-                'status',
-                CertificationStatus::Published->value
-            );
-        })
+            ->whereHas('certification', function ($query) {
+                $query->where(
+                    'status',
+                    CertificationStatus::Published->value
+                );
+            })
             ->with(['certification.category'])
             ->orderBy('current_term')
             ->get();

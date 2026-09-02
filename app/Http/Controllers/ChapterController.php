@@ -35,15 +35,15 @@ class ChapterController extends Controller
     }
 
     public function store(Part $part, StoreRequest $request, StoreAction $action): RedirectResponse
-{
-    $this->authorize('create', $part->certification);
+    {
+        $this->authorize('create', $part->certification);
 
-    $chapter = $action($part, $request->validated());
+        $chapter = $action($part, $request->validated());
 
-    return redirect()
-        ->route('admin.chapters.show', $chapter)
-        ->with('success', 'Chapterを作成しました。');
-}
+        return redirect()
+            ->route('admin.chapters.show', $chapter)
+            ->with('success', 'Chapterを作成しました。');
+    }
 
     public function update(Chapter $chapter, UpdateRequest $request, UpdateAction $action): RedirectResponse
     {

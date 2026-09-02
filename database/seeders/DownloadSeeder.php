@@ -11,6 +11,7 @@ use App\Models\Certificate;
 use App\Models\Certification;
 use App\Models\Enrollment;
 use App\Models\User;
+use App\Services\CertificatePdfService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -37,13 +38,6 @@ final class DownloadSeeder extends Seeder
             'student-graduated2@certify-lms.test'
         )->firstOrFail();
 
-        /*
-         * 資格A
-         *
-         * 花子 → 日商簿記 2 級
-         *
-         * 担当コーチは CertificationSeeder で設定する。
-         */
         $certification1 = Certification::query()
             ->where(
                 'status',
@@ -52,21 +46,6 @@ final class DownloadSeeder extends Seeder
             ->where('name', '日商簿記 2 級')
             ->first();
 
-        if ($certification1 === null) {
-            $this->command?->error(
-                'DownloadSeeder: 公開済みの「日商簿記 2 級」が見つかりません。'
-            );
-
-            return;
-        }
-
-        /*
-         * 資格B
-         *
-         * 一郎 → 基本情報技術者試験
-         *
-         * 担当コーチは CertificationSeeder で設定する。
-         */
         $certification2 = Certification::query()
             ->where(
                 'status',
@@ -74,14 +53,6 @@ final class DownloadSeeder extends Seeder
             )
             ->where('name', '基本情報技術者試験')
             ->first();
-
-        if ($certification2 === null) {
-            $this->command?->error(
-                'DownloadSeeder: 公開済みの「基本情報技術者試験」が見つかりません。'
-            );
-
-            return;
-        }
 
         /*
          * Enrollment
@@ -99,13 +70,6 @@ final class DownloadSeeder extends Seeder
             $certification2
         );
 
-        /*
-         * Certificate + PDF
-         *
-         * Certificateがなければ作成。
-         * Certificateがあれば再利用。
-         * PDF実体がなければ生成。
-         */
         $certificate1 = $this->createCertificateWithPdf(
             $enrollment1
         );
@@ -124,25 +88,6 @@ final class DownloadSeeder extends Seeder
             '一郎'
         );
 
-        $this->command?->info(
-            'DownloadSeeder: ダウンロード確認用の修了証2件を投入しました。'
-        );
-
-        $this->command?->info(
-            '花子 → ' . $certification1->name
-        );
-
-        $this->command?->info(
-            '一郎 → ' . $certification2->name
-        );
-
-        $this->command?->info(
-            '担当コーチは CertificationSeeder の設定を使用します。'
-        );
-
-        $this->command?->info(
-            'PDF実体: OK'
-        );
     }
 
     /**
@@ -161,7 +106,7 @@ final class DownloadSeeder extends Seeder
         $passedAt = now()->subDays(7);
 
         if ($enrollment === null) {
-            $enrollment = new Enrollment();
+            $enrollment = new Enrollment;
 
             $enrollment->user_id = $student->id;
             $enrollment->certification_id = $certification->id;
@@ -190,7 +135,7 @@ final class DownloadSeeder extends Seeder
             ->first();
 
         if ($certificate === null) {
-            $certificate = new Certificate();
+            $certificate = new Certificate;
 
             $certificate->id = (string) Str::ulid();
             $certificate->user_id = $enrollment->user_id;
@@ -198,7 +143,7 @@ final class DownloadSeeder extends Seeder
             $certificate->certification_id = $enrollment->certification_id;
             $certificate->issued_at = now();
             $certificate->pdf_path =
-                'certificates/' . $certificate->id . '.pdf';
+                'certificates/'.$certificate->id.'.pdf';
 
             $certificate->save();
         }
@@ -209,7 +154,7 @@ final class DownloadSeeder extends Seeder
                 $certificate->pdf_path
             )
         ) {
-            app(\App\Services\CertificatePdfService::class)
+            app(CertificatePdfService::class)
                 ->generate(
                     $certificate,
                     $certificate->pdf_path
@@ -226,7 +171,7 @@ final class DownloadSeeder extends Seeder
         ) {
             throw new \RuntimeException(
                 '修了証PDFの生成に失敗しました。'
-                . ' enrollment_id=' . $enrollment->id
+                .' enrollment_id='.$enrollment->id
             );
         }
 
@@ -245,8 +190,8 @@ final class DownloadSeeder extends Seeder
             || ! Storage::disk('local')->exists($pdfPath)
         ) {
             throw new \RuntimeException(
-                $studentName . 'の修了証PDFが実体化されていません。'
-                . ' pdf_path=' . ($pdfPath ?? 'null')
+                $studentName.'の修了証PDFが実体化されていません。'
+                .' pdf_path='.($pdfPath ?? 'null')
             );
         }
     }

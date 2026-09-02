@@ -185,9 +185,7 @@ class Enrollment extends Model
     }
 
     public function notes(): HasMany
-{
-    return $this->hasMany(EnrollmentNote::class);
-}
-
-
+    {
+        return $this->hasMany(EnrollmentNote::class);
+    }
 }

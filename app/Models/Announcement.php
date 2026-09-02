@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use App\Enums\AnnouncementTargetType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Enums\AnnouncementTargetType;
 
 class Announcement extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'title',
         'body',
@@ -28,7 +31,7 @@ class Announcement extends Model
     }
 
     public function createdBy()
-{
-    return $this->belongsTo(User::class, 'created_by');
-}
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

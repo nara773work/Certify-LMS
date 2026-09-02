@@ -7,9 +7,9 @@ namespace App\UseCases\Enrollment;
 use App\Enums\EnrollmentStatus;
 use App\Exceptions\Enrollment\EnrollmentInvalidTransitionException;
 use App\Models\Enrollment;
+use App\Services\AdminDashboardCacheService;
 use App\Services\DefaultEnrollmentService;
 use Illuminate\Support\Facades\DB;
-use App\Services\AdminDashboardCacheService;
 
 /**
  * 受講生による受講解除(SoftDelete) Action。learning 状態の Enrollment のみ削除可。
@@ -20,9 +20,9 @@ use App\Services\AdminDashboardCacheService;
 final class DestroyAction
 {
     public function __construct(
-    private readonly DefaultEnrollmentService $defaultEnrollmentService,
-    private readonly AdminDashboardCacheService $adminDashboardCache,
-) {}
+        private readonly DefaultEnrollmentService $defaultEnrollmentService,
+        private readonly AdminDashboardCacheService $adminDashboardCache,
+    ) {}
 
     /**
      * @throws EnrollmentInvalidTransitionException
@@ -34,13 +34,13 @@ final class DestroyAction
         }
 
         DB::transaction(function () use ($enrollment) {
-    $user = $enrollment->user;
+            $user = $enrollment->user;
 
-    $enrollment->delete();
+            $enrollment->delete();
 
-    $this->defaultEnrollmentService->resolveAfterStatusChange($user, $enrollment);
-});
+            $this->defaultEnrollmentService->resolveAfterStatusChange($user, $enrollment);
+        });
 
-$this->adminDashboardCache->forget();
+        $this->adminDashboardCache->forget();
     }
 }

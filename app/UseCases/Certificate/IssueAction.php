@@ -17,8 +17,7 @@ final class IssueAction
 {
     public function __construct(
         private CertificatePdfService $certificatePdfService,
-    ) {
-    }
+    ) {}
 
     /**
      * 修了証を発行する。
@@ -53,7 +52,7 @@ final class IssueAction
                     )
                 ) {
                     $path = $certificate->pdf_path
-                        ?? 'certificates/' . Str::ulid() . '.pdf';
+                        ?? 'certificates/'.Str::ulid().'.pdf';
 
                     $certificate->pdf_path = $path;
                     $certificate->save();
@@ -79,13 +78,13 @@ final class IssueAction
                 $status !== EnrollmentStatus::Passed->value
                 || $enrollment->passed_at === null
             ) {
-                throw new EnrollmentNotPassedException();
+                throw new EnrollmentNotPassedException;
             }
 
             /*
              * Certificateを新規作成
              */
-            $path = 'certificates/' . Str::ulid() . '.pdf';
+            $path = 'certificates/'.Str::ulid().'.pdf';
 
             $certificate = Certificate::create([
                 'user_id' => $enrollment->user_id,

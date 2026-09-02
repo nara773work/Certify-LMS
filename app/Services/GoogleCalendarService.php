@@ -133,6 +133,7 @@ class GoogleCalendarService
      * @template T
      *
      * @param callable(): T $callback
+     *
      * @return T
      */
     private function executeWithRefresh(

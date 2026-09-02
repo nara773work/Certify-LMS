@@ -12,7 +12,7 @@ class DownloadController extends Controller
     public function download(Certificate $certificate)
     {
         $this->authorize('download', $certificate);
-        
+
         abort_unless(
             Storage::disk('local')->exists($certificate->pdf_path),
             404

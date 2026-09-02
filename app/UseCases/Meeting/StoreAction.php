@@ -12,13 +12,13 @@ use App\Models\Enrollment;
 use App\Models\Meeting;
 use App\Models\User;
 use App\Notifications\MeetingReservationNotification;
+use App\Services\CoachMeetingLoadService;
 use App\Services\GoogleCalendarService;
 use App\Services\MeetingAvailabilityService;
 use App\Services\MeetingQuotaService;
 use App\UseCases\MeetingQuota\ConsumeQuotaAction;
-use App\Services\CoachMeetingLoadService;
-use Illuminate\Support\Carbon;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -30,8 +30,7 @@ class StoreAction
         private ConsumeQuotaAction $consumeAction,
         private GoogleCalendarService $googleCalendarService,
         private CoachMeetingLoadService $coachLoadService,
-    ) {
-    }
+    ) {}
 
     public function __invoke(
         Enrollment $enrollment,
@@ -83,18 +82,18 @@ class StoreAction
                     'meeting_url_snapshot' => $coach->meeting_url,
                 ]);
 
-                        if ($this->googleCalendarService->isConnected(
-            (string) $meeting->coach_id
-        )) {
-            $eventId = $this->googleCalendarService->createEvent($meeting);
+                if ($this->googleCalendarService->isConnected(
+                    (string) $meeting->coach_id
+                )) {
+                    $eventId = $this->googleCalendarService->createEvent($meeting);
 
-            if ($eventId !== null) {
-                $meeting->update([
-                    'google_calendar_event_id' => $eventId,
-                ]);
-            }
-        }
-          
+                    if ($eventId !== null) {
+                        $meeting->update([
+                            'google_calendar_event_id' => $eventId,
+                        ]);
+                    }
+                }
+
             } catch (UniqueConstraintViolationException $e) {
                 throw new MeetingNoAvailableCoachException($e);
             }

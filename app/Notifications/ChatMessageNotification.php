@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
+use App\Models\ChatMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\ChatMessage;
 
 class ChatMessageNotification extends Notification implements ShouldQueue
 {
@@ -20,10 +21,10 @@ class ChatMessageNotification extends Notification implements ShouldQueue
      * Create a new notification instance.
      */
     public function __construct(
-    public ChatMessage $chatMessage,
-) {
-    $this->afterCommit();
-}
+        public ChatMessage $chatMessage,
+    ) {
+        $this->afterCommit();
+    }
 
     /**
      * Get the notification's delivery channels.

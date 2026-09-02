@@ -12,8 +12,7 @@ class FindAvailableAction
 {
     public function __construct(
         private MeetingAvailabilityService $availabilityService,
-    ) {
-    }
+    ) {}
 
     public function __invoke(
         Enrollment $enrollment,

@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\ContentStatus;
 use App\Enums\EnrollmentStatus;
 use App\Enums\UserRole;
 use App\Http\Requests\Enrollment\StoreRequest;
 use App\Http\Requests\Enrollment\UpdateExamDateRequest;
 use App\Models\Certification;
-use App\Models\Chapter;
 use App\Models\Enrollment;
-use App\Models\Part;
-use App\Services\Learning\ProgressSummary;
+use App\Services\Learning\ProgressSummaryService;
 use App\UseCases\Enrollment\DestroyAction;
 use App\UseCases\Enrollment\IndexAction;
 use App\UseCases\Enrollment\ResumeAction;
@@ -22,9 +19,7 @@ use App\UseCases\Enrollment\StoreAction;
 use App\UseCases\Enrollment\UpdateExamDateAction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
-use App\Services\Learning\ProgressSummaryService;
 
 /**
  * 受講登録 Controller。3 ロール共通の閲覧導線(index / show)を提供する。
@@ -98,37 +93,37 @@ class EnrollmentController extends Controller
     }
 
     public function show(
-    Enrollment $enrollment,
-    ShowAction $action,
-    ProgressSummaryService $progressSummaryService,
-): View {
-    $this->authorize('view', $enrollment);
+        Enrollment $enrollment,
+        ShowAction $action,
+        ProgressSummaryService $progressSummaryService,
+    ): View {
+        $this->authorize('view', $enrollment);
 
-    $action($enrollment);
+        $action($enrollment);
 
-    $user = auth()->user();
-    $progress = null;
+        $user = auth()->user();
+        $progress = null;
 
-    // staff(admin / coach)時のみ進捗集計を行う
-    if (in_array($user->role, [UserRole::Coach, UserRole::Admin], true)) {
-        $enrollment->loadMissing(['user']);
+        // staff(admin / coach)時のみ進捗集計を行う
+        if (in_array($user->role, [UserRole::Coach, UserRole::Admin], true)) {
+            $enrollment->loadMissing(['user']);
 
-        $progress = $progressSummaryService->summarize($enrollment);
-    }
+            $progress = $progressSummaryService->summarize($enrollment);
+        }
 
-    if ($user->role === UserRole::Admin) {
-        $enrollment->loadMissing([
-            'statusLogs' => fn ($q) => $q
-                ->with('changedBy')
-                ->orderByDesc('changed_at'),
+        if ($user->role === UserRole::Admin) {
+            $enrollment->loadMissing([
+                'statusLogs' => fn ($q) => $q
+                    ->with('changedBy')
+                    ->orderByDesc('changed_at'),
+            ]);
+        }
+
+        return view('enrollment.show', [
+            'enrollment' => $enrollment,
+            'progress' => $progress,
         ]);
     }
-
-    return view('enrollment.show', [
-        'enrollment' => $enrollment,
-        'progress' => $progress,
-    ]);
-}
 
     public function store(StoreRequest $request, StoreAction $action): RedirectResponse
     {

@@ -92,6 +92,4 @@ class Plan extends Model
     {
         return $query->orderBy('sort_order')->orderByDesc('created_at');
     }
-
-    
 }

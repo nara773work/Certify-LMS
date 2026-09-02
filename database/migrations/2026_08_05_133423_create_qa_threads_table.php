@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,7 +18,7 @@ return new class extends Migration
             $table->foreignUlid('certification_id')
                 ->constrained()
                 ->cascadeOnDelete();
-                //資格情報が削除されるとその資格の質問は削除される
+            // 資格情報が削除されるとその資格の質問は削除される
             $table->string('title');
             $table->text('body');
             $table->string('status')->default('open');
@@ -24,7 +26,7 @@ return new class extends Migration
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
-                //ユーザーが退出しても質問は削除されない
+            // ユーザーが退出しても質問は削除されない
             $table->timestamps();
         });
     }

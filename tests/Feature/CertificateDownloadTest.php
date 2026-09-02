@@ -7,7 +7,9 @@ namespace Tests\Feature;
 use App\Models\Certificate;
 use App\Models\Enrollment;
 use App\Models\User;
+use Database\Seeders\DownloadSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 final class CertificateDownloadTest extends TestCase
@@ -22,7 +24,7 @@ final class CertificateDownloadTest extends TestCase
         $this->seed();
 
         // ダウンロード確認用データを投入
-        $this->seed(\Database\Seeders\DownloadSeeder::class);
+        $this->seed(DownloadSeeder::class);
     }
 
     /**
@@ -52,7 +54,7 @@ final class CertificateDownloadTest extends TestCase
         $this->assertNotNull($certificate->pdf_path);
 
         $this->assertFileExists(
-            storage_path('app/' . $certificate->pdf_path)
+            storage_path('app/'.$certificate->pdf_path)
         );
 
         $response = $this->actingAs($student)
@@ -104,7 +106,7 @@ final class CertificateDownloadTest extends TestCase
         $this->assertNotNull($certificate->pdf_path);
 
         $this->assertFileExists(
-            storage_path('app/' . $certificate->pdf_path)
+            storage_path('app/'.$certificate->pdf_path)
         );
 
         $response = $this->actingAs($coach)
@@ -178,13 +180,13 @@ final class CertificateDownloadTest extends TestCase
         )->pluck('id');
 
         $certificates = Certificate::whereIn(
-    'user_id',
-    $students
-)->get()->filter(function (Certificate $certificate) {
-    return $certificate->pdf_path !== null
-        && \Illuminate\Support\Facades\Storage::disk('local')
-            ->exists($certificate->pdf_path);
-})->values();
+            'user_id',
+            $students
+        )->get()->filter(function (Certificate $certificate) {
+            return $certificate->pdf_path !== null
+                && Storage::disk('local')
+                    ->exists($certificate->pdf_path);
+        })->values();
 
         $this->assertGreaterThanOrEqual(
             2,
@@ -195,7 +197,7 @@ final class CertificateDownloadTest extends TestCase
             $this->assertNotNull($certificate->pdf_path);
 
             $this->assertFileExists(
-                storage_path('app/' . $certificate->pdf_path)
+                storage_path('app/'.$certificate->pdf_path)
             );
 
             $response = $this->actingAs($admin)
@@ -246,7 +248,7 @@ final class CertificateDownloadTest extends TestCase
         $this->assertNotNull($certificate->pdf_path);
 
         $this->assertFileExists(
-            storage_path('app/' . $certificate->pdf_path)
+            storage_path('app/'.$certificate->pdf_path)
         );
 
         $response = $this->actingAs($student)

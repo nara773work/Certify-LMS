@@ -16,7 +16,7 @@ class UpsertMemoAction
         string $body,
     ): MeetingMemo {
         if ($meeting->status === MeetingStatus::Canceled->value) {
-            throw new MeetingStatusTransitionException();
+            throw new MeetingStatusTransitionException;
         }
 
         return MeetingMemo::updateOrCreate(

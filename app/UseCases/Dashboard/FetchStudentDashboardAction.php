@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace App\UseCases\Dashboard;
 
-use App\Enums\CertificationStatus;
 use App\Enums\ContentStatus;
 use App\Enums\EnrollmentStatus;
 use App\Enums\MeetingStatus;
 use App\Http\Controllers\DashboardController;
 use App\Models\Enrollment;
 use App\Models\EnrollmentGoal;
+use App\Models\LearningSession;
 use App\Models\Meeting;
 use App\Models\MeetingPack;
 use App\Models\User;
 use App\Services\CompletionEligibilityService;
 use App\Services\Contracts\WeaknessAnalysisServiceContract;
+use App\Services\Learning\ProgressSummaryService;
 use App\Services\LearningCalendarService;
 use App\Services\LearningHourTargetService;
 use App\Services\MeetingQuotaService;
@@ -28,8 +29,6 @@ use App\UseCases\Dashboard\ViewModels\StudentEnrollmentCard;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
-use App\Services\Learning\ProgressSummaryService;
-use App\Models\LearningSession;
 
 /**
  * 受講生ダッシュボードの ViewModel を組み立てる Action。
@@ -83,26 +82,27 @@ final class FetchStudentDashboardAction
     }
 
     /**
- * 受講生の修了済み Enrollment を取得する。
- *
- * 修了済みは受講中カードとは分離し、修了日時の新しい順に並べる。
- * 修了証 PDF リンク描画のため certificate も eager load する。
- *
- * @return Collection<int, Enrollment>
- */
-private function buildPassedEnrollments(User $student): Collection
-{
-    return Enrollment::query()
-        ->where('user_id', $student->id)
-        ->where('status', EnrollmentStatus::Passed)
-        ->with([
-            'certification',
-            'certificate',
-        ])
-        ->orderByDesc('passed_at')
-        ->get()
-        ->values();
-}
+     * 受講生の修了済み Enrollment を取得する。
+     *
+     * 修了済みは受講中カードとは分離し、修了日時の新しい順に並べる。
+     * 修了証 PDF リンク描画のため certificate も eager load する。
+     *
+     * @return Collection<int, Enrollment>
+     */
+    private function buildPassedEnrollments(User $student): Collection
+    {
+        return Enrollment::query()
+            ->where('user_id', $student->id)
+            ->where('status', EnrollmentStatus::Passed)
+            ->with([
+                'certification',
+                'certificate',
+            ])
+            ->orderByDesc('passed_at')
+            ->get()
+            ->values();
+    }
+
     private function buildPlanInfo(User $student): PlanInfoPanel
     {
         return new PlanInfoPanel(
@@ -117,38 +117,38 @@ private function buildPassedEnrollments(User $student): Collection
     }
 
     private function buildCard(
-    Enrollment $enrollment,
-    ?float $progressRatio,
-): StudentEnrollmentCard {
-    return new StudentEnrollmentCard(
-        enrollmentId: $enrollment->id,
-        certificationName: $enrollment->certification->name,
-        status: $enrollment->status,
-        examDate: $enrollment->exam_date,
-        daysUntilExam: $enrollment->exam_date
-            ? now()->startOfDay()->diffInDays(
-                $enrollment->exam_date->startOfDay(),
-                false
-            )
-            : null,
-        progressRatio: $progressRatio,
-        currentTerm: $enrollment->current_term,
-        learningHourTarget: $this->safe(
-            fn () => $this->hourTarget->compute($enrollment)
-        ),
-        passProbabilityBand: $this->safe(
-            fn () => $this->weakness->getPassProbabilityBand($enrollment)
-        ),
-        weakCategories: $this->safe(
-            fn () => $this->weakness
-                ->getWeakCategories($enrollment)
-                ->take(3)
-        ) ?? collect(),
-        canReceiveCertificate: $this->safe(
-            fn () => $this->completion->isEligible($enrollment)
-        ) ?? false,
-    );
-}
+        Enrollment $enrollment,
+        ?float $progressRatio,
+    ): StudentEnrollmentCard {
+        return new StudentEnrollmentCard(
+            enrollmentId: $enrollment->id,
+            certificationName: $enrollment->certification->name,
+            status: $enrollment->status,
+            examDate: $enrollment->exam_date,
+            daysUntilExam: $enrollment->exam_date
+                ? now()->startOfDay()->diffInDays(
+                    $enrollment->exam_date->startOfDay(),
+                    false
+                )
+                : null,
+            progressRatio: $progressRatio,
+            currentTerm: $enrollment->current_term,
+            learningHourTarget: $this->safe(
+                fn () => $this->hourTarget->compute($enrollment)
+            ),
+            passProbabilityBand: $this->safe(
+                fn () => $this->weakness->getPassProbabilityBand($enrollment)
+            ),
+            weakCategories: $this->safe(
+                fn () => $this->weakness
+                    ->getWeakCategories($enrollment)
+                    ->take(3)
+            ) ?? collect(),
+            canReceiveCertificate: $this->safe(
+                fn () => $this->completion->isEligible($enrollment)
+            ) ?? false,
+        );
+    }
 
     /**
      * @param \Illuminate\Database\Eloquent\Collection<int, Enrollment> $learningEnrollments
@@ -156,23 +156,20 @@ private function buildPassedEnrollments(User $student): Collection
      * @return Collection<int, StudentEnrollmentCard>
      */
     private function buildEnrollmentCards($learningEnrollments): Collection
-{
-    $progressMap = $this->safe(
-        fn () => $this->progressSummaryService
-            ->batchSummarize($learningEnrollments)
-    ) ?? [];
+    {
+        $progressMap = $this->safe(
+            fn () => $this->progressSummaryService
+                ->batchSummarize($learningEnrollments)
+        ) ?? [];
 
-    return $learningEnrollments
-        ->map(fn (Enrollment $enrollment) =>
-            $this->buildCard(
+        return $learningEnrollments
+            ->map(fn (Enrollment $enrollment) => $this->buildCard(
                 $enrollment,
                 $progressMap[$enrollment->id] ?? null
             )
-        )
-        ->values();
-}
-
-    
+            )
+            ->values();
+    }
 
     /**
      * 同資格の公開 Section を Part → Chapter → Section の表示順に並べ、指定 Section 以降で最初の未読を返す。
@@ -250,64 +247,63 @@ private function buildPassedEnrollments(User $student): Collection
     }
 
     private function buildResumeCard(User $student): ?ResumeCard
-{
-    $session = LearningSession::query()
-        ->whereHas('enrollment', function ($query) use ($student): void {
-            $query
-                ->where('user_id', $student->id)
-                ->where('status', EnrollmentStatus::Learning->value);
-        })
-        ->with([
-            'enrollment.certification',
-            'section.chapter.part',
-        ])
-        ->orderByDesc('started_at')
-        ->first();
+    {
+        $session = LearningSession::query()
+            ->whereHas('enrollment', function ($query) use ($student): void {
+                $query
+                    ->where('user_id', $student->id)
+                    ->where('status', EnrollmentStatus::Learning->value);
+            })
+            ->with([
+                'enrollment.certification',
+                'section.chapter.part',
+            ])
+            ->orderByDesc('started_at')
+            ->first();
 
-    if ($session === null || $session->section === null) {
-        return null;
-    }
+        if ($session === null || $session->section === null) {
+            return null;
+        }
 
-    $enrollment = $session->enrollment;
-    $section = $session->section;
+        $enrollment = $session->enrollment;
+        $section = $session->section;
 
-    $isCompleted = $enrollment->sectionProgresses()
-        ->where('section_id', $section->id)
-        ->exists();
+        $isCompleted = $enrollment->sectionProgresses()
+            ->where('section_id', $section->id)
+            ->exists();
 
-    if (! $isCompleted) {
+        if (! $isCompleted) {
+            return new ResumeCard(
+                certificationName: $enrollment->certification->name,
+                partTitle: $section->chapter->part->title,
+                chapterTitle: $section->chapter->title,
+                sectionTitle: $section->title,
+                sectionUrl: route(
+                    'learning.sections.show',
+                    ['section' => $section->id],
+                ),
+            );
+        }
+
+        $nextSection = $this->findNextUnreadSection(
+            $enrollment->certification_id,
+            $enrollment->id,
+            $section->id,
+        );
+
+        if ($nextSection === null) {
+            return null;
+        }
+
         return new ResumeCard(
             certificationName: $enrollment->certification->name,
-            partTitle: $section->chapter->part->title,
-            chapterTitle: $section->chapter->title,
-            sectionTitle: $section->title,
+            partTitle: $nextSection->part_title,
+            chapterTitle: $nextSection->chapter_title,
+            sectionTitle: $nextSection->section_title,
             sectionUrl: route(
                 'learning.sections.show',
-                ['section' => $section->id],
+                ['section' => $nextSection->section_id],
             ),
         );
     }
-
-    $nextSection = $this->findNextUnreadSection(
-        $enrollment->certification_id,
-        $enrollment->id,
-        $section->id,
-    );
-
-    if ($nextSection === null) {
-        return null;
-    }
-
-    return new ResumeCard(
-        certificationName: $enrollment->certification->name,
-        partTitle: $nextSection->part_title,
-        chapterTitle: $nextSection->chapter_title,
-        sectionTitle: $nextSection->section_title,
-        sectionUrl: route(
-            'learning.sections.show',
-            ['section' => $nextSection->section_id],
-        ),
-    );
-}
-
 }

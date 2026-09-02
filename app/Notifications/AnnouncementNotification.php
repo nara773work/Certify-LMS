@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
+use App\Models\Announcement;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Announcement;
 
 class AnnouncementNotification extends Notification implements ShouldQueue
 {
@@ -15,14 +17,15 @@ class AnnouncementNotification extends Notification implements ShouldQueue
     public int $tries = 3;
 
     public array $backoff = [10, 30, 60];
+
     /**
      * Create a new notification instance.
      */
-public function __construct(
-    public Announcement $announcement
-) {
-    $this->afterCommit();
-}
+    public function __construct(
+        public Announcement $announcement
+    ) {
+        $this->afterCommit();
+    }
 
     /**
      * Get the notification's delivery channels.
@@ -34,7 +37,6 @@ public function __construct(
         return ['database', 'mail'];
     }
 
-    
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)

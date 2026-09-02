@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\AiChatConversation;
+use App\Policies\AiChatPolicy;
 use App\View\Composers\EnrollmentSwitcherComposer;
 use App\View\Composers\NotificationBadgeComposer;
 use App\View\Composers\SectionPageMetaComposer;
 use App\View\Composers\SidebarBadgeComposer;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use App\Models\AiChatConversation;
-use App\Policies\AiChatPolicy;
-use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
 {

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Enums\CertificationStatus;
 use App\Enums\EnrollmentStatus;
 use App\Services\DefaultEnrollmentService;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Enums\CertificationStatus;
 
 /**
  * 受講生のデフォルト資格を解決し、教材 / 模試 / 面談予約画面の 1 階層目を 2 階層目(/.../enrollments/{default_id})へ
@@ -52,8 +52,8 @@ class ResolveDefaultEnrollment
             ->whereIn('status', [EnrollmentStatus::Learning->value, EnrollmentStatus::Passed->value])
             ->whereHas('certification', function ($query) {
                 $query->where(
-                'status',
-                CertificationStatus::Published->value,
+                    'status',
+                    CertificationStatus::Published->value,
                 );
             })
             ->get();

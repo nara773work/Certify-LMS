@@ -9,10 +9,10 @@ use App\Exceptions\Enrollment\EnrollmentAlreadyPassedException;
 use App\Exceptions\Enrollment\EnrollmentInvalidTransitionException;
 use App\Models\Enrollment;
 use App\Models\User;
+use App\Services\AdminDashboardCacheService;
 use App\Services\DefaultEnrollmentService;
 use App\Services\EnrollmentStatusChangeService;
 use Illuminate\Support\Facades\DB;
-use App\Services\AdminDashboardCacheService;
 
 /**
  * admin が Enrollment を学習中止(failed) に手動更新する Action。
@@ -25,10 +25,10 @@ use App\Services\AdminDashboardCacheService;
 final class FailAction
 {
     public function __construct(
-    private readonly EnrollmentStatusChangeService $statusChanger,
-    private readonly DefaultEnrollmentService $defaultEnrollmentService,
-    private readonly AdminDashboardCacheService $adminDashboardCache,
-) {}
+        private readonly EnrollmentStatusChangeService $statusChanger,
+        private readonly DefaultEnrollmentService $defaultEnrollmentService,
+        private readonly AdminDashboardCacheService $adminDashboardCache,
+    ) {}
 
     /**
      * @throws EnrollmentAlreadyPassedException
@@ -45,26 +45,26 @@ final class FailAction
         }
 
         $enrollment = DB::transaction(function () use ($enrollment, $admin, $reason) {
-    $enrollment->update(['status' => EnrollmentStatus::Failed->value]);
+            $enrollment->update(['status' => EnrollmentStatus::Failed->value]);
 
-    $this->statusChanger->recordStatusChange(
-        $enrollment,
-        fromStatus: EnrollmentStatus::Learning,
-        toStatus: EnrollmentStatus::Failed,
-        changedBy: $admin,
-        reason: $reason ?? 'admin による学習中止',
-    );
+            $this->statusChanger->recordStatusChange(
+                $enrollment,
+                fromStatus: EnrollmentStatus::Learning,
+                toStatus: EnrollmentStatus::Failed,
+                changedBy: $admin,
+                reason: $reason ?? 'admin による学習中止',
+            );
 
-    $this->defaultEnrollmentService->resolveAfterStatusChange(
-        $enrollment->user,
-        $enrollment,
-    );
+            $this->defaultEnrollmentService->resolveAfterStatusChange(
+                $enrollment->user,
+                $enrollment,
+            );
 
-    return $enrollment->refresh();
-});
+            return $enrollment->refresh();
+        });
 
-$this->adminDashboardCache->forget();
+        $this->adminDashboardCache->forget();
 
-return $enrollment;
+        return $enrollment;
     }
 }

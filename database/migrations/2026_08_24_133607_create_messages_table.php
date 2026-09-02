@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,11 +16,11 @@ return new class extends Migration
         Schema::create('messages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ai_chat_conversation_id')
-            ->constrained('ai_chat_conversations')
-            ->cascadeOnDelete();
+                ->constrained('ai_chat_conversations')
+                ->cascadeOnDelete();
             $table->text('content')->nullable();
             $table->string('status')->default('pending'); // pending / sent / failed
-            $table->string('role')->default('user');// user / assistant
+            $table->string('role')->default('user'); // user / assistant
             $table->timestamps();
         });
     }
@@ -31,4 +33,3 @@ return new class extends Migration
         Schema::dropIfExists('messages');
     }
 };
-

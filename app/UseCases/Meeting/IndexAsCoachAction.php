@@ -8,22 +8,22 @@ use App\Models\Meeting;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class IndexAsCoachAction{
-
+class IndexAsCoachAction
+{
     public function __invoke(
         User $user,
         string $filter = 'upcoming',
         ?string $studentId = null,
         ?string $enrollmentId = null
-        ):LengthAwarePaginator{
-        
+    ): LengthAwarePaginator {
+
         $query = Meeting::query()
             ->with(['enrollment.certification', 'student'])
             ->forCoach($user)
             ->when($studentId, fn ($q, $id) => $q->where('student_id', $id))
             ->when($enrollmentId, fn ($q, $id) => $q->where('enrollment_id', $id));
 
-        return  match ($filter) {
+        return match ($filter) {
             'past' => $query->past()->orderByDesc('scheduled_at')->paginate(20),
             'all' => $query->orderByDesc('scheduled_at')->paginate(20),
             default => $query->upcoming()->orderBy('scheduled_at')->paginate(20),

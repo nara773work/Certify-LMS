@@ -1,18 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
+use App\Models\QaReply;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\QaReply;
 
 class QaReplyNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    
     public int $tries = 3;
 
     public array $backoff = [10, 30, 60];

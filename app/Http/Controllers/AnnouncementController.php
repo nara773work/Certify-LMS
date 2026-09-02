@@ -1,47 +1,53 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
-use App\Models\Announcement;
-use App\Models\Certification;
 use App\Enums\AnnouncementTargetType;
 use App\Enums\CertificationStatus;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
-use App\Notifications\AnnouncementNotification;
 use App\Http\Requests\Announcement\AnnouncementRequest;
+use App\Models\Announcement;
+use App\Models\Certification;
+use App\Models\User;
+use App\Notifications\AnnouncementNotification;
 
 class AnnouncementController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         $announcements = Announcement::withCount([
-        'users as dispatched_count'
-        ])->orderBy('created_at','desc')->paginate(10);
-        return view('announcement.management.index',compact('announcements'));
+            'users as dispatched_count',
+        ])->orderBy('created_at', 'desc')->paginate(10);
+
+        return view('announcement.management.index', compact('announcements'));
     }
 
-    public function create(){
+    public function create()
+    {
 
-        $certifications = Certification::where('status',CertificationStatus::Published)->get();
-        $students = User::where('status',UserStatus::InProgress)->get();
-        return view('announcement.management.create',compact('certifications','students'));
+        $certifications = Certification::where('status', CertificationStatus::Published)->get();
+        $students = User::where('status', UserStatus::InProgress)->get();
+
+        return view('announcement.management.create', compact('certifications', 'students'));
     }
 
-    public function store(AnnouncementRequest $request){
+    public function store(AnnouncementRequest $request)
+    {
 
         $announcement = Announcement::create([
             'title' => $request->title,
-            'body'=> $request->body,
-            'target_type'=> $request->target_type,
+            'body' => $request->body,
+            'target_type' => $request->target_type,
             'dispatched_at' => now(),
             'created_by' => auth()->id(),
         ]);
 
         $users = collect();
 
-           // 配信対象を取得
+        // 配信対象を取得
         if ($request->target_type === AnnouncementTargetType::AllStudents->value) {
 
             // 全受講生
@@ -51,7 +57,7 @@ class AnnouncementController extends Controller
 
             // 資格指定
             $users = User::whereHas('enrollments', function ($query) use ($request) {
-            $query->where('certification_id', $request->target_certification_id);
+                $query->where('certification_id', $request->target_certification_id);
             })->get();
 
         } elseif ($request->target_type === AnnouncementTargetType::User->value) {
@@ -81,36 +87,36 @@ class AnnouncementController extends Controller
             }
         }
 
-        return redirect()->route('admin.announcements.index')->with('success','お知らせを配信しました');
+        return redirect()->route('admin.announcements.index')->with('success', 'お知らせを配信しました');
     }
 
     public function show(Announcement $announcement)
-{   
+    {
         $announcement->loadCount([
-            'users as dispatched_count'
+            'users as dispatched_count',
         ]);
 
         return view('announcement.management.show', compact('announcement'));
-}
-
-public function notificationshow(string $id)
-{
-    $notification = auth()->user()
-        ->notifications()
-        ->findOrFail($id);
-
-    if ($notification->type === AnnouncementNotification::class) {
-        $announcementId = $notification->data['announcement_id'] ?? null;
-
-        if (!$announcementId) {
-            abort(404);
-        }
-
-        $announcement = Announcement::findOrFail($announcementId);
-
-        $this->authorize('view', $announcement);
     }
 
-    return view('notifications.show', compact('notification'));
-}
+    public function notificationshow(string $id)
+    {
+        $notification = auth()->user()
+            ->notifications()
+            ->findOrFail($id);
+
+        if ($notification->type === AnnouncementNotification::class) {
+            $announcementId = $notification->data['announcement_id'] ?? null;
+
+            if (! $announcementId) {
+                abort(404);
+            }
+
+            $announcement = Announcement::findOrFail($announcementId);
+
+            $this->authorize('view', $announcement);
+        }
+
+        return view('notifications.show', compact('notification'));
+    }
 }

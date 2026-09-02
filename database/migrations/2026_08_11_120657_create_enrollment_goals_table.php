@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,9 +18,9 @@ return new class extends Migration
             $table->foreignUlid('enrollment_id')
                 ->constrained()
                 ->cascadeOnDelete();
-            $table->string('title',100);
+            $table->string('title', 100);
             $table->date('target_date');
-            $table->text('description',1000)->nullable();
+            $table->text('description', 1000)->nullable();
             $table->foreignUlid('user_id')
                 ->constrained()
                 ->cascadeOnDelete();

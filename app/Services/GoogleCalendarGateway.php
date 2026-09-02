@@ -34,8 +34,7 @@ class GoogleCalendarGateway
 
         return collect($events->getItems())
             ->filter(
-                fn ($event) =>
-                    $event->getStart()?->getDateTime()
+                fn ($event) => $event->getStart()?->getDateTime()
                     && $event->getEnd()?->getDateTime()
             )
             ->map(fn ($event) => [
@@ -122,7 +121,7 @@ class GoogleCalendarGateway
     private function createClient(
         GoogleCalendarToken $credential
     ): Client {
-        $client = new Client();
+        $client = new Client;
 
         $client->setClientId(
             config('services.google.client_id')

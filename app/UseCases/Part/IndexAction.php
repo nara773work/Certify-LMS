@@ -21,9 +21,9 @@ final class IndexAction
         return $certification->parts()
             ->ordered('order')
             ->with(['chapters' => fn ($q) => $q->ordered('order')
-            ->with(['sections' => fn ($q) => $q->ordered('order'),
+                ->with(['sections' => fn ($q) => $q->ordered('order'),
                 ])
-            ->withCount('sections')])
+                ->withCount('sections')])
             ->get();
     }
 }

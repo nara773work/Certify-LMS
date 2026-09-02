@@ -1,13 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Question;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use App\Models\User;
 use App\Enums\UserRole;
 use App\Models\Certification;
-use App\Models\Question;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AuthorizationTest extends TestCase
 {
@@ -33,7 +34,7 @@ class AuthorizationTest extends TestCase
             ->firstOrFail();
     }
 
-    public function test_Admin_can_see_question_index(): void
+    public function test_admin_can_see_question_index(): void
     {
         $this->seed();
 
@@ -48,7 +49,7 @@ class AuthorizationTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_Coach_can_see_question_index(): void
+    public function test_coach_can_see_question_index(): void
     {
         $this->seed();
 
@@ -65,7 +66,7 @@ class AuthorizationTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_Coach_cannot_see_question_index(): void
+    public function test_coach_cannot_see_question_index(): void
     {
         $this->seed();
 
@@ -82,7 +83,7 @@ class AuthorizationTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_Admin_can_store_question(): void
+    public function test_admin_can_store_question(): void
     {
         $this->seed();
 
@@ -106,7 +107,7 @@ class AuthorizationTest extends TestCase
         $response->assertStatus(302);
     }
 
-    public function test_Coach_can_store_question(): void
+    public function test_coach_can_store_question(): void
     {
         $this->seed();
 
@@ -132,7 +133,7 @@ class AuthorizationTest extends TestCase
         $response->assertStatus(302);
     }
 
-    public function test_Coach_cannot_store_question(): void
+    public function test_coach_cannot_store_question(): void
     {
         $this->seed();
 
@@ -158,8 +159,7 @@ class AuthorizationTest extends TestCase
         $response->assertStatus(403);
     }
 
-
-    public function test_Admin_can_see_question(): void
+    public function test_admin_can_see_question(): void
     {
         $this->seed();
 
@@ -179,7 +179,7 @@ class AuthorizationTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_Coach_can_see_question(): void
+    public function test_coach_can_see_question(): void
     {
         $this->seed();
 
@@ -201,7 +201,7 @@ class AuthorizationTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_Coach_cannot_see_question(): void
+    public function test_coach_cannot_see_question(): void
     {
         $this->seed();
 
@@ -223,7 +223,7 @@ class AuthorizationTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_Admin_can_update_question(): void
+    public function test_admin_can_update_question(): void
     {
         $this->seed();
 
@@ -250,7 +250,7 @@ class AuthorizationTest extends TestCase
         $response->assertStatus(302);
     }
 
-    public function test_Coach_can_update_question(): void
+    public function test_coach_can_update_question(): void
     {
         $this->seed();
 
@@ -279,7 +279,7 @@ class AuthorizationTest extends TestCase
         $response->assertStatus(302);
     }
 
-    public function test_Coach_cannot_update_question(): void
+    public function test_coach_cannot_update_question(): void
     {
         $this->seed();
 
@@ -308,59 +308,59 @@ class AuthorizationTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_Admin_can_delete_question(): void
-{
-    $this->seed();
+    public function test_admin_can_delete_question(): void
+    {
+        $this->seed();
 
-    $admin = User::where(
-        'role',
-        UserRole::Admin
-    )->firstOrFail();
+        $admin = User::where(
+            'role',
+            UserRole::Admin
+        )->firstOrFail();
 
-    $section = $this->getSection();
+        $section = $this->getSection();
 
-    $question = $section->questions()
-        ->firstOrFail();
+        $question = $section->questions()
+            ->firstOrFail();
 
-    // Answerが紐づいていないテスト用Questionを作成
-    $question = $question->replicate();
-    $question->save();
+        // Answerが紐づいていないテスト用Questionを作成
+        $question = $question->replicate();
+        $question->save();
 
-    $response = $this->actingAs($admin)
-        ->delete(
-            "/admin/section-questions/{$question->id}"
-        );
+        $response = $this->actingAs($admin)
+            ->delete(
+                "/admin/section-questions/{$question->id}"
+            );
 
-    $response->assertStatus(302);
-}
+        $response->assertStatus(302);
+    }
 
-    public function test_Coach_can_delete_question(): void
-{
-    $this->seed();
+    public function test_coach_can_delete_question(): void
+    {
+        $this->seed();
 
-    $coach = User::where(
-        'email',
-        'coach@certify-lms.test'
-    )->firstOrFail();
+        $coach = User::where(
+            'email',
+            'coach@certify-lms.test'
+        )->firstOrFail();
 
-    $section = $this->getSection();
+        $section = $this->getSection();
 
-    $question = $section->questions()
-        ->firstOrFail();
+        $question = $section->questions()
+            ->firstOrFail();
 
-    // Answerが紐づいていないテスト用Questionを作成
-    $question = $question->replicate();
-    $question->save();
+        // Answerが紐づいていないテスト用Questionを作成
+        $question = $question->replicate();
+        $question->save();
 
-    $response = $this->actingAs($coach)
-        ->delete(
-            "/admin/section-questions/{$question->id}"
-        );
+        $response = $this->actingAs($coach)
+            ->delete(
+                "/admin/section-questions/{$question->id}"
+            );
 
-    $response->assertStatus(302);
-}
+        $response->assertStatus(302);
+    }
 
-    public function test_Coach_cannot_delete_question(): void
+    public function test_coach_cannot_delete_question(): void
     {
         $this->seed();
 

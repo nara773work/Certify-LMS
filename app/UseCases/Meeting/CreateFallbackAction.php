@@ -8,11 +8,12 @@ use App\Enums\EnrollmentStatus;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 
-class CreateFallbackAction{
+class CreateFallbackAction
+{
+    public function __invoke(User $user): Collection
+    {
 
-    public function __invoke(User $user): Collection{
-        
-    return  $user?->enrollments()
+        return $user?->enrollments()
             ->whereIn('status', [EnrollmentStatus::Learning->value, EnrollmentStatus::Passed->value])
             ->with('certification')
             ->get();

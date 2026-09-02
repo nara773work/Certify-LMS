@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\UseCases\Learning;
 
+use App\Enums\CertificationStatus;
 use App\Enums\ContentStatus;
 use App\Models\Chapter;
 use App\Models\SectionProgress;
 use App\Models\User;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use App\Enums\CertificationStatus;
 
 /**
  * /learning/chapters/{chapter} (4 階層目、Section 一覧) のデータを準備する Action。

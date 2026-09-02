@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http;
 
 use App\Enums\MeetingStatus;
@@ -100,7 +102,7 @@ class MeetingReminderNotificationTest extends TestCase
     }
 
     public function test_same_reminder_twice(): void
-{
+    {
         $this->seed();
 
         $meeting = Meeting::factory()->create([

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Plan;
 
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,7 +32,7 @@ class PlanRequest extends FormRequest
             'duration_days.between' => '1~3650の範囲で入力してください',
             'default_meeting_quota.required' => '初期付与面談回数を入力してください',
             'default_meeting_quota.between' => '0~1000の範囲で入力してください',
-            'sort_order.between' => '0~1000の範囲で入力してください'
+            'sort_order.between' => '0~1000の範囲で入力してください',
         ];
     }
 }

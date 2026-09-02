@@ -15,8 +15,7 @@ class CancelAction
     public function __construct(
         private RefundQuotaAction $refundAction,
         private GoogleCalendarService $googleCalendarService,
-    ) {
-    }
+    ) {}
 
     public function __invoke(
         Meeting $meeting,

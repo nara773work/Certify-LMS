@@ -9,15 +9,15 @@ use App\Enums\MeetingStatus;
 use App\Models\Certification;
 use App\Models\CoachAvailability;
 use App\Models\Enrollment;
+use App\Models\GoogleCalendarToken;
 use App\Models\Meeting;
 use App\Models\User;
+use App\Services\GoogleCalendarService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
-use Tests\TestCase;
-use App\Models\GoogleCalendarToken;
-use App\Services\GoogleCalendarService;
 use Mockery;
+use Tests\TestCase;
 
 class MeetingControllerTest extends TestCase
 {
@@ -320,229 +320,227 @@ class MeetingControllerTest extends TestCase
         ]);
     }
 
-    /** 
+    /**
      * Google Calendar連携済みのコーチに対して、
-     * 新しい面談予約がGoogle Calendarにイベントとして作成されることを確認する 
-     * 
-    */
+     * 新しい面談予約がGoogle Calendarにイベントとして作成されることを確認する
+     */
     public function test_store_creates_google_calendar_event_for_connected_coach(): void
-{
-    $student = User::factory()->student()->inProgress()->create([
-        'max_meetings' => 3,
-    ]);
-
-    $admin = User::factory()->admin()->create();
-
-    $coach = User::factory()->coach()->inProgress()->create([
-        'meeting_url' => 'https://meet.example.com/coach-room',
-    ]);
-
-    $certification = Certification::factory()->published()->create();
-
-    $this->attachCoach($certification, $coach, $admin);
-
-    CoachAvailability::factory()
-        ->forCoach($coach)
-        ->onDay(1)
-        ->timeRange('09:00:00', '18:00:00')
-        ->create();
-
-    $enrollment = Enrollment::factory()
-        ->for($student, 'user')
-        ->for($certification)
-        ->learning()
-        ->create();
-
-    $scheduledAt = now()
-        ->startOfDay()
-        ->next(Carbon::MONDAY)
-        ->setTime(10, 0);
-
-    // コーチがGoogle Calendar連携済み
-    GoogleCalendarToken::create([
-        'user_id' => $coach->id,
-        'access_token' => 'test-access-token',
-        'refresh_token' => 'test-refresh-token',
-        'expires_at' => now()->addHour(),
-        'refresh_token_expires_at' => now()->addDays(30),
-    ]);
-
-    $googleCalendarService = Mockery::mock(GoogleCalendarService::class);
-
-    $googleCalendarService
-        ->shouldReceive('isConnected')
-        ->once()
-        ->andReturn(true);
-
-    $googleCalendarService
-        ->shouldReceive('eventsForCoach')
-        ->andReturn([]);
-
-    $googleCalendarService
-        ->shouldReceive('createEvent')
-        ->once()
-        ->andReturn('google-event-123');
-
-    $this->app->instance(
-        GoogleCalendarService::class,
-        $googleCalendarService
-    );
-
-    $response = $this
-        ->actingAs($student)
-        ->post(route('meetings.store', $enrollment), [
-            'scheduled_at' => $scheduledAt->format('Y-m-d\TH:i:s'),
-            'topic' => 'Google Calendar登録テスト',
+    {
+        $student = User::factory()->student()->inProgress()->create([
+            'max_meetings' => 3,
         ]);
 
-    $response->assertRedirect();
+        $admin = User::factory()->admin()->create();
 
-    $meeting = Meeting::query()
-        ->where('student_id', $student->id)
-        ->latest()
-        ->first();
-
-    $this->assertNotNull($meeting);
-
-    $this->assertSame(
-        'google-event-123',
-        $meeting->google_calendar_event_id
-    );
-}
-
-/** 
- * Google Calendar未連携のコーチに対して、
- * 新しい面談予約がGoogle Calendarにイベントとして作成されないことを確認する 
- */
-public function test_store_does_not_create_google_calendar_event_for_unconnected_coach(): void
-{
-    $student = User::factory()->student()->inProgress()->create([
-        'max_meetings' => 3,
-    ]);
-
-    $admin = User::factory()->admin()->create();
-
-    $coach = User::factory()->coach()->inProgress()->create([
-        'meeting_url' => 'https://meet.example.com/coach-room',
-    ]);
-
-    $certification = Certification::factory()->published()->create();
-
-    $this->attachCoach($certification, $coach, $admin);
-
-    CoachAvailability::factory()
-        ->forCoach($coach)
-        ->onDay(1)
-        ->timeRange('09:00:00', '18:00:00')
-        ->create();
-
-    $enrollment = Enrollment::factory()
-        ->for($student, 'user')
-        ->for($certification)
-        ->learning()
-        ->create();
-
-    $scheduledAt = now()
-        ->startOfDay()
-        ->next(Carbon::MONDAY)
-        ->setTime(10, 0);
-
-    // GoogleCalendarTokenは作らない = 未連携
-
-    $googleCalendarService = Mockery::mock(GoogleCalendarService::class);
-
-    $googleCalendarService
-        ->shouldReceive('isConnected')
-        ->once()
-        ->andReturn(false);
-
-    $googleCalendarService
-    ->shouldReceive('eventsForCoach')
-    ->andReturn([]);
-
-    $googleCalendarService
-        ->shouldNotReceive('createEvent');
-
-    $this->app->instance(
-        GoogleCalendarService::class,
-        $googleCalendarService
-    );
-
-    $response = $this
-        ->actingAs($student)
-        ->post(route('meetings.store', $enrollment), [
-            'scheduled_at' => $scheduledAt->format('Y-m-d\TH:i:s'),
-            'topic' => '未連携テスト',
+        $coach = User::factory()->coach()->inProgress()->create([
+            'meeting_url' => 'https://meet.example.com/coach-room',
         ]);
 
-    $response->assertRedirect();
+        $certification = Certification::factory()->published()->create();
 
-    $meeting = Meeting::query()
-        ->where('student_id', $student->id)
-        ->latest()
-        ->first();
+        $this->attachCoach($certification, $coach, $admin);
 
-    $this->assertNotNull($meeting);
+        CoachAvailability::factory()
+            ->forCoach($coach)
+            ->onDay(1)
+            ->timeRange('09:00:00', '18:00:00')
+            ->create();
 
-    $this->assertEmpty(
-        $meeting->google_calendar_event_id
-    );
-}
+        $enrollment = Enrollment::factory()
+            ->for($student, 'user')
+            ->for($certification)
+            ->learning()
+            ->create();
 
-/** 
- * Google Calendarにイベントが作成された面談をキャンセルすると、
- * そのイベントもGoogle Calendarから削除されることを確認する 
- */
-public function test_cancel_deletes_google_calendar_event(): void
-{
-    $student = User::factory()->student()->inProgress()->create([
-        'max_meetings' => 5,
-    ]);
+        $scheduledAt = now()
+            ->startOfDay()
+            ->next(Carbon::MONDAY)
+            ->setTime(10, 0);
 
-    $coach = User::factory()->coach()->create();
-
-    GoogleCalendarToken::create([
-        'user_id' => $coach->id,
-        'access_token' => 'test-access-token',
-        'refresh_token' => 'test-refresh-token',
-        'expires_at' => now()->addHour(),
-    'refresh_token_expires_at' => now()->addDays(30),
-]);
-
-    $meeting = Meeting::factory()
-        ->reserved()
-        ->forCoach($coach)
-        ->forStudent($student)
-        ->create([
-            'scheduled_at' => now()->addDays(3)->startOfHour(),
-            'google_calendar_event_id' => 'google-event-123',
+        // コーチがGoogle Calendar連携済み
+        GoogleCalendarToken::create([
+            'user_id' => $coach->id,
+            'access_token' => 'test-access-token',
+            'refresh_token' => 'test-refresh-token',
+            'expires_at' => now()->addHour(),
+            'refresh_token_expires_at' => now()->addDays(30),
         ]);
 
-    $googleCalendarService = Mockery::mock(GoogleCalendarService::class);
+        $googleCalendarService = Mockery::mock(GoogleCalendarService::class);
 
-    $googleCalendarService
-        ->shouldReceive('deleteEvent')
-        ->once()
-        ->with(Mockery::on(
-            fn (Meeting $passedMeeting): bool =>
-                $passedMeeting->id === $meeting->id
-                && $passedMeeting->google_calendar_event_id === 'google-event-123'
-        ));
-
-    $this->app->instance(
-        GoogleCalendarService::class,
         $googleCalendarService
-    );
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(true);
 
-    $response = $this
-        ->actingAs($student)
-        ->post(route('meetings.cancel', $meeting));
+        $googleCalendarService
+            ->shouldReceive('eventsForCoach')
+            ->andReturn([]);
 
-    $response->assertRedirect();
+        $googleCalendarService
+            ->shouldReceive('createEvent')
+            ->once()
+            ->andReturn('google-event-123');
 
-    $this->assertDatabaseHas('meetings', [
-        'id' => $meeting->id,
-        'status' => MeetingStatus::Canceled->value,
-    ]);
-}
+        $this->app->instance(
+            GoogleCalendarService::class,
+            $googleCalendarService
+        );
+
+        $response = $this
+            ->actingAs($student)
+            ->post(route('meetings.store', $enrollment), [
+                'scheduled_at' => $scheduledAt->format('Y-m-d\TH:i:s'),
+                'topic' => 'Google Calendar登録テスト',
+            ]);
+
+        $response->assertRedirect();
+
+        $meeting = Meeting::query()
+            ->where('student_id', $student->id)
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($meeting);
+
+        $this->assertSame(
+            'google-event-123',
+            $meeting->google_calendar_event_id
+        );
+    }
+
+    /**
+     * Google Calendar未連携のコーチに対して、
+     * 新しい面談予約がGoogle Calendarにイベントとして作成されないことを確認する
+     */
+    public function test_store_does_not_create_google_calendar_event_for_unconnected_coach(): void
+    {
+        $student = User::factory()->student()->inProgress()->create([
+            'max_meetings' => 3,
+        ]);
+
+        $admin = User::factory()->admin()->create();
+
+        $coach = User::factory()->coach()->inProgress()->create([
+            'meeting_url' => 'https://meet.example.com/coach-room',
+        ]);
+
+        $certification = Certification::factory()->published()->create();
+
+        $this->attachCoach($certification, $coach, $admin);
+
+        CoachAvailability::factory()
+            ->forCoach($coach)
+            ->onDay(1)
+            ->timeRange('09:00:00', '18:00:00')
+            ->create();
+
+        $enrollment = Enrollment::factory()
+            ->for($student, 'user')
+            ->for($certification)
+            ->learning()
+            ->create();
+
+        $scheduledAt = now()
+            ->startOfDay()
+            ->next(Carbon::MONDAY)
+            ->setTime(10, 0);
+
+        // GoogleCalendarTokenは作らない = 未連携
+
+        $googleCalendarService = Mockery::mock(GoogleCalendarService::class);
+
+        $googleCalendarService
+            ->shouldReceive('isConnected')
+            ->once()
+            ->andReturn(false);
+
+        $googleCalendarService
+            ->shouldReceive('eventsForCoach')
+            ->andReturn([]);
+
+        $googleCalendarService
+            ->shouldNotReceive('createEvent');
+
+        $this->app->instance(
+            GoogleCalendarService::class,
+            $googleCalendarService
+        );
+
+        $response = $this
+            ->actingAs($student)
+            ->post(route('meetings.store', $enrollment), [
+                'scheduled_at' => $scheduledAt->format('Y-m-d\TH:i:s'),
+                'topic' => '未連携テスト',
+            ]);
+
+        $response->assertRedirect();
+
+        $meeting = Meeting::query()
+            ->where('student_id', $student->id)
+            ->latest()
+            ->first();
+
+        $this->assertNotNull($meeting);
+
+        $this->assertEmpty(
+            $meeting->google_calendar_event_id
+        );
+    }
+
+    /**
+     * Google Calendarにイベントが作成された面談をキャンセルすると、
+     * そのイベントもGoogle Calendarから削除されることを確認する
+     */
+    public function test_cancel_deletes_google_calendar_event(): void
+    {
+        $student = User::factory()->student()->inProgress()->create([
+            'max_meetings' => 5,
+        ]);
+
+        $coach = User::factory()->coach()->create();
+
+        GoogleCalendarToken::create([
+            'user_id' => $coach->id,
+            'access_token' => 'test-access-token',
+            'refresh_token' => 'test-refresh-token',
+            'expires_at' => now()->addHour(),
+            'refresh_token_expires_at' => now()->addDays(30),
+        ]);
+
+        $meeting = Meeting::factory()
+            ->reserved()
+            ->forCoach($coach)
+            ->forStudent($student)
+            ->create([
+                'scheduled_at' => now()->addDays(3)->startOfHour(),
+                'google_calendar_event_id' => 'google-event-123',
+            ]);
+
+        $googleCalendarService = Mockery::mock(GoogleCalendarService::class);
+
+        $googleCalendarService
+            ->shouldReceive('deleteEvent')
+            ->once()
+            ->with(Mockery::on(
+                fn (Meeting $passedMeeting): bool => $passedMeeting->id === $meeting->id
+                    && $passedMeeting->google_calendar_event_id === 'google-event-123'
+            ));
+
+        $this->app->instance(
+            GoogleCalendarService::class,
+            $googleCalendarService
+        );
+
+        $response = $this
+            ->actingAs($student)
+            ->post(route('meetings.cancel', $meeting));
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('meetings', [
+            'id' => $meeting->id,
+            'status' => MeetingStatus::Canceled->value,
+        ]);
+    }
 }

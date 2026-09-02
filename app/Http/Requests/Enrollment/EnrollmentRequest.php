@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Enrollment;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EnrollmentRequest extends FormRequest
@@ -17,18 +20,18 @@ class EnrollmentRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'title' => ['required', 'max:100'],
             'description' => ['nullable', 'max:1000'],
-            'target_date' => [ 'nullable','date','after:today'],
+            'target_date' => ['nullable', 'date', 'after:today'],
         ];
     }
 
-        public function messages(): array
+    public function messages(): array
     {
         return [
             'title.required' => 'タイトルを入力してください',

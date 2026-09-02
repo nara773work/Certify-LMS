@@ -199,7 +199,7 @@ class PlanSeeder extends Seeder
 
         foreach ($graduatedStudents as $index => $student) {
             $plan = $publishedPlans[$index % count($publishedPlans)];
-            
+
             $student->update([
                 'plan_id' => $plan->id,
                 'plan_started_at' => $student->plan_expires_at->copy()->subDays($plan->duration_days),

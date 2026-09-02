@@ -11,7 +11,6 @@ use App\Models\CoachAvailability;
 use App\Models\Meeting;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use App\Services\GoogleCalendarService;
 
 /**
  * 担当コーチ集合の面談可能時間枠を 60 分単位で展開し、空きスロットを集計する Service。
@@ -29,121 +28,118 @@ final class MeetingAvailabilityService
      *
      * @return Collection<int, array{slot_start: Carbon, slot_end: Carbon, available_coach_count: int}>
      */
-
     public function __construct(
-    private readonly GoogleCalendarService $googleCalendarService,
-) {
-}
+        private readonly GoogleCalendarService $googleCalendarService,
+    ) {}
 
     public function slotsForCertification(
-    Certification $certification,
-    Carbon $date,
-): Collection {
-    $dayStart = $date->copy()->startOfDay();
-    $dayEnd = $date->copy()->endOfDay();
-    $dayOfWeek = $date->dayOfWeek;
+        Certification $certification,
+        Carbon $date,
+    ): Collection {
+        $dayStart = $date->copy()->startOfDay();
+        $dayEnd = $date->copy()->endOfDay();
+        $dayOfWeek = $date->dayOfWeek;
 
-    $coaches = $certification->coaches()->get();
+        $coaches = $certification->coaches()->get();
 
-    if ($coaches->isEmpty()) {
-        return collect();
-    }
-
-    $coachIds = $coaches->pluck('id')->all();
-
-    // Google Calendarの予定をコーチごとに取得
-    $googleEventsByCoach = [];
-
-foreach ($coachIds as $coachId) {
-
-    $events = $this->googleCalendarService->eventsForCoach(
-        (string) $coachId,
-        $dayStart,
-        $dayEnd,
-    );
-
-    $googleEventsByCoach[$coachId] = $events;
-}
-
-    $availabilities = CoachAvailability::query()
-        ->whereIn('coach_id', $coachIds)
-        ->where('day_of_week', $dayOfWeek)
-        ->where('is_active', true)
-        ->get();
-
-    $existingMeetings = Meeting::query()
-        ->whereIn('coach_id', $coachIds)
-        ->whereBetween('scheduled_at', [$dayStart, $dayEnd])
-        ->whereIn('status', [
-            MeetingStatus::Reserved->value,
-            MeetingStatus::Completed->value,
-        ])
-        ->get(['coach_id', 'scheduled_at']);
-
-    $bookedByCoach = $existingMeetings
-        ->groupBy('coach_id')
-        ->map(
-            fn ($rows) => $rows
-                ->map(fn (Meeting $m) => $m->scheduled_at->format('H:i'))
-                ->all()
-        );
-
-    /** @var array<string, int> $slotCounts */
-    $slotCounts = [];
-
-    foreach ($availabilities as $availability) {
-        $slot = Carbon::parse(
-            $date->format('Y-m-d').' '.$availability->start_time
-        );
-
-        $end = Carbon::parse(
-            $date->format('Y-m-d').' '.$availability->end_time
-        );
-
-        while ($slot->copy()->addHour() <= $end) {
-            $slotKey = $slot->format('H:i');
-            $coachId = $availability->coach_id;
-
-            $booked = $bookedByCoach[$coachId] ?? [];
-
-            // Google Calendar予定
-            $googleEvents = $googleEventsByCoach[$coachId] ?? [];
-
-            $hasGoogleEvent = collect($googleEvents)->contains(
-                fn (array $event) =>
-                    $slot->lt($event['end'])
-                    && $slot->copy()->addHour()->gt($event['start'])
-            );
-
-            // Certify LMSの予約もGoogle Calendarの予定もなければ空き
-            if (
-                ! in_array($slotKey, $booked, true)
-                && ! $hasGoogleEvent
-            ) {
-                $slotCounts[$slotKey] =
-                    ($slotCounts[$slotKey] ?? 0) + 1;
-            }
-
-            $slot->addHour();
+        if ($coaches->isEmpty()) {
+            return collect();
         }
-    }
 
-    ksort($slotCounts);
+        $coachIds = $coaches->pluck('id')->all();
 
-    return collect($slotCounts)
-        ->map(function (int $count, string $time) use ($date) {
-            $start = Carbon::parse(
-                $date->format('Y-m-d').' '.$time
+        // Google Calendarの予定をコーチごとに取得
+        $googleEventsByCoach = [];
+
+        foreach ($coachIds as $coachId) {
+
+            $events = $this->googleCalendarService->eventsForCoach(
+                (string) $coachId,
+                $dayStart,
+                $dayEnd,
             );
 
-            return [
-                'slot_start' => $start,
-                'slot_end' => $start->copy()->addHour(),
-                'available_coach_count' => $count,
-            ];
-        })
-        ->values();
-}
+            $googleEventsByCoach[$coachId] = $events;
+        }
+
+        $availabilities = CoachAvailability::query()
+            ->whereIn('coach_id', $coachIds)
+            ->where('day_of_week', $dayOfWeek)
+            ->where('is_active', true)
+            ->get();
+
+        $existingMeetings = Meeting::query()
+            ->whereIn('coach_id', $coachIds)
+            ->whereBetween('scheduled_at', [$dayStart, $dayEnd])
+            ->whereIn('status', [
+                MeetingStatus::Reserved->value,
+                MeetingStatus::Completed->value,
+            ])
+            ->get(['coach_id', 'scheduled_at']);
+
+        $bookedByCoach = $existingMeetings
+            ->groupBy('coach_id')
+            ->map(
+                fn ($rows) => $rows
+                    ->map(fn (Meeting $m) => $m->scheduled_at->format('H:i'))
+                    ->all()
+            );
+
+        /** @var array<string, int> $slotCounts */
+        $slotCounts = [];
+
+        foreach ($availabilities as $availability) {
+            $slot = Carbon::parse(
+                $date->format('Y-m-d').' '.$availability->start_time
+            );
+
+            $end = Carbon::parse(
+                $date->format('Y-m-d').' '.$availability->end_time
+            );
+
+            while ($slot->copy()->addHour() <= $end) {
+                $slotKey = $slot->format('H:i');
+                $coachId = $availability->coach_id;
+
+                $booked = $bookedByCoach[$coachId] ?? [];
+
+                // Google Calendar予定
+                $googleEvents = $googleEventsByCoach[$coachId] ?? [];
+
+                $hasGoogleEvent = collect($googleEvents)->contains(
+                    fn (array $event) => $slot->lt($event['end'])
+                        && $slot->copy()->addHour()->gt($event['start'])
+                );
+
+                // Certify LMSの予約もGoogle Calendarの予定もなければ空き
+                if (
+                    ! in_array($slotKey, $booked, true)
+                    && ! $hasGoogleEvent
+                ) {
+                    $slotCounts[$slotKey] =
+                        ($slotCounts[$slotKey] ?? 0) + 1;
+                }
+
+                $slot->addHour();
+            }
+        }
+
+        ksort($slotCounts);
+
+        return collect($slotCounts)
+            ->map(function (int $count, string $time) use ($date) {
+                $start = Carbon::parse(
+                    $date->format('Y-m-d').' '.$time
+                );
+
+                return [
+                    'slot_start' => $start,
+                    'slot_end' => $start->copy()->addHour(),
+                    'available_coach_count' => $count,
+                ];
+            })
+            ->values();
+    }
 
     /**
      * 指定 scheduled_at が certification 担当コーチ集合の有効枠内かを検証する。
@@ -163,6 +159,4 @@ foreach ($coachIds as $coachId) {
             throw new MeetingOutOfAvailabilityException;
         }
     }
-
-    
 }

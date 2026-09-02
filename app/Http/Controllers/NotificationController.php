@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Enums\NotificationStatus;
-use App\Models\Notification;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request){
+    public function index(Request $request)
+    {
 
         $user = Auth()->user();
 
@@ -16,7 +17,7 @@ class NotificationController extends Controller
             ->whereNull('read_at')
             ->count();
 
-        $tab = $request->input('tab','all');
+        $tab = $request->input('tab', 'all');
 
         $query = $user->notifications();
 
@@ -28,12 +29,11 @@ class NotificationController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-
-        return view('notifications.index',compact('unreadCount','tab','notifications'));
+        return view('notifications.index', compact('unreadCount', 'tab', 'notifications'));
     }
 
     public function read(string $id)
-{
+    {
         $notification = auth()->user()
             ->notifications()
             ->findOrFail($id);
@@ -42,16 +42,16 @@ class NotificationController extends Controller
 
         $data = $notification->data;
 
-        if (!empty($data['url'])) {
+        if (! empty($data['url'])) {
             return redirect($data['url']);
         }
 
         return redirect()->route('notifications.show', [
             'notification' => $notification->id,
         ]);
-}
+    }
 
-        public function readall()
+    public function readall()
     {
         $notification = auth()->user()
             ->notifications()

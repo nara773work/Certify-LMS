@@ -1,15 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Settings;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
 use App\Enums\UserRole;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
 
 class SettingControllerTest extends TestCase
 {
@@ -17,6 +18,7 @@ class SettingControllerTest extends TestCase
      * A basic feature test example.
      */
     use RefreshDatabase;
+
     public function test_profile_edit_student(): void
     {
         $this->seed();
@@ -27,7 +29,8 @@ class SettingControllerTest extends TestCase
         $response->assertStatus(200);
 
     }
-        public function test_profile_edit_coach(): void
+
+    public function test_profile_edit_coach(): void
     {
         $this->seed();
 
@@ -36,7 +39,8 @@ class SettingControllerTest extends TestCase
 
         $response->assertStatus(200);
     }
-        public function test_profile_edit_admin(): void
+
+    public function test_profile_edit_admin(): void
     {
         $this->seed();
 
@@ -46,7 +50,7 @@ class SettingControllerTest extends TestCase
         $response->assertStatus(200);
     }
 
-        public function test_profile_store(): void
+    public function test_profile_store(): void
     {
         $this->seed();
 
@@ -54,22 +58,22 @@ class SettingControllerTest extends TestCase
 
         $data = [
             'name' => 'test',
-            'bio'=> null
+            'bio' => null,
         ];
-        $response = $this->actingAs($Student)->patch('/settings/profile',$data);
+        $response = $this->actingAs($Student)->patch('/settings/profile', $data);
 
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('users',
-        [
-            'id' => $Student->id,
-            'name' => 'test',
-            'bio'=> null
-        ]);
+            [
+                'id' => $Student->id,
+                'name' => 'test',
+                'bio' => null,
+            ]);
 
     }
 
-        public function test_profile_store_email(): void
+    public function test_profile_store_email(): void
     {
         $this->seed();
 
@@ -78,7 +82,7 @@ class SettingControllerTest extends TestCase
         $data = [
             'email' => 'test@example.com',
         ];
-        $response = $this->actingAs($Student)->patch('/settings/profile',$data);
+        $response = $this->actingAs($Student)->patch('/settings/profile', $data);
 
         $response->assertStatus(302);
 
@@ -109,18 +113,17 @@ class SettingControllerTest extends TestCase
         $this->assertNotNull(
             User::find($student->id)->avatar_url
         );
-}
+    }
 
-        public function test_profile_avatar_delete(): void
+    public function test_profile_avatar_delete(): void
     {
         $this->seed();
 
-        $Student = User::where('email','student-graduated@certify-lms.test')
-        ->firstOrFail();
-
+        $Student = User::where('email', 'student-graduated@certify-lms.test')
+            ->firstOrFail();
 
         $response = $this->actingAs($Student)
-        ->delete('/settings/avatar');
+            ->delete('/settings/avatar');
 
         $response->assertStatus(302);
 
@@ -132,7 +135,7 @@ class SettingControllerTest extends TestCase
     }
 
     public function test_profile_password(): void
-{
+    {
         $this->seed();
 
         $Student = User::where('role', UserRole::Student->value)

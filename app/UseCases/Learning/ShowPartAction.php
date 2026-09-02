@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\UseCases\Learning;
 
+use App\Enums\CertificationStatus;
 use App\Enums\ContentStatus;
 use App\Models\Part;
 use App\Models\User;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use App\Enums\CertificationStatus;
 use App\Services\Learning\ProgressSummaryService;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * /learning/parts/{part} (3 階層目、Chapter 一覧) のデータを準備する Action。
@@ -23,10 +23,10 @@ final class ShowPartAction
     public function __construct(
         private readonly ProgressSummaryService $progressSummaryService,
     ) {}
+
     /**
      * @return array<string, mixed>
      */
-    
     public function __invoke(Part $part, User $student): array
     {
         $part->loadMissing('certification');
@@ -42,11 +42,10 @@ final class ShowPartAction
         $enrollment = $student->enrollments()
             ->where('certification_id', $part->certification_id)
             ->first();
-        
+
         if ($enrollment === null) {
             abort(403);
         }
-
 
         $chapters = $part->chapters()
             ->where('status', ContentStatus::Published->value)
@@ -56,15 +55,15 @@ final class ShowPartAction
                     ->where('status', ContentStatus::Published->value),
             ])
             ->get();
-      
+
         $completedByChapter =
             $this->progressSummaryService
                 ->completedSectionsByChapter($enrollment, $chapters);
 
         return [
-    'part' => $part->load('certification'),
-    'chapters' => $chapters,
-    'completedByChapter' => $completedByChapter,
-];
+            'part' => $part->load('certification'),
+            'chapters' => $chapters,
+            'completedByChapter' => $completedByChapter,
+        ];
     }
 }

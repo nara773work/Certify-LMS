@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
 use App\Enums\UserRole;
@@ -16,20 +18,22 @@ class EnrollmentNotePolicy
     {
         //
     }
+
     public function viewAny(User $user, Enrollment $enrollment): bool
-{
-    return $user->role === UserRole::Admin
-        || $user->assignedCertifications()
-            ->where('certifications.id', $enrollment->certification_id)
-            ->exists();
-}
+    {
+        return $user->role === UserRole::Admin
+            || $user->assignedCertifications()
+                ->where('certifications.id', $enrollment->certification_id)
+                ->exists();
+    }
+
     public function create(User $user, Enrollment $enrollment): bool
-{
-    return $user->role === UserRole::Admin
-        || $user->assignedCertifications()
-            ->where('certifications.id', $enrollment->certification_id)
-            ->exists();
-}
+    {
+        return $user->role === UserRole::Admin
+            || $user->assignedCertifications()
+                ->where('certifications.id', $enrollment->certification_id)
+                ->exists();
+    }
 
     public function edit(User $user, EnrollmentNote $note): bool
     {

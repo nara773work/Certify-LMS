@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\UseCases\Learning;
 
+use App\Enums\CertificationStatus;
+use App\Enums\ContentStatus;
 use App\Models\Enrollment;
+use App\Services\Learning\ProgressSummaryService;
 use App\Services\LearningHourTargetService;
 use App\Services\SectionQuestionScoreService;
 use App\Services\StreakService;
-use App\Enums\CertificationStatus;
-use App\Enums\ContentStatus;
-use App\Services\Learning\ProgressSummaryService;
 
 /**
  * /learning/enrollments/{enrollment} (2 階層目、教材 Part 一覧) のデータを準備する Action。

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Section;
@@ -18,7 +20,7 @@ class AiChatService
             100,
             throw: false,
         )->post(
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' . $apiKey,
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key='.$apiKey,
             [
                 'contents' => [
                     [
@@ -34,7 +36,7 @@ class AiChatService
 
         if ($response->failed()) {
             throw new \RuntimeException(
-                'Gemini API error: ' . $response->body()
+                'Gemini API error: '.$response->body()
             );
         }
 

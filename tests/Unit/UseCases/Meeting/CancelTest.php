@@ -200,4 +200,3 @@ class CancelTest extends TestCase
         );
     }
 }
-

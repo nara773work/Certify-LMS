@@ -118,5 +118,4 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('profile.avatardelete', [ProfilePolicy::class, 'avatardelete']);
         Gate::define('profile.passwordupdate', [ProfilePolicy::class, 'update']);
     }
-
 }

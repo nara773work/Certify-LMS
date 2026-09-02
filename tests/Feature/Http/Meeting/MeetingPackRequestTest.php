@@ -1,14 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Meeting;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\MeetingPack;
 use App\Enums\UserRole;
-use App\Enums\MeetingPackStatus;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class MeetingPackRequestTest extends TestCase
 {
@@ -33,7 +32,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -58,7 +57,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -69,7 +68,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_name_101(): void
+    public function test_name_101(): void
     {
         $this->seed();
 
@@ -85,7 +84,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -110,7 +109,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -120,7 +119,7 @@ class MeetingPackRequestTest extends TestCase
 
     }
 
-        public function test_description_2001(): void
+    public function test_description_2001(): void
     {
         $this->seed();
 
@@ -136,7 +135,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -162,7 +161,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -187,7 +186,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -212,7 +211,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -221,7 +220,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_meeting_count_1(): void
+    public function test_meeting_count_1(): void
     {
         $this->seed();
 
@@ -237,16 +236,16 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('meeting_packs', [
-            'meeting_count' =>1,
+            'meeting_count' => 1,
         ]);
     }
 
-        public function test_meeting_count_0(): void
+    public function test_meeting_count_0(): void
     {
         $this->seed();
 
@@ -262,7 +261,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -287,7 +286,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -313,7 +312,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -338,7 +337,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -347,7 +346,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_price_0(): void
+    public function test_price_0(): void
     {
         $this->seed();
 
@@ -363,7 +362,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -372,7 +371,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_price_minus1(): void
+    public function test_price_minus1(): void
     {
         $this->seed();
 
@@ -388,7 +387,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/meeting-packs',$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -397,7 +396,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_stripe_price_id_255(): void
+    public function test_stripe_price_id_255(): void
     {
         $this->seed();
 
@@ -413,7 +412,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/meeting-packs",$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -422,7 +421,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_stripe_price_id_256(): void
+    public function test_stripe_price_id_256(): void
     {
         $this->seed();
 
@@ -438,11 +437,11 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/meeting-packs",$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
-         $response->assertSessionHasErrors([
+        $response->assertSessionHasErrors([
             'stripe_price_id',
         ]);
     }
@@ -463,7 +462,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/meeting-packs",$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -472,7 +471,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_sort_1001(): void
+    public function test_sort_1001(): void
     {
         $this->seed();
 
@@ -488,7 +487,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/meeting-packs",$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -513,7 +512,7 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/meeting-packs",$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
@@ -522,7 +521,7 @@ class MeetingPackRequestTest extends TestCase
         ]);
     }
 
-        public function test_sort_minus1(): void
+    public function test_sort_minus1(): void
     {
         $this->seed();
 
@@ -538,12 +537,12 @@ class MeetingPackRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/meeting-packs",$data);
+            ->post('/admin/meeting-packs', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors([
-           'sort_order',
+            'sort_order',
         ]);
     }
 }

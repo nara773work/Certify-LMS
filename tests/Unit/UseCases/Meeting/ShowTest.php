@@ -9,7 +9,6 @@ use App\Models\Certification;
 use App\Models\CertificationCategory;
 use App\Models\Enrollment;
 use App\Models\Meeting;
-use App\Models\MeetingMemo;
 use App\Models\User;
 use App\UseCases\Meeting\ShowAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -158,4 +157,3 @@ class ShowTest extends TestCase
         $this->assertNull($result->meetingMemo);
     }
 }
-

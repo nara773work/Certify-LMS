@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Announcement;
-use App\Models\User;
-use App\Models\Certification;
 use App\Enums\AnnouncementTargetType;
+use App\Models\Announcement;
+use App\Models\Certification;
+use App\Models\User;
 use App\Notifications\AnnouncementNotification;
+use Illuminate\Database\Seeder;
 
 class AnnouncementSeeder extends Seeder
 {
@@ -18,10 +20,10 @@ class AnnouncementSeeder extends Seeder
     {
         $admin = User::where('role', 'admin')->first();
 
-        //前受講生
+        // 前受講生
         $announcement = Announcement::create([
-            'title'=>'全受講生の方へアクセス制限のお知らせ',
-            'body'=>'システムメンテナンスのため、2026.09.10の13:00~15:00はアクセスが制限されます',
+            'title' => '全受講生の方へアクセス制限のお知らせ',
+            'body' => 'システムメンテナンスのため、2026.09.10の13:00~15:00はアクセスが制限されます',
             'target_type' => AnnouncementTargetType::AllStudents->value,
             'dispatched_at' => now(),
             'created_by' => $admin->id,
@@ -35,7 +37,7 @@ class AnnouncementSeeder extends Seeder
             $student->notify(new AnnouncementNotification($announcement));
         }
 
-        //資格指定
+        // 資格指定
         $certification = Certification::first();
 
         $announcement = Announcement::create([
@@ -56,7 +58,7 @@ class AnnouncementSeeder extends Seeder
             $user->notify(new AnnouncementNotification($announcement));
         }
 
-        //ユーザー指定
+        // ユーザー指定
         $student = User::where('role', 'student')->first();
 
         $announcement = Announcement::create([

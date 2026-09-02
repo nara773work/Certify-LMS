@@ -1,14 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Enrollment;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
 use App\Models\Certification;
 use App\Models\Enrollment;
-use App\Models\EnrollmentNote;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class EnrollmentNoteRequestTest extends TestCase
 {
@@ -16,6 +16,7 @@ class EnrollmentNoteRequestTest extends TestCase
      * A basic feature test example.
      */
     use RefreshDatabase;
+
     public function test_body_required(): void
     {
         $this->seed();
@@ -29,7 +30,7 @@ class EnrollmentNoteRequestTest extends TestCase
             'body' => '',
         ];
 
-        $response = $this->actingAs($ITCoach)->post("/enrollments/{$enrollment->id}/notes",$note);
+        $response = $this->actingAs($ITCoach)->post("/enrollments/{$enrollment->id}/notes", $note);
 
         $response->assertStatus(302);
 
@@ -49,11 +50,11 @@ class EnrollmentNoteRequestTest extends TestCase
             'body' => str_repeat('あ', 2000),
         ];
 
-        $response = $this->actingAs($ITCoach)->post("/enrollments/{$enrollment->id}/notes",$note);
+        $response = $this->actingAs($ITCoach)->post("/enrollments/{$enrollment->id}/notes", $note);
 
         $response->assertStatus(302);
 
-        $this->assertDatabaseHas('enrollment_notes',[
+        $this->assertDatabaseHas('enrollment_notes', [
             'enrollment_id' => $enrollment->id,
             'body' => str_repeat('あ', 2000),
         ]);
@@ -72,7 +73,7 @@ class EnrollmentNoteRequestTest extends TestCase
             'body' => str_repeat('あ', 2001),
         ];
 
-        $response = $this->actingAs($ITCoach)->post("/enrollments/{$enrollment->id}/notes",$note);
+        $response = $this->actingAs($ITCoach)->post("/enrollments/{$enrollment->id}/notes", $note);
 
         $response->assertStatus(302);
 

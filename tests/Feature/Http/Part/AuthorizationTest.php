@@ -1,13 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Part;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
 use App\Enums\UserRole;
 use App\Models\Certification;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AuthorizationTest extends TestCase
 {
@@ -15,7 +16,8 @@ class AuthorizationTest extends TestCase
      * A basic feature test example.
      */
     use RefreshDatabase;
-    //教材管理画面
+
+    // 教材管理画面
     public function test_admin_can_see_certification(): void
     {
         $this->seed();
@@ -73,7 +75,7 @@ class AuthorizationTest extends TestCase
         $response->assertForbidden();
     }
 
-    //part
+    // part
     public function test_admin_can_see_part(): void
     {
         $this->seed();
@@ -139,7 +141,7 @@ class AuthorizationTest extends TestCase
         $response->assertForbidden();
     }
 
-    //part store
+    // part store
     public function test_admin_can_create_part(): void
     {
         $this->seed();
@@ -193,7 +195,6 @@ class AuthorizationTest extends TestCase
         $response->assertRedirect();
     }
 
-
     public function test_unassigned_coach_cannot_create_part(): void
     {
         $this->seed();
@@ -222,10 +223,10 @@ class AuthorizationTest extends TestCase
         $response->assertForbidden();
     }
 
-    //part show
-    public function test_Admin_can_see_part_show(): void
+    // part show
+    public function test_admin_can_see_part_show(): void
     {
-        $this -> seed();
+        $this->seed();
         $Admin = User::where('role', UserRole::Admin)->first();
         $certification = Certification::where(
             'name',
@@ -237,15 +238,15 @@ class AuthorizationTest extends TestCase
             ->firstOrFail();
 
         $response = $this->actingAs($Admin)
-        ->get("/admin/parts/{$part->id}");
+            ->get("/admin/parts/{$part->id}");
 
         $response->assertStatus(200);
     }
 
-    public function test_Coach_can_see_part_show(): void
+    public function test_coach_can_see_part_show(): void
     {
-        $this -> seed();
-        $Coach = User::where('email','coach@certify-lms.test')->first();
+        $this->seed();
+        $Coach = User::where('email', 'coach@certify-lms.test')->first();
         $certification = Certification::where(
             'name',
             '基本情報技術者試験'
@@ -256,15 +257,15 @@ class AuthorizationTest extends TestCase
             ->firstOrFail();
 
         $response = $this->actingAs($Coach)
-        ->get("/admin/parts/{$part->id}");
+            ->get("/admin/parts/{$part->id}");
 
         $response->assertStatus(200);
     }
 
-    public function test_Coach_cannot_see_part_show(): void
+    public function test_coach_cannot_see_part_show(): void
     {
-        $this -> seed();
-        $Coach = User::where('email','coach2@certify-lms.test')->first();
+        $this->seed();
+        $Coach = User::where('email', 'coach2@certify-lms.test')->first();
         $certification = Certification::where(
             'name',
             '基本情報技術者試験'
@@ -275,12 +276,12 @@ class AuthorizationTest extends TestCase
             ->firstOrFail();
 
         $response = $this->actingAs($Coach)
-        ->get("/admin/parts/{$part->id}");
+            ->get("/admin/parts/{$part->id}");
 
         $response->assertStatus(403);
     }
 
-    //part update
+    // part update
     public function test_admin_can_update_part(): void
     {
         $this->seed();
@@ -365,7 +366,7 @@ class AuthorizationTest extends TestCase
         $response->assertForbidden();
     }
 
-    //part delete
+    // part delete
     public function test_admin_can_delete_part(): void
     {
         $this->seed();
@@ -434,5 +435,4 @@ class AuthorizationTest extends TestCase
 
         $response->assertForbidden();
     }
-
 }

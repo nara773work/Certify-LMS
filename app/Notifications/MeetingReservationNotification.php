@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
+use App\Models\Meeting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Models\Meeting;
 
-class MeetingReservationNotification extends Notification implements ShouldQueue 
+class MeetingReservationNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -19,11 +20,11 @@ class MeetingReservationNotification extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      */
-public function __construct(
-    public Meeting $meeting,
-) {
-    $this->afterCommit();
-}
+    public function __construct(
+        public Meeting $meeting,
+    ) {
+        $this->afterCommit();
+    }
 
     /**
      * Get the notification's delivery channels.

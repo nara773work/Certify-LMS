@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Models\GoogleCalendarToken;
 
 /**
  * プラン受講中のユーザーを表す Model。
@@ -326,5 +325,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(AiChatConversation::class, 'user_id');
     }
-
 }

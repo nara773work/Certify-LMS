@@ -8,9 +8,10 @@ use App\Models\Meeting;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-class IndexAction{
-
-    public function __invoke(User $user,string $filter = 'upcoming'): LengthAwarePaginator{
+class IndexAction
+{
+    public function __invoke(User $user, string $filter = 'upcoming'): LengthAwarePaginator
+    {
 
         $query = Meeting::query()
             ->with(['enrollment.certification', 'coach'])

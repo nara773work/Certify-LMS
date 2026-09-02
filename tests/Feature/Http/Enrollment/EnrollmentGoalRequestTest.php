@@ -1,20 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Enrollment;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use Carbon\Carbon;
 use App\Enums\UserRole;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class EnrollmentGoalRequestTest extends TestCase
 {
     /**
      * A basic feature test example.
      */
-
     use RefreshDatabase;
 
     public function test_title_required(): void
@@ -22,7 +22,7 @@ class EnrollmentGoalRequestTest extends TestCase
         $this->seed();
 
         $user = User::query()
-        ->where('role', UserRole::Student->value)->firstOrFail();
+            ->where('role', UserRole::Student->value)->firstOrFail();
         $enrollment = $user->enrollments()->first();
 
         $goal = [
@@ -32,7 +32,7 @@ class EnrollmentGoalRequestTest extends TestCase
             'target_date' => Carbon::today()->addDays(3),
         ];
         $response = $this->actingAs($user)
-        ->post("/enrollments/{$enrollment->id}/goals",$goal);
+            ->post("/enrollments/{$enrollment->id}/goals", $goal);
 
         $response->assertSessionHasErrors([
             'title',
@@ -45,35 +45,35 @@ class EnrollmentGoalRequestTest extends TestCase
 
     }
 
-        public function test_title_100(): void
+    public function test_title_100(): void
     {
         $this->seed();
 
         $user = User::query()
-        ->where('role', UserRole::Student->value)->firstOrFail();
+            ->where('role', UserRole::Student->value)->firstOrFail();
         $enrollment = $user->enrollments()->first();
 
         $goal = [
-            'title' =>str_repeat('あ', 100),
+            'title' => str_repeat('あ', 100),
             'enrollment_id' => $enrollment->id,
             'description' => null,
             'target_date' => Carbon::today()->addDays(3),
         ];
         $response = $this->actingAs($user)
-        ->post("/enrollments/{$enrollment->id}/goals",$goal);
+            ->post("/enrollments/{$enrollment->id}/goals", $goal);
 
         $this->assertDatabaseHas('enrollment_goals', [
-            'title' =>str_repeat('あ', 100),
+            'title' => str_repeat('あ', 100),
             'enrollment_id' => $enrollment->id,
         ]);
     }
 
-        public function test_title_101(): void
+    public function test_title_101(): void
     {
         $this->seed();
 
         $user = User::query()
-        ->where('role', UserRole::Student->value)->firstOrFail();
+            ->where('role', UserRole::Student->value)->firstOrFail();
         $enrollment = $user->enrollments()->first();
 
         $goal = [
@@ -83,7 +83,7 @@ class EnrollmentGoalRequestTest extends TestCase
             'target_date' => Carbon::today()->addDays(3),
         ];
         $response = $this->actingAs($user)
-        ->post("/enrollments/{$enrollment->id}/goals",$goal);
+            ->post("/enrollments/{$enrollment->id}/goals", $goal);
 
         $response->assertSessionHasErrors([
             'title',
@@ -95,22 +95,22 @@ class EnrollmentGoalRequestTest extends TestCase
         ]);
     }
 
-        public function test_description_1000(): void
+    public function test_description_1000(): void
     {
         $this->seed();
 
         $user = User::query()
-        ->where('role', UserRole::Student->value)->firstOrFail();
+            ->where('role', UserRole::Student->value)->firstOrFail();
         $enrollment = $user->enrollments()->first();
 
         $goal = [
-            'title' =>'title',
+            'title' => 'title',
             'enrollment_id' => $enrollment->id,
             'description' => str_repeat('あ', 1000),
             'target_date' => Carbon::today()->addDays(3),
         ];
         $response = $this->actingAs($user)
-        ->post("/enrollments/{$enrollment->id}/goals",$goal);
+            ->post("/enrollments/{$enrollment->id}/goals", $goal);
 
         $this->assertDatabaseHas('enrollment_goals', [
             'description' => str_repeat('あ', 1000),
@@ -118,12 +118,12 @@ class EnrollmentGoalRequestTest extends TestCase
         ]);
     }
 
-        public function test_description_1001(): void
+    public function test_description_1001(): void
     {
         $this->seed();
 
         $user = User::query()
-        ->where('role', UserRole::Student->value)->firstOrFail();
+            ->where('role', UserRole::Student->value)->firstOrFail();
         $enrollment = $user->enrollments()->first();
 
         $goal = [
@@ -133,10 +133,10 @@ class EnrollmentGoalRequestTest extends TestCase
             'target_date' => Carbon::today()->addDays(3),
         ];
         $response = $this->actingAs($user)
-        ->post("/enrollments/{$enrollment->id}/goals",$goal);
+            ->post("/enrollments/{$enrollment->id}/goals", $goal);
 
         $response->assertSessionHasErrors([
-            'description'
+            'description',
         ]);
 
         $this->assertDatabaseMissing('enrollment_goals', [
@@ -145,12 +145,12 @@ class EnrollmentGoalRequestTest extends TestCase
         ]);
     }
 
-        public function test_target_date_after(): void
+    public function test_target_date_after(): void
     {
         $this->seed();
 
         $user = User::query()
-        ->where('role', UserRole::Student->value)->firstOrFail();
+            ->where('role', UserRole::Student->value)->firstOrFail();
         $enrollment = $user->enrollments()->first();
 
         $goal = [
@@ -160,10 +160,10 @@ class EnrollmentGoalRequestTest extends TestCase
             'target_date' => Carbon::yesterday(),
         ];
         $response = $this->actingAs($user)
-        ->post("/enrollments/{$enrollment->id}/goals",$goal);
+            ->post("/enrollments/{$enrollment->id}/goals", $goal);
 
         $response->assertSessionHasErrors([
-            'target_date' ,
+            'target_date',
         ]);
 
         $this->assertDatabaseMissing('enrollment_goals', [

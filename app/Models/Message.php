@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use App\Enums\AiChatMessageRole;
+use App\Enums\AiChatMessageStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Enums\AiChatMessageStatus;
-use App\Enums\AiChatMessageRole;
 
 class Message extends Model
 {
@@ -23,7 +25,7 @@ class Message extends Model
         'status' => AiChatMessageStatus::class,
     ];
 
-    function conversation()
+    public function conversation()
     {
         return $this->belongsTo(AiChatConversation::class);
     }

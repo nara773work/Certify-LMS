@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\CertificationStatus;
 use App\Enums\EnrollmentStatus;
 use App\Models\Enrollment;
 use App\Models\User;
-use App\Enums\CertificationStatus;
 
 /**
  * 受講生のデフォルト資格(users.default_enrollment_id)の自動設定 / 自動振替 / NULL リセットを担う Service。

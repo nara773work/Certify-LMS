@@ -10,6 +10,7 @@ use App\Models\CoachAvailability;
 use App\Models\Enrollment;
 use App\Models\User;
 use App\Services\GoogleCalendarService;
+use App\Services\MeetingAvailabilityService;
 use App\UseCases\Meeting\FindAvailableAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -57,12 +58,12 @@ class FindAvailableTest extends TestCase
         ]);
 
         $certification->coaches()->attach(
-    $coach->id,
-    [
-        'assigned_by_user_id' => $coach->id,
-        'assigned_at' => now(),
-    ]
-);
+            $coach->id,
+            [
+                'assigned_by_user_id' => $coach->id,
+                'assigned_at' => now(),
+            ]
+        );
 
         return compact(
             'student',
@@ -88,7 +89,7 @@ class FindAvailableTest extends TestCase
         array $events = [],
     ): FindAvailableAction {
         return new FindAvailableAction(
-            new \App\Services\MeetingAvailabilityService(
+            new MeetingAvailabilityService(
                 $this->createGoogleCalendarMock($events),
             ),
         );
@@ -191,4 +192,3 @@ class FindAvailableTest extends TestCase
         );
     }
 }
-

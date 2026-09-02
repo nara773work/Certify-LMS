@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +19,7 @@ class Notification extends Model
         'status',
     ];
 
-        public function scopeUnread($query)
+    public function scopeUnread($query)
     {
         return $query->whereNull('read_at');
     }

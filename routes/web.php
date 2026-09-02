@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Auth\OnboardingController;
-use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\BrowseController;
 use App\Http\Controllers\CertificationCatalogController;
 use App\Http\Controllers\CertificationCategoryController;
@@ -35,11 +35,11 @@ use App\Http\Controllers\MockExamSessionMonitorController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PartController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\QaReplyController;
+use App\Http\Controllers\QaThreadController;
 use App\Http\Controllers\QuestionCategoryController;
 use App\Http\Controllers\QuizHistoryController;
 use App\Http\Controllers\QuizStatsController;
-use App\Http\Controllers\QaThreadController;
-use App\Http\Controllers\QaReplyController;
 use App\Http\Controllers\ReceiveCertificateController;
 use App\Http\Controllers\SectionController;
 use App\Http\Controllers\SectionImageController;
@@ -68,25 +68,25 @@ Route::get('/', function () {
 Route::middleware(['auth', 'role:student,coach'])
     ->name('qa-board.')->group(function () {
 
-        Route::get('qa-board',[QaThreadController::class,'index'])
-        ->name('index');
-        Route::get('/qa-board/create',[QaThreadController::class,'create'])
-        ->name('create');
-        Route::post('/qa-board',[QaThreadController::class,'store'])
-        ->name('store');
-        Route::get('/qa-board/{thread}',[QaThreadController::class,'show'])
-        ->name('show');
-        Route::get('/qa-board/{thread}/edit',[QaThreadController::class,'edit'])
-        ->name('edit');
-        Route::patch('/qa-board/{thread}',[QaThreadController::class,'update'])
-        ->name('update');
-        Route::delete('/qa-board/{thread}',[QaThreadController::class,'destroy'])
-        ->name('destroy');
+        Route::get('qa-board', [QaThreadController::class, 'index'])
+            ->name('index');
+        Route::get('/qa-board/create', [QaThreadController::class, 'create'])
+            ->name('create');
+        Route::post('/qa-board', [QaThreadController::class, 'store'])
+            ->name('store');
+        Route::get('/qa-board/{thread}', [QaThreadController::class, 'show'])
+            ->name('show');
+        Route::get('/qa-board/{thread}/edit', [QaThreadController::class, 'edit'])
+            ->name('edit');
+        Route::patch('/qa-board/{thread}', [QaThreadController::class, 'update'])
+            ->name('update');
+        Route::delete('/qa-board/{thread}', [QaThreadController::class, 'destroy'])
+            ->name('destroy');
 
-        Route::post('/qa-board/{thread}/resolve',[QaThreadController::class,'resolve'])
-        ->name('resolve');
-        Route::post('/qa-board/{thread}/unresolve',[QaThreadController::class,'unresolve'])
-        ->name('unresolve');    
+        Route::post('/qa-board/{thread}/resolve', [QaThreadController::class, 'resolve'])
+            ->name('resolve');
+        Route::post('/qa-board/{thread}/unresolve', [QaThreadController::class, 'unresolve'])
+            ->name('unresolve');
 
     });
 
@@ -96,14 +96,14 @@ Route::middleware(['auth', 'role:student,coach'])
 Route::middleware(['auth', 'role:student,coach'])
     ->name('qa-board.')->group(function () {
 
-        Route::post('/qa-board/{thread}/replies',[QaReplyController::class,'store'])
-        ->name('replies.store');
-        Route::get('/qa-board/{thread}/replies/{reply}/edit',[QaReplyController::class,'edit'])
-        ->name('replies.edit');
-        Route::patch('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'update'])
-        ->name('replies.update');
-        Route::delete('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'destroy'])
-        ->name('replies.destroy');      
+        Route::post('/qa-board/{thread}/replies', [QaReplyController::class, 'store'])
+            ->name('replies.store');
+        Route::get('/qa-board/{thread}/replies/{reply}/edit', [QaReplyController::class, 'edit'])
+            ->name('replies.edit');
+        Route::patch('/qa-board/{thread}/replies/{reply}', [QaReplyController::class, 'update'])
+            ->name('replies.update');
+        Route::delete('/qa-board/{thread}/replies/{reply}', [QaReplyController::class, 'destroy'])
+            ->name('replies.destroy');
 
     });
 
@@ -113,14 +113,14 @@ Route::middleware(['auth', 'role:student,coach'])
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')->name('admin.')->group(function () {
 
-        Route::get('/qa-board',[QaThreadController::class,'index'])
-        ->name('qa-board.index');
-        Route::get('/qa-board/{thread}',[QaThreadController::class,'show'])
-        ->name('qa-board.show');
-        Route::delete('/qa-board/{thread}',[QaThreadController::class,'destroy'])
-        ->name('qa-board.destroy');
-        Route::delete('/qa-board/{thread}/replies/{reply}',[QaReplyController::class,'destroy'])
-        ->name('qa-board.replies.destroy');        
+        Route::get('/qa-board', [QaThreadController::class, 'index'])
+            ->name('qa-board.index');
+        Route::get('/qa-board/{thread}', [QaThreadController::class, 'show'])
+            ->name('qa-board.show');
+        Route::delete('/qa-board/{thread}', [QaThreadController::class, 'destroy'])
+            ->name('qa-board.destroy');
+        Route::delete('/qa-board/{thread}/replies/{reply}', [QaReplyController::class, 'destroy'])
+            ->name('qa-board.replies.destroy');
 
     });
 
@@ -130,26 +130,26 @@ Route::middleware(['auth', 'role:admin'])
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')->name('admin.')->group(function () {
 
-        Route::get('/meeting-packs',[MeetingPackController::class,'index'])
-        ->name('meeting-packs.index');
-        Route::get('/meeting-packs/create',[MeetingPackController::class,'create'])
-        ->name('meeting-packs.create');
-        Route::post('/meeting-packs',[MeetingPackController::class,'store'])
-        ->name('meeting-packs.store'); 
-        Route::get('/meeting-packs/{plan}',[MeetingPackController::class,'show'])
-        ->name('meeting-packs.show');   
-        Route::get('/meeting-packs/{plan}/edit',[MeetingPackController::class,'edit'])
-        ->name('meeting-packs.edit');
-        Route::patch('/meeting-packs/{plan}',[MeetingPackController::class,'update'])
-        ->name('meeting-packs.update');
-        Route::delete('/meeting-packs/{plan}',[MeetingPackController::class,'destroy'])
-        ->name('meeting-packs.destroy');
-        Route::post('/meeting-packs/{plan}/publish',[MeetingPackController::class,'publish'])
-        ->name('meeting-packs.publish');    
-        Route::post('/meeting-packs/{plan}/archive',[MeetingPackController::class,'archive'])
-        ->name('meeting-packs.archive');
-        Route::post('/meeting-packs/{plan}/unarchive',[MeetingPackController::class,'unarchive'])
-        ->name('meeting-packs.unarchive');  
+        Route::get('/meeting-packs', [MeetingPackController::class, 'index'])
+            ->name('meeting-packs.index');
+        Route::get('/meeting-packs/create', [MeetingPackController::class, 'create'])
+            ->name('meeting-packs.create');
+        Route::post('/meeting-packs', [MeetingPackController::class, 'store'])
+            ->name('meeting-packs.store');
+        Route::get('/meeting-packs/{plan}', [MeetingPackController::class, 'show'])
+            ->name('meeting-packs.show');
+        Route::get('/meeting-packs/{plan}/edit', [MeetingPackController::class, 'edit'])
+            ->name('meeting-packs.edit');
+        Route::patch('/meeting-packs/{plan}', [MeetingPackController::class, 'update'])
+            ->name('meeting-packs.update');
+        Route::delete('/meeting-packs/{plan}', [MeetingPackController::class, 'destroy'])
+            ->name('meeting-packs.destroy');
+        Route::post('/meeting-packs/{plan}/publish', [MeetingPackController::class, 'publish'])
+            ->name('meeting-packs.publish');
+        Route::post('/meeting-packs/{plan}/archive', [MeetingPackController::class, 'archive'])
+            ->name('meeting-packs.archive');
+        Route::post('/meeting-packs/{plan}/unarchive', [MeetingPackController::class, 'unarchive'])
+            ->name('meeting-packs.unarchive');
 
     });
 
@@ -159,26 +159,26 @@ Route::middleware(['auth', 'role:admin'])
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')->name('admin.')->group(function () {
 
-        Route::get('/plans',[PlanController::class,'index'])
-        ->name('plans.index');
-        Route::get('/plans/create',[PlanController::class,'create'])
-        ->name('plans.create');
-        Route::post('/plans',[PlanController::class,'store'])
-        ->name('plans.store'); 
-        Route::get('/plans/{plan}',[PlanController::class,'show'])
-        ->name('plans.show');   
-        Route::get('/plans/{plan}/edit',[PlanController::class,'edit'])
-        ->name('plans.edit');
-        Route::put('/plans/{plan}',[PlanController::class,'update'])
-        ->name('plans.update');
-        Route::delete('/plans/{plan}',[PlanController::class,'destroy'])
-        ->name('plans.destroy');
-        Route::post('/plans/{plan}/publish',[PlanController::class,'publish'])
-        ->name('plans.publish');    
-        Route::post('/plans/{plan}/archive',[PlanController::class,'archive'])
-        ->name('plans.archive');
-        Route::post('/plans/{plan}/unarchive',[PlanController::class,'unarchive'])
-        ->name('plans.unarchive');  
+        Route::get('/plans', [PlanController::class, 'index'])
+            ->name('plans.index');
+        Route::get('/plans/create', [PlanController::class, 'create'])
+            ->name('plans.create');
+        Route::post('/plans', [PlanController::class, 'store'])
+            ->name('plans.store');
+        Route::get('/plans/{plan}', [PlanController::class, 'show'])
+            ->name('plans.show');
+        Route::get('/plans/{plan}/edit', [PlanController::class, 'edit'])
+            ->name('plans.edit');
+        Route::put('/plans/{plan}', [PlanController::class, 'update'])
+            ->name('plans.update');
+        Route::delete('/plans/{plan}', [PlanController::class, 'destroy'])
+            ->name('plans.destroy');
+        Route::post('/plans/{plan}/publish', [PlanController::class, 'publish'])
+            ->name('plans.publish');
+        Route::post('/plans/{plan}/archive', [PlanController::class, 'archive'])
+            ->name('plans.archive');
+        Route::post('/plans/{plan}/unarchive', [PlanController::class, 'unarchive'])
+            ->name('plans.unarchive');
 
     });
 
@@ -188,12 +188,12 @@ Route::middleware(['auth', 'role:admin'])
 Route::middleware(['auth', 'role:admin,coach,student'])
     ->group(function () {
 
-        Route::get('/notifications',[NotificationController::class,'index'])
-        ->name('notifications.index');
-        Route::post('/notifications/{notification}/read',[NotificationController::class,'read'])
-        ->name('notifications.markAsRead');
-        Route::post('/notifications/read-all',[NotificationController::class,'readall'])
-        ->name('notifications.markAllAsRead');  
+        Route::get('/notifications', [NotificationController::class, 'index'])
+            ->name('notifications.index');
+        Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])
+            ->name('notifications.markAsRead');
+        Route::post('/notifications/read-all', [NotificationController::class, 'readall'])
+            ->name('notifications.markAllAsRead');
 
     });
 
@@ -203,19 +203,19 @@ Route::middleware(['auth', 'role:admin,coach,student'])
 Route::middleware(['auth', 'role:admin,student,coach'])
     ->group(function () {
 
-        Route::post('/enrollments/{enrollment}/goals',[EnrollmentGoalController::class,'store'])
-        ->name('enrollments.goals.store'); 
-        Route::get('/enrollment-goals/{goal}/edit',[EnrollmentGoalController::class,'edit'])
-        ->name('enrollment-goals.edit');
-        Route::patch('/enrollment-goals/{goal}',[EnrollmentGoalController::class,'update'])
-        ->name('enrollment-goals.update');
-        Route::delete('/enrollment-goals/{goal}',[EnrollmentGoalController::class,'destroy'])
-        ->name('enrollment-goals.destroy');   
-        Route::post('/enrollment-goals/{goal}/achieve',[EnrollmentGoalController::class,'achieve'])
-        ->name('enrollment-goals.markAchieved');
-        Route::delete('/enrollment-goals/{goal}/achieve',[EnrollmentGoalController::class,'unachieve'])
-        ->name('enrollment-goals.unmarkAchieved');
-    });  
+        Route::post('/enrollments/{enrollment}/goals', [EnrollmentGoalController::class, 'store'])
+            ->name('enrollments.goals.store');
+        Route::get('/enrollment-goals/{goal}/edit', [EnrollmentGoalController::class, 'edit'])
+            ->name('enrollment-goals.edit');
+        Route::patch('/enrollment-goals/{goal}', [EnrollmentGoalController::class, 'update'])
+            ->name('enrollment-goals.update');
+        Route::delete('/enrollment-goals/{goal}', [EnrollmentGoalController::class, 'destroy'])
+            ->name('enrollment-goals.destroy');
+        Route::post('/enrollment-goals/{goal}/achieve', [EnrollmentGoalController::class, 'achieve'])
+            ->name('enrollment-goals.markAchieved');
+        Route::delete('/enrollment-goals/{goal}/achieve', [EnrollmentGoalController::class, 'unachieve'])
+            ->name('enrollment-goals.unmarkAchieved');
+    });
 
 // ============================================================
 // S-B-06 設定プロフィール
@@ -223,18 +223,17 @@ Route::middleware(['auth', 'role:admin,student,coach'])
 Route::middleware(['auth', 'role:admin,student,coach'])
     ->group(function () {
 
-        Route::get('/settings/profile',[SettingController::class,'edit'])
-        ->name('settings.profile.edit');
-        Route::patch('/settings/profile',[SettingController::class,'update'])
-        ->name('settings.profile.update');
-        Route::post('/settings/avatar',[SettingController::class,'avatar'])
-        ->name('settings.avatar.store');   
-        Route::delete('/settings/avatar',[SettingController::class,'avatardelete'])
-        ->name('settings.avatar.destroy');
-        Route::put('/settings/password',[SettingController::class,'updatepassword'])
-        ->name('settings.password.update');
-    });  
-
+        Route::get('/settings/profile', [SettingController::class, 'edit'])
+            ->name('settings.profile.edit');
+        Route::patch('/settings/profile', [SettingController::class, 'update'])
+            ->name('settings.profile.update');
+        Route::post('/settings/avatar', [SettingController::class, 'avatar'])
+            ->name('settings.avatar.store');
+        Route::delete('/settings/avatar', [SettingController::class, 'avatardelete'])
+            ->name('settings.avatar.destroy');
+        Route::put('/settings/password', [SettingController::class, 'updatepassword'])
+            ->name('settings.password.update');
+    });
 
 // ============================================================
 // S-B-07 受講生メモの管理
@@ -242,15 +241,15 @@ Route::middleware(['auth', 'role:admin,student,coach'])
 Route::middleware(['auth', 'role:admin,coach'])
     ->group(function () {
 
-        Route::post('/enrollments/{enrollment}/notes',[EnrollmentNoteController::class,'store'])
-        ->name('enrollments.notes.store');
-        Route::get('/enrollment-notes/{note}/edit',[EnrollmentNoteController::class,'edit'])
-        ->name('enrollment-notes.edit');
-        Route::patch('/enrollment-notes/{note}',[EnrollmentNoteController::class,'update'])
-        ->name('enrollment-notes.update');   
-        Route::delete('/enrollment-notes/{note}',[EnrollmentNoteController::class,'destroy'])
-        ->name('enrollment-notes.destroy');
-    });  
+        Route::post('/enrollments/{enrollment}/notes', [EnrollmentNoteController::class, 'store'])
+            ->name('enrollments.notes.store');
+        Route::get('/enrollment-notes/{note}/edit', [EnrollmentNoteController::class, 'edit'])
+            ->name('enrollment-notes.edit');
+        Route::patch('/enrollment-notes/{note}', [EnrollmentNoteController::class, 'update'])
+            ->name('enrollment-notes.update');
+        Route::delete('/enrollment-notes/{note}', [EnrollmentNoteController::class, 'destroy'])
+            ->name('enrollment-notes.destroy');
+    });
 
 // ============================================================
 // S-B-08 お知らせ配信（管理者）
@@ -259,20 +258,20 @@ Route::middleware(['auth', 'role:admin'])
     ->prefix('/admin')
     ->group(function () {
 
-        Route::get('/announcements',[AnnouncementController::class,'index'])
-        ->name('admin.announcements.index');
-        Route::get('/announcements/create',[AnnouncementController::class,'create'])
-        ->name('admin.announcements.create');
-        Route::post('/announcements',[AnnouncementController::class,'store'])
-        ->name('admin.announcements.store');   
-        Route::get('/announcements/{announcement}',[AnnouncementController::class,'show'])
-        ->name('admin.announcements.show');
+        Route::get('/announcements', [AnnouncementController::class, 'index'])
+            ->name('admin.announcements.index');
+        Route::get('/announcements/create', [AnnouncementController::class, 'create'])
+            ->name('admin.announcements.create');
+        Route::post('/announcements', [AnnouncementController::class, 'store'])
+            ->name('admin.announcements.store');
+        Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])
+            ->name('admin.announcements.show');
     });
-    Route::middleware(['auth', 'role:admin,coach,student'])
+Route::middleware(['auth', 'role:admin,coach,student'])
     ->group(function () {
-    
-    Route::get('/notifications/{notification}', [AnnouncementController::class, 'notificationshow'])
-    ->name('notifications.show');
+
+        Route::get('/notifications/{notification}', [AnnouncementController::class, 'notificationshow'])
+            ->name('notifications.show');
 
     });
 
@@ -283,11 +282,11 @@ Route::middleware(['auth', 'role:coach'])
     ->group(function () {
 
         Route::get('/settings/google-calendar/connect', [GoogleCalendarController::class, 'connect'])
-        ->name('settings.google-calendar.redirect');
+            ->name('settings.google-calendar.redirect');
         Route::get('/settings/google-calendar/callback', [GoogleCalendarController::class, 'callback'])
-        ->name('settings.google-calendar.callback');
-        Route::delete('/settings/google-calendar', [GoogleCalendarController::class,'destroy'])
-        ->name('settings.google-calendar.destroy');
+            ->name('settings.google-calendar.callback');
+        Route::delete('/settings/google-calendar', [GoogleCalendarController::class, 'destroy'])
+            ->name('settings.google-calendar.destroy');
 
     });
 
@@ -297,17 +296,17 @@ Route::middleware(['auth', 'role:coach'])
 Route::middleware(['auth', 'role:student', 'active-learning'])->group(function () {
 
     Route::get('/ai-chat', [AiChatController::class, 'index'])
-    ->name('ai-chat.index');
+        ->name('ai-chat.index');
     Route::post('/ai-chat/conversations', [AiChatController::class, 'store'])
-    ->name('ai-chat.conversations.store');
+        ->name('ai-chat.conversations.store');
     Route::get('/ai-chat/conversations/{conversation}', [AiChatController::class, 'show'])
-    ->name('ai-chat.conversations.show');
+        ->name('ai-chat.conversations.show');
     Route::patch('/ai-chat/conversations/{conversation}', [AiChatController::class, 'update'])
-    ->name('ai-chat.conversations.update');
+        ->name('ai-chat.conversations.update');
     Route::delete('/ai-chat/conversations/{conversation}', [AiChatController::class, 'destroy'])
-    ->name('ai-chat.conversations.destroy');
+        ->name('ai-chat.conversations.destroy');
     Route::post('/ai-chat/conversations/{conversation}/messages', [AiChatController::class, 'messagestore'])
-    ->name('ai-chat.conversations.messages.store');
+        ->name('ai-chat.conversations.messages.store');
 
 });
 
@@ -317,15 +316,15 @@ Route::middleware(['auth', 'role:student', 'active-learning'])->group(function (
 Route::middleware(['auth', 'role:student', 'active-learning'])->group(function () {
 
     Route::get('/meeting-quota/checkout', [MeetingQuotaController::class, 'index'])
-    ->name('meeting-quota.checkout.select');
+        ->name('meeting-quota.checkout.select');
     Route::post('/meeting-quota/checkout', [MeetingQuotaController::class, 'store'])
-    ->name('meeting-quota.checkout.create');
+        ->name('meeting-quota.checkout.create');
     Route::get('/meeting-quota/success', [MeetingQuotaController::class, 'success'])
-    ->name('meeting-quota.success');
+        ->name('meeting-quota.success');
 
 });
 
-    Route::post('/webhooks/stripe', [MeetingQuotaController::class, 'stripe'])
+Route::post('/webhooks/stripe', [MeetingQuotaController::class, 'stripe'])
     ->name('meeting-quota.stripe');
 
 // ============================================================
@@ -334,7 +333,7 @@ Route::middleware(['auth', 'role:student', 'active-learning'])->group(function (
 Route::middleware(['auth', 'role:student,admin,coach'])->group(function () {
 
     Route::get('/certificates/{certificate}/download', [DownloadController::class, 'download'])
-    ->name('certificates.download');
+        ->name('certificates.download');
 
 });
 
@@ -763,9 +762,3 @@ if (app()->environment('local')) {
         return view('_dev.components');
     })->name('_dev.components');
 }
-
-
-
-
-
-

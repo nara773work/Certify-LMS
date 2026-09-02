@@ -6,8 +6,8 @@ namespace Tests\Unit\UseCases\Meeting;
 
 use App\Enums\MeetingStatus;
 use App\Models\Certification;
-use App\Models\CertificationCoachAssignment;
 use App\Models\CertificationCategory;
+use App\Models\CertificationCoachAssignment;
 use App\Models\Enrollment;
 use App\Models\Meeting;
 use App\Models\User;
@@ -70,9 +70,9 @@ class IndexAsCoachTest extends TestCase
         );
 
         $category = CertificationCategory::create([
-    'name' => 'IndexAsCoachTestカテゴリ',
-    'slug' => 'index-as-coach-test-category',
-]);
+            'name' => 'IndexAsCoachTestカテゴリ',
+            'slug' => 'index-as-coach-test-category',
+        ]);
 
         $certification = Certification::create([
             'category_id' => $category->id,
@@ -175,7 +175,7 @@ class IndexAsCoachTest extends TestCase
             '別コーチの面談',
         );
 
-        $action = new IndexAsCoachAction();
+        $action = new IndexAsCoachAction;
 
         $result = $action($data['coach'], 'upcoming');
 
@@ -224,7 +224,7 @@ class IndexAsCoachTest extends TestCase
             '未来の面談',
         );
 
-        $action = new IndexAsCoachAction();
+        $action = new IndexAsCoachAction;
 
         $result = $action($data['coach'], 'past');
 
@@ -273,7 +273,7 @@ class IndexAsCoachTest extends TestCase
             '別コーチの面談',
         );
 
-        $action = new IndexAsCoachAction();
+        $action = new IndexAsCoachAction;
 
         $result = $action($data['coach'], 'all');
 
@@ -291,7 +291,7 @@ class IndexAsCoachTest extends TestCase
     /**
      * studentIdを指定すると受講生で絞り込める。
      */
-    public function test_studentIdで受講生を絞り込める(): void
+    public function test_student_idで受講生を絞り込める(): void
     {
         $data = $this->createTestData();
 
@@ -305,15 +305,15 @@ class IndexAsCoachTest extends TestCase
         );
 
         $meeting2 = $this->createMeeting(
-    $data['enrollment2'],
-    $data['student2'],
-    $data['coach'],
-    Carbon::now()->addDay()->addHour(),
-    MeetingStatus::Reserved,
-    '受講生2の面談',
-);
+            $data['enrollment2'],
+            $data['student2'],
+            $data['coach'],
+            Carbon::now()->addDay()->addHour(),
+            MeetingStatus::Reserved,
+            '受講生2の面談',
+        );
 
-        $action = new IndexAsCoachAction();
+        $action = new IndexAsCoachAction;
 
         $result = $action(
             $data['coach'],
@@ -335,7 +335,7 @@ class IndexAsCoachTest extends TestCase
     /**
      * enrollmentIdを指定するとEnrollmentで絞り込める。
      */
-    public function test_enrollmentIdで受講登録を絞り込める(): void
+    public function test_enrollment_idで受講登録を絞り込める(): void
     {
         $data = $this->createTestData();
 
@@ -349,15 +349,15 @@ class IndexAsCoachTest extends TestCase
         );
 
         $meeting2 = $this->createMeeting(
-    $data['enrollment2'],
-    $data['student2'],
-    $data['coach'],
-    Carbon::now()->addDay()->addHour(),
-    MeetingStatus::Reserved,
-    'Enrollment2の面談',
-);
+            $data['enrollment2'],
+            $data['student2'],
+            $data['coach'],
+            Carbon::now()->addDay()->addHour(),
+            MeetingStatus::Reserved,
+            'Enrollment2の面談',
+        );
 
-        $action = new IndexAsCoachAction();
+        $action = new IndexAsCoachAction;
 
         $result = $action(
             $data['coach'],
@@ -377,4 +377,3 @@ class IndexAsCoachTest extends TestCase
         );
     }
 }
-

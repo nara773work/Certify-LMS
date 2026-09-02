@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Exceptions\Auth\InvalidInvitationTokenException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\OnboardingRequest;
 use App\Models\Invitation;
@@ -13,7 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
-use App\Exceptions\Auth\InvalidInvitationTokenException;
 
 class OnboardingController extends Controller
 {
@@ -39,15 +39,15 @@ class OnboardingController extends Controller
         Invitation $invitation,
         OnboardingRequest $request,
         OnboardAction $action,
-    ): RedirectResponse |View {
-    {
+    ): RedirectResponse|View {
+
         try {
-        $action($invitation, $request->validated());
-            } catch (InvalidInvitationTokenException) {
-                return view('auth.invitation-invalid');
-            }
+            $action($invitation, $request->validated());
+        } catch (InvalidInvitationTokenException) {
+            return view('auth.invitation-invalid');
+        }
 
         return redirect()->route('dashboard.index');
+
     }
-}
 }

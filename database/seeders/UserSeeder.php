@@ -46,7 +46,6 @@ class UserSeeder extends Seeder
         $defaultPassword = Hash::make('password');
         $now = now();
 
-
         User::factory()
             ->admin()
             ->state([
@@ -59,7 +58,7 @@ class UserSeeder extends Seeder
             ])
             ->create();
 
-        //アバターあり
+        // アバターあり
         User::factory()
             ->coach()
             ->state([
@@ -117,9 +116,8 @@ class UserSeeder extends Seeder
                 'email_verified_at' => $now,
             ])
             ->create();
-    
 
-    // 修了済み受講生（アバターあり）
+        // 修了済み受講生（アバターあり）
         User::factory()
             ->student()
             ->state([
@@ -151,6 +149,7 @@ class UserSeeder extends Seeder
             ])
             ->create();
     }
+
     /**
      * 状態網羅 demo データ(Factory 生成、ランダムな name / email)。
      * 一覧画面のフィルタ・並び順・各 status のバッジ表示を実機確認するために投入する。

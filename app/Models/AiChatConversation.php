@@ -1,13 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Section;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use Carbon\Carbon;
 
 class AiChatConversation extends Model
 {
@@ -26,22 +24,22 @@ class AiChatConversation extends Model
         'last_message_at' => 'datetime',
     ];
 
-    function user()
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    function messages()
+    public function messages()
     {
         return $this->hasMany(Message::class);
     }
 
-    function enrollment()
+    public function enrollment()
     {
         return $this->belongsTo(Enrollment::class);
     }
 
-    function section()
+    public function section()
     {
         return $this->belongsTo(Section::class);
     }

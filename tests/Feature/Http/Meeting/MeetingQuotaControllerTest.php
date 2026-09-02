@@ -9,10 +9,10 @@ use App\Models\MeetingPack;
 use App\Models\MeetingQuotaTransaction;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\MeetingQuotaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+
 /**
  * @group external-api
  */
@@ -54,30 +54,30 @@ class MeetingQuotaControllerTest extends TestCase
      * ※ 実際のmiddleware / Policyの仕様に合わせて
      *    ステータスや期待ステータスコードを調整する。
      */
-public function test_student_who_is_not_in_progress_cannot_purchase(): void
-{
-    $this->seed();
+    public function test_student_who_is_not_in_progress_cannot_purchase(): void
+    {
+        $this->seed();
 
-    $student = User::query()
-        ->where('role', 'student')
-        ->where('email', 'student@certify-lms.test')
-        ->firstOrFail();
+        $student = User::query()
+            ->where('role', 'student')
+            ->where('email', 'student@certify-lms.test')
+            ->firstOrFail();
 
-    $meetingPack = MeetingPack::query()
-        ->where('status', 'published')
-        ->firstOrFail();
+        $meetingPack = MeetingPack::query()
+            ->where('status', 'published')
+            ->firstOrFail();
 
-    $student->status = 'graduated';
-    $student->save();
+        $student->status = 'graduated';
+        $student->save();
 
-    $response = $this
-        ->actingAs($student)
-        ->post(route('meeting-quota.checkout.create'), [
-            'meeting_pack_id' => $meetingPack->id,
-        ]);
+        $response = $this
+            ->actingAs($student)
+            ->post(route('meeting-quota.checkout.create'), [
+                'meeting_pack_id' => $meetingPack->id,
+            ]);
 
-    $response->assertForbidden();
-}
+        $response->assertForbidden();
+    }
 
     /**
      * Stripe Checkout作成時に、
@@ -312,7 +312,7 @@ public function test_student_who_is_not_in_progress_cannot_purchase(): void
             ->where('email', 'student@certify-lms.test')
             ->firstOrFail();
 
-        $before = app(\App\Services\MeetingQuotaService::class)
+        $before = app(MeetingQuotaService::class)
             ->remaining($student);
 
         $meetingPack = MeetingPack::query()
@@ -340,7 +340,7 @@ public function test_student_who_is_not_in_progress_cannot_purchase(): void
 
         $student->refresh();
 
-        $after = app(\App\Services\MeetingQuotaService::class)
+        $after = app(MeetingQuotaService::class)
             ->remaining($student);
 
         $this->assertSame(
@@ -350,301 +350,301 @@ public function test_student_who_is_not_in_progress_cannot_purchase(): void
     }
 
     /**
- * 正規のStripe署名を持つWebhookを受信すると、
- * Paymentと面談回数が作成される。
- */
-public function test_valid_stripe_webhook_creates_payment_and_quota(): void
-{
-    $this->seed();
+     * 正規のStripe署名を持つWebhookを受信すると、
+     * Paymentと面談回数が作成される。
+     */
+    public function test_valid_stripe_webhook_creates_payment_and_quota(): void
+    {
+        $this->seed();
 
-    $student = User::query()
-        ->where('email', 'student@certify-lms.test')
-        ->firstOrFail();
+        $student = User::query()
+            ->where('email', 'student@certify-lms.test')
+            ->firstOrFail();
 
-    $meetingPack = MeetingPack::query()
-        ->where('status', 'published')
-        ->where('meeting_count', 5)
-        ->firstOrFail();
+        $meetingPack = MeetingPack::query()
+            ->where('status', 'published')
+            ->where('meeting_count', 5)
+            ->firstOrFail();
 
-    $sessionId = 'cs_test_valid_001';
+        $sessionId = 'cs_test_valid_001';
 
-    $payload = json_encode([
-        'id' => 'evt_test_valid_001',
-        'object' => 'event',
-        'type' => 'checkout.session.completed',
-        'data' => [
-            'object' => [
-                'id' => $sessionId,
-                'object' => 'checkout.session',
-                'amount_total' => $meetingPack->price,
-                'metadata' => [
-                    'user_id' => $student->id,
-                    'meeting_pack_id' => $meetingPack->id,
+        $payload = json_encode([
+            'id' => 'evt_test_valid_001',
+            'object' => 'event',
+            'type' => 'checkout.session.completed',
+            'data' => [
+                'object' => [
+                    'id' => $sessionId,
+                    'object' => 'checkout.session',
+                    'amount_total' => $meetingPack->price,
+                    'metadata' => [
+                        'user_id' => $student->id,
+                        'meeting_pack_id' => $meetingPack->id,
+                    ],
                 ],
             ],
-        ],
-    ], JSON_THROW_ON_ERROR);
+        ], JSON_THROW_ON_ERROR);
 
-    $secret = 'whsec_test_secret';
+        $secret = 'whsec_test_secret';
 
-config([
-    'services.stripe.webhook_secret' => $secret,
-]);
+        config([
+            'services.stripe.webhook_secret' => $secret,
+        ]);
 
-$timestamp = time();
+        $timestamp = time();
 
-$signedPayload = $timestamp . '.' . $payload;
+        $signedPayload = $timestamp.'.'.$payload;
 
-$signature = 't=' . $timestamp . ',v1='
-    . hash_hmac('sha256', $signedPayload, $secret);
+        $signature = 't='.$timestamp.',v1='
+            .hash_hmac('sha256', $signedPayload, $secret);
 
-$headers = [
-    'HTTP_STRIPE_SIGNATURE' => $signature,
-    'CONTENT_TYPE' => 'application/json',
-];
+        $headers = [
+            'HTTP_STRIPE_SIGNATURE' => $signature,
+            'CONTENT_TYPE' => 'application/json',
+        ];
 
-$response = $this->call(
-    'POST',
-    route('meeting-quota.stripe'),
-    [],
-    [],
-    [],
-    $headers,
-    $payload
-);
-
-$response->assertStatus(200);
-
-    $this->assertDatabaseHas('payments', [
-        'stripe_session_id' => $sessionId,
-        'user_id' => $student->id,
-        'meeting_pack_id' => $meetingPack->id,
-        'status' => 'succeeded',
-        'amount' => $meetingPack->price,
-        'quantity' => 5,
-    ]);
-
-    $payment = Payment::query()
-        ->where('stripe_session_id', $sessionId)
-        ->firstOrFail();
-
-    $this->assertDatabaseHas('meeting_quota_transactions', [
-        'user_id' => $student->id,
-        'type' => 'purchased',
-        'amount' => 5,
-        'related_payment_id' => $payment->id,
-    ]);
-}
-
-/**
- * 不正なStripe署名の場合は処理しない。
- */
-public function test_invalid_stripe_signature_returns_400(): void
-{
-    $this->seed();
-
-    $student = User::query()
-        ->where('email', 'student@certify-lms.test')
-        ->firstOrFail();
-
-    $meetingPack = MeetingPack::query()
-        ->where('status', 'published')
-        ->where('meeting_count', 5)
-        ->firstOrFail();
-
-    $payload = json_encode([
-        'id' => 'evt_test_invalid_signature',
-        'object' => 'event',
-        'type' => 'checkout.session.completed',
-        'data' => [
-            'object' => [
-                'id' => 'cs_test_invalid_signature',
-                'object' => 'checkout.session',
-                'amount_total' => $meetingPack->price,
-                'metadata' => [
-                    'user_id' => $student->id,
-                    'meeting_pack_id' => $meetingPack->id,
-                ],
-            ],
-        ],
-    ], JSON_THROW_ON_ERROR);
-
-    config([
-        'services.stripe.webhook_secret' => 'whsec_test_secret',
-    ]);
-
-    $response = $this
-        ->withHeaders([
-            'Stripe-Signature' => 'invalid-signature',
-            'Content-Type' => 'application/json',
-        ])
-        ->call(
+        $response = $this->call(
             'POST',
             route('meeting-quota.stripe'),
             [],
             [],
             [],
-            ['CONTENT_TYPE' => 'application/json'],
+            $headers,
             $payload
         );
 
-    $response->assertStatus(400);
-}
+        $response->assertStatus(200);
 
-/**
- * Stripe署名がない場合は処理しない。
- */
-public function test_missing_stripe_signature_returns_400(): void
-{
-    $this->seed();
+        $this->assertDatabaseHas('payments', [
+            'stripe_session_id' => $sessionId,
+            'user_id' => $student->id,
+            'meeting_pack_id' => $meetingPack->id,
+            'status' => 'succeeded',
+            'amount' => $meetingPack->price,
+            'quantity' => 5,
+        ]);
 
-    $payload = json_encode([
-        'id' => 'evt_test_missing_signature',
-        'object' => 'event',
-        'type' => 'checkout.session.completed',
-    ], JSON_THROW_ON_ERROR);
-
-    $response = $this
-        ->call(
-            'POST',
-            route('meeting-quota.stripe'),
-            [],
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            $payload
-        );
-
-    $response->assertStatus(400);
-
-}
-
-/**
- * 同じStripe Webhookが2回届いても、
- * Paymentと面談回数は1回分しか作成されない。
- */
-public function test_duplicate_stripe_webhook_is_idempotent(): void
-{
-    $this->seed();
-
-    $student = User::query()
-        ->where('email', 'student@certify-lms.test')
-        ->firstOrFail();
-
-    $meetingPack = MeetingPack::query()
-        ->where('status', 'published')
-        ->where('meeting_count', 5)
-        ->firstOrFail();
-
-    $sessionId = 'cs_test_duplicate_webhook_001';
-
-    $payload = json_encode([
-        'id' => 'evt_test_duplicate_001',
-        'object' => 'event',
-        'type' => 'checkout.session.completed',
-        'data' => [
-            'object' => [
-                'id' => $sessionId,
-                'object' => 'checkout.session',
-                'amount_total' => $meetingPack->price,
-                'metadata' => [
-                    'user_id' => $student->id,
-                    'meeting_pack_id' => $meetingPack->id,
-                ],
-            ],
-        ],
-    ], JSON_THROW_ON_ERROR);
-
-    $secret = 'whsec_test_secret';
-
-    config([
-        'services.stripe.webhook_secret' => $secret,
-    ]);
-
-    $timestamp = time();
-
-$signedPayload = $timestamp . '.' . $payload;
-
-$signature = 't=' . $timestamp . ',v1='
-    . hash_hmac('sha256', $signedPayload, $secret);
-
-$headers = [
-    'HTTP_STRIPE_SIGNATURE' => $signature,
-    'CONTENT_TYPE' => 'application/json',
-];
-
-    // 1回目
-    $firstResponse = $this->call(
-    'POST',
-    route('meeting-quota.stripe'),
-    [],
-    [],
-    [],
-    $headers,
-    $payload
-);
-    $firstResponse->assertStatus(200);
-
-    $paymentCountAfterFirst = Payment::query()
-        ->where('stripe_session_id', $sessionId)
-        ->count();
-
-    $quotaCountAfterFirst = MeetingQuotaTransaction::query()
-        ->where('user_id', $student->id)
-        ->where('type', 'purchased')
-        ->count();
-
-    // 2回目（同じWebhook）
-    $secondResponse = $this->call(
-    'POST',
-    route('meeting-quota.stripe'),
-    [],
-    [],
-    [],
-    $headers,
-    $payload
-);
-
-    $secondResponse->assertStatus(200);
-
-    $this->assertSame(
-        1,
-        $paymentCountAfterFirst
-    );
-
-    $this->assertSame(
-        1,
-        $quotaCountAfterFirst
-    );
-
-    $this->assertSame(
-        1,
-        Payment::query()
+        $payment = Payment::query()
             ->where('stripe_session_id', $sessionId)
-            ->count()
-    );
+            ->firstOrFail();
 
-    $this->assertSame(
-        1,
-        MeetingQuotaTransaction::query()
+        $this->assertDatabaseHas('meeting_quota_transactions', [
+            'user_id' => $student->id,
+            'type' => 'purchased',
+            'amount' => 5,
+            'related_payment_id' => $payment->id,
+        ]);
+    }
+
+    /**
+     * 不正なStripe署名の場合は処理しない。
+     */
+    public function test_invalid_stripe_signature_returns_400(): void
+    {
+        $this->seed();
+
+        $student = User::query()
+            ->where('email', 'student@certify-lms.test')
+            ->firstOrFail();
+
+        $meetingPack = MeetingPack::query()
+            ->where('status', 'published')
+            ->where('meeting_count', 5)
+            ->firstOrFail();
+
+        $payload = json_encode([
+            'id' => 'evt_test_invalid_signature',
+            'object' => 'event',
+            'type' => 'checkout.session.completed',
+            'data' => [
+                'object' => [
+                    'id' => 'cs_test_invalid_signature',
+                    'object' => 'checkout.session',
+                    'amount_total' => $meetingPack->price,
+                    'metadata' => [
+                        'user_id' => $student->id,
+                        'meeting_pack_id' => $meetingPack->id,
+                    ],
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        config([
+            'services.stripe.webhook_secret' => 'whsec_test_secret',
+        ]);
+
+        $response = $this
+            ->withHeaders([
+                'Stripe-Signature' => 'invalid-signature',
+                'Content-Type' => 'application/json',
+            ])
+            ->call(
+                'POST',
+                route('meeting-quota.stripe'),
+                [],
+                [],
+                [],
+                ['CONTENT_TYPE' => 'application/json'],
+                $payload
+            );
+
+        $response->assertStatus(400);
+    }
+
+    /**
+     * Stripe署名がない場合は処理しない。
+     */
+    public function test_missing_stripe_signature_returns_400(): void
+    {
+        $this->seed();
+
+        $payload = json_encode([
+            'id' => 'evt_test_missing_signature',
+            'object' => 'event',
+            'type' => 'checkout.session.completed',
+        ], JSON_THROW_ON_ERROR);
+
+        $response = $this
+            ->call(
+                'POST',
+                route('meeting-quota.stripe'),
+                [],
+                [],
+                [],
+                ['CONTENT_TYPE' => 'application/json'],
+                $payload
+            );
+
+        $response->assertStatus(400);
+
+    }
+
+    /**
+     * 同じStripe Webhookが2回届いても、
+     * Paymentと面談回数は1回分しか作成されない。
+     */
+    public function test_duplicate_stripe_webhook_is_idempotent(): void
+    {
+        $this->seed();
+
+        $student = User::query()
+            ->where('email', 'student@certify-lms.test')
+            ->firstOrFail();
+
+        $meetingPack = MeetingPack::query()
+            ->where('status', 'published')
+            ->where('meeting_count', 5)
+            ->firstOrFail();
+
+        $sessionId = 'cs_test_duplicate_webhook_001';
+
+        $payload = json_encode([
+            'id' => 'evt_test_duplicate_001',
+            'object' => 'event',
+            'type' => 'checkout.session.completed',
+            'data' => [
+                'object' => [
+                    'id' => $sessionId,
+                    'object' => 'checkout.session',
+                    'amount_total' => $meetingPack->price,
+                    'metadata' => [
+                        'user_id' => $student->id,
+                        'meeting_pack_id' => $meetingPack->id,
+                    ],
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $secret = 'whsec_test_secret';
+
+        config([
+            'services.stripe.webhook_secret' => $secret,
+        ]);
+
+        $timestamp = time();
+
+        $signedPayload = $timestamp.'.'.$payload;
+
+        $signature = 't='.$timestamp.',v1='
+            .hash_hmac('sha256', $signedPayload, $secret);
+
+        $headers = [
+            'HTTP_STRIPE_SIGNATURE' => $signature,
+            'CONTENT_TYPE' => 'application/json',
+        ];
+
+        // 1回目
+        $firstResponse = $this->call(
+            'POST',
+            route('meeting-quota.stripe'),
+            [],
+            [],
+            [],
+            $headers,
+            $payload
+        );
+        $firstResponse->assertStatus(200);
+
+        $paymentCountAfterFirst = Payment::query()
+            ->where('stripe_session_id', $sessionId)
+            ->count();
+
+        $quotaCountAfterFirst = MeetingQuotaTransaction::query()
             ->where('user_id', $student->id)
             ->where('type', 'purchased')
-            ->count()
-    );
-}
+            ->count();
 
-private function generateStripeSignature(
-    string $payload,
-    string $secret
-): string {
-    $timestamp = time();
+        // 2回目（同じWebhook）
+        $secondResponse = $this->call(
+            'POST',
+            route('meeting-quota.stripe'),
+            [],
+            [],
+            [],
+            $headers,
+            $payload
+        );
 
-    $signature = hash_hmac(
-        'sha256',
-        $timestamp . '.' . $payload,
-        $secret
-    );
+        $secondResponse->assertStatus(200);
 
-    return "t={$timestamp},v1={$signature}";
-}
+        $this->assertSame(
+            1,
+            $paymentCountAfterFirst
+        );
+
+        $this->assertSame(
+            1,
+            $quotaCountAfterFirst
+        );
+
+        $this->assertSame(
+            1,
+            Payment::query()
+                ->where('stripe_session_id', $sessionId)
+                ->count()
+        );
+
+        $this->assertSame(
+            1,
+            MeetingQuotaTransaction::query()
+                ->where('user_id', $student->id)
+                ->where('type', 'purchased')
+                ->count()
+        );
+    }
+
+    private function generateStripeSignature(
+        string $payload,
+        string $secret
+    ): string {
+        $timestamp = time();
+
+        $signature = hash_hmac(
+            'sha256',
+            $timestamp.'.'.$payload,
+            $secret
+        );
+
+        return "t={$timestamp},v1={$signature}";
+    }
 }

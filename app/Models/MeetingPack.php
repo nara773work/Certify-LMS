@@ -82,6 +82,6 @@ class MeetingPack extends Model
 
     public function payments(): HasMany
     {
-        return $this->hasMany(Payment::class,'meeting_pack_id');
+        return $this->hasMany(Payment::class, 'meeting_pack_id');
     }
 }

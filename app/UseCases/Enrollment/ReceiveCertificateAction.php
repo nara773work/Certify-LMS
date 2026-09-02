@@ -9,11 +9,11 @@ use App\Exceptions\Enrollment\CompletionNotEligibleException;
 use App\Exceptions\Enrollment\EnrollmentNotLearningException;
 use App\Models\Certificate;
 use App\Models\Enrollment;
+use App\Services\AdminDashboardCacheService;
 use App\Services\CompletionEligibilityService;
 use App\Services\EnrollmentStatusChangeService;
 use App\UseCases\Certificate\IssueAction as IssueCertificateAction;
 use Illuminate\Support\Facades\DB;
-use App\Services\AdminDashboardCacheService;
 
 /**
  * 受講生本人による「修了証を受け取る」自己発火 Action。
@@ -32,11 +32,11 @@ use App\Services\AdminDashboardCacheService;
 final class ReceiveCertificateAction
 {
     public function __construct(
-    private readonly CompletionEligibilityService $eligibility,
-    private readonly EnrollmentStatusChangeService $statusChanger,
-    private readonly IssueCertificateAction $issueCertificate,
-    private readonly AdminDashboardCacheService $adminDashboardCache,
-) {}
+        private readonly CompletionEligibilityService $eligibility,
+        private readonly EnrollmentStatusChangeService $statusChanger,
+        private readonly IssueCertificateAction $issueCertificate,
+        private readonly AdminDashboardCacheService $adminDashboardCache,
+    ) {}
 
     /**
      * @throws CompletionNotEligibleException 公開模試すべてに合格していない
@@ -53,24 +53,24 @@ final class ReceiveCertificateAction
         }
 
         $certificate = DB::transaction(function () use ($enrollment) {
-    $enrollment->update([
-        'status' => EnrollmentStatus::Passed->value,
-        'passed_at' => now(),
-    ]);
+            $enrollment->update([
+                'status' => EnrollmentStatus::Passed->value,
+                'passed_at' => now(),
+            ]);
 
-    $this->statusChanger->recordStatusChange(
-        $enrollment,
-        fromStatus: EnrollmentStatus::Learning,
-        toStatus: EnrollmentStatus::Passed,
-        changedBy: $enrollment->user,
-        reason: '受講生による修了証受領',
-    );
+            $this->statusChanger->recordStatusChange(
+                $enrollment,
+                fromStatus: EnrollmentStatus::Learning,
+                toStatus: EnrollmentStatus::Passed,
+                changedBy: $enrollment->user,
+                reason: '受講生による修了証受領',
+            );
 
-    return ($this->issueCertificate)($enrollment->refresh());
-});
+            return ($this->issueCertificate)($enrollment->refresh());
+        });
 
-$this->adminDashboardCache->forget();
+        $this->adminDashboardCache->forget();
 
-return $certificate;
+        return $certificate;
     }
 }

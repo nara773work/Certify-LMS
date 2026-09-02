@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Enums\MeetingStatus;
@@ -20,9 +22,9 @@ class SendMeetingRemindersCommand extends Command
 
         $window = $this->option('window');
 
-        $this->info('window: ' . $window);
+        $this->info('window: '.$window);
 
-        if (!in_array($window, ['eve', 'one_hour_before'], true)) {
+        if (! in_array($window, ['eve', 'one_hour_before'], true)) {
             $this->error(
                 '--window=eve または --window=one_hour_before を指定してください。'
             );
@@ -38,12 +40,11 @@ class SendMeetingRemindersCommand extends Command
             $this->sendOneHourBeforeReminders();
         }
 
-
         return self::SUCCESS;
     }
 
     private function sendDayBeforeReminders(): void
-{
+    {
         $tomorrow = now()->addDay();
 
         $meetings = Meeting::query()
@@ -51,15 +52,15 @@ class SendMeetingRemindersCommand extends Command
             ->whereDate('scheduled_at', $tomorrow->toDateString())
             ->get();
 
-        $this->info('対象件数: ' . $meetings->count());
+        $this->info('対象件数: '.$meetings->count());
 
         foreach ($meetings as $meeting) {
             $this->sendReminder($meeting, 'day_before');
         }
-}
+    }
 
     private function sendOneHourBeforeReminders(): void
-{   
+    {
         $targetStart = now()->addHour()->startOfHour();
         $targetEnd = now()->addHour()->endOfHour();
 
@@ -71,12 +72,12 @@ class SendMeetingRemindersCommand extends Command
             ])
             ->get();
 
-        $this->info('対象件数: ' . $meetings->count());
+        $this->info('対象件数: '.$meetings->count());
 
         foreach ($meetings as $meeting) {
             $this->sendReminder($meeting, 'one_hour_before');
         }
-}
+    }
 
     private function sendReminder(Meeting $meeting, string $timing): void
     {
@@ -88,7 +89,8 @@ class SendMeetingRemindersCommand extends Command
             ->exists();
 
         if ($alreadySent) {
-            $this->info('すでに送信済み: ' . $meeting->id);
+            $this->info('すでに送信済み: '.$meeting->id);
+
             return;
         }
 

@@ -25,7 +25,7 @@ class SectionPolicy
         return match ($auth->role) {
             UserRole::Admin => true,
             UserRole::Coach => $chapter->certification->coaches
-            ->contains('id', $auth->id),
+                ->contains('id', $auth->id),
             default => false,
         };
     }

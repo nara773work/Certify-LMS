@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -16,14 +18,14 @@ return new class extends Migration
             $table->foreignId('qa_thread_id')
                 ->constrained()
                 ->cascadeOnDelete();
-                //質問が削除されると回答も削除される
+            // 質問が削除されると回答も削除される
             $table->text('body');
             $table->timestamps();
             $table->foreignUlid('user_id')
                 ->nullable()
                 ->constrained()
                 ->nullOnDelete();
-                //ユーザーが退出しても回答は削除されない
+            // ユーザーが退出しても回答は削除されない
         });
     }
 

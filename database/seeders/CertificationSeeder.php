@@ -183,5 +183,3 @@ final class CertificationSeeder extends Seeder
         ]);
     }
 }
-
-

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\AiChat;
 
 use App\Enums\AiChatMessageRole;
@@ -9,6 +11,7 @@ use App\Models\User;
 use App\Services\AiChatService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+
 /**
  * @group external-api
  */

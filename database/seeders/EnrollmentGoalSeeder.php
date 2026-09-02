@@ -1,15 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\Enrollment;
-use App\Models\EnrollmentGoal;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Models\EnrollmentGoal;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Seeder;
 
 class EnrollmentGoalSeeder extends Seeder
 {
@@ -32,22 +32,22 @@ class EnrollmentGoalSeeder extends Seeder
         $enrollmentBasic = $fixeduser->enrollments()->firstOrFail();
 
         $enrollmentAdvance = $fixeduser
-        ->enrollments()
-        ->whereHas('certification', function ($query) {
-            $query->where('name', '応用情報技術者試験');
-        })->first();
+            ->enrollments()
+            ->whereHas('certification', function ($query) {
+                $query->where('name', '応用情報技術者試験');
+            })->first();
 
         $enrollmentTOEIC = $fixeduser
-        ->enrollments()
-        ->whereHas('certification', function ($query) {
-            $query->where('name', 'TOEIC L&R 800 点コース');
-        })->first();
+            ->enrollments()
+            ->whereHas('certification', function ($query) {
+                $query->where('name', 'TOEIC L&R 800 点コース');
+            })->first();
 
         $enrollmentBoki = $fixeduser
-        ->enrollments()
-        ->whereHas('certification', function ($query) {
-            $query->where('name', '日商簿記 2 級');
-        })->first();
+            ->enrollments()
+            ->whereHas('certification', function ($query) {
+                $query->where('name', '日商簿記 2 級');
+            })->first();
 
         EnrollmentGoal::create([
             'enrollment_id' => $enrollmentBasic->id,
@@ -59,7 +59,7 @@ class EnrollmentGoalSeeder extends Seeder
         ]);
 
         EnrollmentGoal::create([
-            'enrollment_id' => $enrollmentAdvance ->id,
+            'enrollment_id' => $enrollmentAdvance->id,
             'title' => '用語を覚える',
             'target_date' => Carbon::today()->addDays(5),
             'description' => '毎日用語の復習をする',
@@ -68,7 +68,7 @@ class EnrollmentGoalSeeder extends Seeder
         ]);
 
         EnrollmentGoal::create([
-            'enrollment_id' => $enrollmentTOEIC ->id,
+            'enrollment_id' => $enrollmentTOEIC->id,
             'title' => '過去問で700点を超える',
             'target_date' => Carbon::today()->addDays(15),
             'description' => '2週間後に過去問を解き、700点越えを目指す',
@@ -85,60 +85,60 @@ class EnrollmentGoalSeeder extends Seeder
             'user_id' => $fixeduser->id,
         ]);
 
-        //demo
-    foreach ($demoStudents as $student) {
+        // demo
+        foreach ($demoStudents as $student) {
 
-        $enrollmentBasic = $student->enrollments()
-            ->whereHas('certification', function ($query) {
-                $query->where('name', '基本情報技術者試験');
-            })
-            ->first();
+            $enrollmentBasic = $student->enrollments()
+                ->whereHas('certification', function ($query) {
+                    $query->where('name', '基本情報技術者試験');
+                })
+                ->first();
 
-        $enrollmentAdvance = $student->enrollments()
-            ->whereHas('certification', function ($query) {
-                $query->where('name', '応用情報技術者試験');
-            })
-            ->first();
+            $enrollmentAdvance = $student->enrollments()
+                ->whereHas('certification', function ($query) {
+                    $query->where('name', '応用情報技術者試験');
+                })
+                ->first();
 
-        $enrollmentBoki = $student->enrollments()
-            ->whereHas('certification', function ($query) {
-                $query->where('name', '日商簿記 2 級');
-            })
-            ->first();
+            $enrollmentBoki = $student->enrollments()
+                ->whereHas('certification', function ($query) {
+                    $query->where('name', '日商簿記 2 級');
+                })
+                ->first();
 
-        if ($enrollmentBasic) {
-            EnrollmentGoal::create([
-                'enrollment_id' => $enrollmentBasic->id,
-                'title' => 'B問題の傾向になれる',
-                'target_date' => Carbon::today()->addDays(7),
-                'description' => '過去3年分のB問題を解く',
-                'achieved_at' => null,
-                'user_id' => $student->id,
-            ]);
+            if ($enrollmentBasic) {
+                EnrollmentGoal::create([
+                    'enrollment_id' => $enrollmentBasic->id,
+                    'title' => 'B問題の傾向になれる',
+                    'target_date' => Carbon::today()->addDays(7),
+                    'description' => '過去3年分のB問題を解く',
+                    'achieved_at' => null,
+                    'user_id' => $student->id,
+                ]);
+            }
+
+            if ($enrollmentAdvance) {
+                EnrollmentGoal::create([
+                    'enrollment_id' => $enrollmentAdvance->id,
+                    'title' => 'セキュリティ分野を克服する',
+                    'target_date' => Carbon::today()->addDays(7),
+                    'description' => 'セキュリティ分野の問題を50問以上解く',
+                    'achieved_at' => Carbon::today()->addDays(3),
+                    'user_id' => $student->id,
+                ]);
+            }
+
+            if ($enrollmentBoki) {
+                EnrollmentGoal::create([
+                    'enrollment_id' => $enrollmentBoki->id,
+                    'title' => '損益計算書の作成に慣れる',
+                    'target_date' => Carbon::today()->addDays(7),
+                    'description' => '損益計算書の作成に慣れるために問題集を1周する',
+                    'achieved_at' => Carbon::today()->addDays(3),
+                    'user_id' => $student->id,
+                ]);
+            }
         }
-
-        if ($enrollmentAdvance) {
-            EnrollmentGoal::create([
-                'enrollment_id' => $enrollmentAdvance->id,
-                'title' => 'セキュリティ分野を克服する',
-                'target_date' => Carbon::today()->addDays(7),
-                'description' => 'セキュリティ分野の問題を50問以上解く',
-                'achieved_at' => Carbon::today()->addDays(3),
-                'user_id' => $student->id,
-            ]);
-        }
-
-        if ($enrollmentBoki) {
-            EnrollmentGoal::create([
-                'enrollment_id' => $enrollmentBoki->id,
-                'title' => '損益計算書の作成に慣れる',
-                'target_date' => Carbon::today()->addDays(7),
-                'description' => '損益計算書の作成に慣れるために問題集を1周する',
-                'achieved_at' => Carbon::today()->addDays(3),
-                'user_id' => $student->id,
-            ]);
-        }
-    }
 
     }
 }

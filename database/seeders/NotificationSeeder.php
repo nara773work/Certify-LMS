@@ -1,23 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Enums\UserRole;
+use App\Models\ChatMessage;
+use App\Models\Meeting;
+use App\Models\QaReply;
 use App\Models\User;
 use App\Notifications\ChatMessageNotification;
-use App\Notifications\QaReplyNotification;
 use App\Notifications\MeetingReservationNotification;
+use App\Notifications\QaReplyNotification;
 use Illuminate\Database\Seeder;
-use App\Models\ChatMessage;
-use App\Models\QaReply;
-use App\Models\Meeting;
 
 class NotificationSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
-     public function run(): void
+    public function run(): void
     {
         $student = User::where('role', UserRole::Student)->firstOrFail();
         $coach = User::where('role', UserRole::Coach)->firstOrFail();
@@ -26,7 +28,7 @@ class NotificationSeeder extends Seeder
         $qaReply = QaReply::firstOrFail();
         $meeting = Meeting::firstOrFail();
 
-        //受講生花子
+        // 受講生花子
 
         $student->notify(
             new ChatMessageNotification($chatMessage)
@@ -49,12 +51,12 @@ class NotificationSeeder extends Seeder
             $notification->markAsRead();
         }
 
-        //コーチ太郎
+        // コーチ太郎
 
         $coach->notify(
             new MeetingReservationNotification($meeting)
         );
-        
+
         $coach->notify(
             new ChatMessageNotification($chatMessage)
         );
@@ -68,5 +70,4 @@ class NotificationSeeder extends Seeder
             $notification->markAsRead();
         }
     }
-    
 }

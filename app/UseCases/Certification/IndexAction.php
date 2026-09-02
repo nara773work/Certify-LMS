@@ -34,9 +34,9 @@ final class IndexAction
 
         if ($status === CertificationStatus::Published) {
             $query->where('status', CertificationStatus::Published->value);
-        }elseif($status === CertificationStatus::Draft){
+        } elseif ($status === CertificationStatus::Draft) {
             $query->where('status', CertificationStatus::Draft->value);
-        }elseif($status === CertificationStatus::Archived){
+        } elseif ($status === CertificationStatus::Archived) {
             $query->where('status', CertificationStatus::Archived->value);
         }
 

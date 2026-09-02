@@ -7,6 +7,7 @@ namespace Tests\Unit\Services;
 use App\Services\AiChatService;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
+
 /**
  * @group external-api
  */
@@ -18,7 +19,7 @@ final class AiChatServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new AiChatService();
+        $this->service = new AiChatService;
     }
 
     /**
@@ -60,7 +61,7 @@ final class AiChatServiceTest extends TestCase
      * Gemini APIがエラーを返した場合、
      * RuntimeExceptionを投げる。
      */
-    public function testGeminiAPIエラーの場合は例外を投げる(): void
+    public function test_gemini_ap_iエラーの場合は例外を投げる(): void
     {
         Http::fake([
             'https://generativelanguage.googleapis.com/*' => Http::response([
@@ -147,7 +148,7 @@ final class AiChatServiceTest extends TestCase
      * Gemini APIに送信するリクエストが、
      * 想定したプロンプト構造になっている。
      */
-    public function testGeminiへの送信内容が正しい(): void
+    public function test_geminiへの送信内容が正しい(): void
     {
         Http::fake([
             'https://generativelanguage.googleapis.com/*' => Http::response([

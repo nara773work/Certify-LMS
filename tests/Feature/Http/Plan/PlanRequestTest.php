@@ -1,13 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Plan;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
 use App\Enums\UserRole;
 use App\Models\User;
-use App\Models\Plan;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class PlanRequestTest extends TestCase
 {
@@ -26,12 +26,12 @@ class PlanRequestTest extends TestCase
             'name' => '',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -50,12 +50,12 @@ class PlanRequestTest extends TestCase
             'name' => str_repeat('あ', 100),
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -64,7 +64,7 @@ class PlanRequestTest extends TestCase
         ]);
     }
 
-        public function test_name_101(): void
+    public function test_name_101(): void
     {
         $this->seed();
 
@@ -74,12 +74,12 @@ class PlanRequestTest extends TestCase
             'name' => str_repeat('あ', 101),
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -98,12 +98,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => str_repeat('あ', 2000),
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -123,12 +123,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => str_repeat('あ', 2000),
             'duration_days' => '',
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -147,12 +147,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 3650,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -171,12 +171,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => str_repeat('あ', 3651),
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -185,7 +185,7 @@ class PlanRequestTest extends TestCase
         ]);
     }
 
-        public function test_duration_days_1(): void
+    public function test_duration_days_1(): void
     {
         $this->seed();
 
@@ -195,21 +195,21 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 1,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('plans', [
-            'duration_days' =>1,
+            'duration_days' => 1,
         ]);
     }
 
-        public function test_duration_days_0(): void
+    public function test_duration_days_0(): void
     {
         $this->seed();
 
@@ -219,12 +219,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 0,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -243,12 +243,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>'',
+            'default_meeting_quota' => '',
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -268,12 +268,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>1000,
+            'default_meeting_quota' => 1000,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -292,12 +292,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>1001,
+            'default_meeting_quota' => 1001,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -306,7 +306,7 @@ class PlanRequestTest extends TestCase
         ]);
     }
 
-        public function test_default_meeting_quota_0(): void
+    public function test_default_meeting_quota_0(): void
     {
         $this->seed();
 
@@ -316,12 +316,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>0,
+            'default_meeting_quota' => 0,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -330,7 +330,7 @@ class PlanRequestTest extends TestCase
         ]);
     }
 
-        public function test_default_meeting_quota_minus1(): void
+    public function test_default_meeting_quota_minus1(): void
     {
         $this->seed();
 
@@ -340,12 +340,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => '',
             'duration_days' => 10,
-            'default_meeting_quota'=>-1,
+            'default_meeting_quota' => -1,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -364,12 +364,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => str_repeat('あ', 1000),
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/plans",$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -378,7 +378,7 @@ class PlanRequestTest extends TestCase
         ]);
     }
 
-        public function test_sort_1001(): void
+    public function test_sort_1001(): void
     {
         $this->seed();
 
@@ -388,12 +388,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => str_repeat('あ', 1001),
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/plans",$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -412,12 +412,12 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 0,
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/plans",$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -426,7 +426,7 @@ class PlanRequestTest extends TestCase
         ]);
     }
 
-        public function test_sort_minus1(): void
+    public function test_sort_minus1(): void
     {
         $this->seed();
 
@@ -436,18 +436,17 @@ class PlanRequestTest extends TestCase
             'name' => 'test',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => -1,
         ];
 
         $response = $this->actingAs($user)
-        ->post("/admin/plans",$data);
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors([
-           'sort_order',
+            'sort_order',
         ]);
     }
-
 }

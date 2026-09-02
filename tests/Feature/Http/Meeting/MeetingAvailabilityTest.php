@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Meeting;
 
 use App\Models\Enrollment;
@@ -49,8 +51,8 @@ class MeetingAvailabilityTest extends TestCase
             )
             ->andReturn([
                 [
-                    'start' => Carbon::parse($date . ' 10:00:00'),
-                    'end' => Carbon::parse($date . ' 11:00:00'),
+                    'start' => Carbon::parse($date.' 10:00:00'),
+                    'end' => Carbon::parse($date.' 11:00:00'),
                 ],
             ]);
 
@@ -80,8 +82,7 @@ class MeetingAvailabilityTest extends TestCase
 
         $this->assertFalse(
             collect($slots)->contains(
-                fn (array $slot): bool =>
-                    str_contains($slot['slot_start'], '10:00:00')
+                fn (array $slot): bool => str_contains($slot['slot_start'], '10:00:00')
             )
         );
     }

@@ -1,14 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Announcement;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
+use App\Enums\AnnouncementTargetType;
 use App\Enums\UserRole;
 use App\Models\User;
-use App\Models\Announcement;
-use App\Enums\AnnouncementTargetType;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AnnouncementRequestTest extends TestCase
 {
@@ -16,11 +16,12 @@ class AnnouncementRequestTest extends TestCase
      * A basic feature test example.
      */
     use RefreshDatabase;
+
     public function test_title_required(): void
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $data = [
             'title' => '',
@@ -28,7 +29,7 @@ class AnnouncementRequestTest extends TestCase
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];
 
-        $response = $this->actingAs($user)->post('/admin/announcements',$data);
+        $response = $this->actingAs($user)->post('/admin/announcements', $data);
 
         $response->assertStatus(302);
         $response->assertSessionHasErrors('title');
@@ -38,7 +39,7 @@ class AnnouncementRequestTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $data = [
             'title' => str_repeat('あ', 200),
@@ -46,10 +47,10 @@ class AnnouncementRequestTest extends TestCase
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];
 
-        $response = $this->actingAs($user)->post('/admin/announcements',$data);
+        $response = $this->actingAs($user)->post('/admin/announcements', $data);
 
         $response->assertStatus(302);
-        $this->assertDatabaseHas('announcements',[
+        $this->assertDatabaseHas('announcements', [
             'title' => str_repeat('あ', 200),
             'body' => 'test',
             'target_type' => AnnouncementTargetType::AllStudents->value,
@@ -60,7 +61,7 @@ class AnnouncementRequestTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $data = [
             'title' => str_repeat('あ', 201),
@@ -68,7 +69,7 @@ class AnnouncementRequestTest extends TestCase
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];
 
-        $response = $this->actingAs($user)->post('/admin/announcements',$data);
+        $response = $this->actingAs($user)->post('/admin/announcements', $data);
 
         $response->assertStatus(302);
         $response->assertSessionHasErrors('title');
@@ -78,7 +79,7 @@ class AnnouncementRequestTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $data = [
             'title' => 'test',
@@ -86,7 +87,7 @@ class AnnouncementRequestTest extends TestCase
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];
 
-        $response = $this->actingAs($user)->post('/admin/announcements',$data);
+        $response = $this->actingAs($user)->post('/admin/announcements', $data);
 
         $response->assertStatus(302);
         $response->assertSessionHasErrors('body');
@@ -96,7 +97,7 @@ class AnnouncementRequestTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $data = [
             'title' => 'test',
@@ -104,10 +105,10 @@ class AnnouncementRequestTest extends TestCase
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];
 
-        $response = $this->actingAs($user)->post('/admin/announcements',$data);
+        $response = $this->actingAs($user)->post('/admin/announcements', $data);
 
         $response->assertStatus(302);
-        $this->assertDatabaseHas('announcements',[
+        $this->assertDatabaseHas('announcements', [
             'title' => 'test',
             'body' => str_repeat('あ', 5000),
             'target_type' => AnnouncementTargetType::AllStudents->value,
@@ -118,7 +119,7 @@ class AnnouncementRequestTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $data = [
             'title' => 'test',
@@ -126,7 +127,7 @@ class AnnouncementRequestTest extends TestCase
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];
 
-        $response = $this->actingAs($user)->post('/admin/announcements',$data);
+        $response = $this->actingAs($user)->post('/admin/announcements', $data);
 
         $response->assertStatus(302);
         $response->assertSessionHasErrors('body');

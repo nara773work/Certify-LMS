@@ -210,6 +210,7 @@ final class ProgressSummaryService
      * 複数 Enrollment の Section 完了率を1クエリで集計する。
      *
      * @param Collection<int, Enrollment> $enrollments
+     *
      * @return array<string, float>
      */
     public function batchSummarize(Collection $enrollments): array
@@ -281,6 +282,7 @@ final class ProgressSummaryService
      * Chapter ごとの公開済 Section 完了数を取得する。
      *
      * @param Collection<int, Chapter> $chapters
+     *
      * @return array<string, int>
      */
     public function completedSectionsByChapter(
@@ -325,7 +327,6 @@ final class ProgressSummaryService
 
         return $result;
     }
-
 
     private function ratio(int $completed, int $total): float
     {

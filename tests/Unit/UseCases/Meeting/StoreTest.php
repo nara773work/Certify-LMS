@@ -6,11 +6,11 @@ namespace Tests\Unit\UseCases\Meeting;
 
 use App\Enums\MeetingStatus;
 use App\Models\Certification;
+use App\Models\CertificationCategory;
 use App\Models\CertificationCoachAssignment;
 use App\Models\CoachAvailability;
 use App\Models\Enrollment;
 use App\Models\Meeting;
-use App\Models\MeetingQuotaTransaction;
 use App\Models\User;
 use App\Services\CoachMeetingLoadService;
 use App\Services\GoogleCalendarService;
@@ -68,7 +68,7 @@ class StoreTest extends TestCase
             'coach',
         );
 
-        $category = \App\Models\CertificationCategory::create([
+        $category = CertificationCategory::create([
             'name' => 'StoreTestカテゴリ',
             'slug' => 'store-test-category',
         ]);
@@ -196,9 +196,9 @@ class StoreTest extends TestCase
         );
 
         $this->assertSame(
-    MeetingStatus::Reserved,
-    $meeting->status,
-);
+            MeetingStatus::Reserved,
+            $meeting->status,
+        );
 
         $this->assertSame(
             'テスト面談',
@@ -232,7 +232,7 @@ class StoreTest extends TestCase
      * Google Calendar連携済みならイベントを作成し、
      * event IDを面談へ保存する。
      */
-    public function test_Google_Calendar連携済みならイベントを作成してイベントIDを保存する(): void
+    public function test_google_calendar連携済みならイベントを作成してイベント_i_dを保存する(): void
     {
         Notification::fake();
 
@@ -281,7 +281,7 @@ class StoreTest extends TestCase
     /**
      * Google Calendar未連携でも面談予約できる。
      */
-    public function test_Google_Calendar未連携でも面談予約できる(): void
+    public function test_google_calendar未連携でも面談予約できる(): void
     {
         Notification::fake();
 

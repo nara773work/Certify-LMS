@@ -28,7 +28,7 @@ final class ProgressSummaryServiceTest extends TestCase
     {
         parent::setUp();
 
-        $this->service = new ProgressSummaryService();
+        $this->service = new ProgressSummaryService;
     }
 
     public function test_progress_is_zero_when_nothing_is_completed(): void
@@ -269,14 +269,14 @@ final class ProgressSummaryServiceTest extends TestCase
         ]);
     }
 
-private function createProgress(
-    Enrollment $enrollment,
-    Section $section,
-): SectionProgress {
-    return SectionProgress::create([
-        'enrollment_id' => $enrollment->id,
-        'section_id' => $section->id,
-        'completed_at' => now(),
-    ]);
-}
+    private function createProgress(
+        Enrollment $enrollment,
+        Section $section,
+    ): SectionProgress {
+        return SectionProgress::create([
+            'enrollment_id' => $enrollment->id,
+            'section_id' => $section->id,
+            'completed_at' => now(),
+        ]);
+    }
 }

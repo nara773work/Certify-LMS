@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Notifications\DatabaseNotification;
 
 class ApiNotificationController extends Controller
 {
@@ -29,7 +30,7 @@ class ApiNotificationController extends Controller
      * 自分の通知を1件既読にする。
      */
     public function read(Request $request, string $notification)
-{
+    {
         $notificationModel = $request->user()
             ->notifications()
             ->where('id', $notification)
@@ -40,19 +41,19 @@ class ApiNotificationController extends Controller
         return response()->json([
             'message' => '通知を既読にしました。',
         ]);
-}
+    }
 
     /**
      * 自分の未読通知をすべて既読にする。
      */
     public function readAll(Request $request)
-{
-    $request->user()
-        ->unreadNotifications
-        ->markAsRead();
+    {
+        $request->user()
+            ->unreadNotifications
+            ->markAsRead();
 
-    return response()->json([
-        'message' => 'すべての通知を既読にしました。',
-    ]);
-}
+        return response()->json([
+            'message' => 'すべての通知を既読にしました。',
+        ]);
+    }
 }

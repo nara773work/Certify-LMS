@@ -1,14 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\QaBoard;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
+use App\Enums\UserRole;
 use App\Models\Certification;
 use App\Models\QaThread;
-use App\Enums\UserRole;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class QaBoardRequestTest extends TestCase
 {
@@ -28,11 +29,11 @@ class QaBoardRequestTest extends TestCase
             'certification_id' => '',
             'title' => 'test',
             'body' => 'test',
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/qa-board',$data);
+            ->post('/qa-board', $data);
 
         $response->assertStatus(302);
 
@@ -52,11 +53,11 @@ class QaBoardRequestTest extends TestCase
             'certification_id' => 00000,
             'title' => 'test',
             'body' => 'test',
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/qa-board',$data);
+            ->post('/qa-board', $data);
 
         $response->assertStatus(302);
 
@@ -76,11 +77,11 @@ class QaBoardRequestTest extends TestCase
             'certification_id' => $certification->id,
             'title' => '',
             'body' => 'test',
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/qa-board',$data);
+            ->post('/qa-board', $data);
 
         $response->assertStatus(302);
 
@@ -101,11 +102,11 @@ class QaBoardRequestTest extends TestCase
             'certification_id' => $certification->id,
             'title' => str_repeat('あ', 200),
             'body' => 'test',
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/qa-board',$data);
+            ->post('/qa-board', $data);
 
         $response->assertStatus(302);
 
@@ -126,11 +127,11 @@ class QaBoardRequestTest extends TestCase
             'certification_id' => $certification->id,
             'title' => str_repeat('あ', 201),
             'body' => 'test',
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/qa-board',$data);
+            ->post('/qa-board', $data);
 
         $response->assertStatus(302);
 
@@ -150,11 +151,11 @@ class QaBoardRequestTest extends TestCase
             'certification_id' => $certification->id,
             'title' => 'test',
             'body' => '',
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/qa-board',$data);
+            ->post('/qa-board', $data);
 
         $response->assertStatus(302);
 
@@ -175,11 +176,11 @@ class QaBoardRequestTest extends TestCase
             'certification_id' => $certification->id,
             'title' => 'test',
             'body' => str_repeat('あ', 5000),
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/qa-board',$data);
+            ->post('/qa-board', $data);
 
         $response->assertStatus(302);
 
@@ -188,6 +189,7 @@ class QaBoardRequestTest extends TestCase
             'body' => str_repeat('あ', 5000),
         ]);
     }
+
     public function test_thread_body_5001(): void
     {
         $this->seed();
@@ -199,11 +201,11 @@ class QaBoardRequestTest extends TestCase
             'certification_id' => $certification->id,
             'title' => 'test',
             'body' => str_repeat('あ', 5001),
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/qa-board',$data);
+            ->post('/qa-board', $data);
 
         $response->assertStatus(302);
 
@@ -225,7 +227,7 @@ class QaBoardRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/qa-board/{$thread->id}/replies",$data);
+            ->post("/qa-board/{$thread->id}/replies", $data);
 
         $response->assertStatus(302);
 
@@ -247,7 +249,7 @@ class QaBoardRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/qa-board/{$thread->id}/replies",$data);
+            ->post("/qa-board/{$thread->id}/replies", $data);
 
         $response->assertStatus(302);
 
@@ -255,6 +257,7 @@ class QaBoardRequestTest extends TestCase
             'body' => str_repeat('あ', 5000),
         ]);
     }
+
     public function test_reply_body_5001(): void
     {
         $this->seed();
@@ -268,7 +271,7 @@ class QaBoardRequestTest extends TestCase
         ];
 
         $response = $this->actingAs($user)
-        ->post("/qa-board/{$thread->id}/replies",$data);
+            ->post("/qa-board/{$thread->id}/replies", $data);
 
         $response->assertStatus(302);
 
@@ -276,5 +279,4 @@ class QaBoardRequestTest extends TestCase
             'body',
         ]);
     }
-    
 }

@@ -29,28 +29,28 @@ final class FetchAdminDashboardAction
     ) {}
 
     public function __invoke(User $admin): AdminDashboardViewModel
-{
-    $kpi = $this->safe(
-        fn () => $this->stats->adminKpi()
-    );
+    {
+        $kpi = $this->safe(
+            fn () => $this->stats->adminKpi()
+        );
 
-    $completionRate = $this->safe(
-        fn () => $this->stats->completionRateByCertification()
-    );
+        $completionRate = $this->safe(
+            fn () => $this->stats->completionRateByCertification()
+        );
 
-    $byCertificationTop10 = $kpi !== null
-        ? collect($kpi['by_certification'])->take(10)
-        : collect();
+        $byCertificationTop10 = $kpi !== null
+            ? collect($kpi['by_certification'])->take(10)
+            : collect();
 
-    $isEmptyState = $kpi === null
-        ? true
-        : ($kpi['learning_count'] + $kpi['passed_count'] + $kpi['failed_count'] === 0);
+        $isEmptyState = $kpi === null
+            ? true
+            : ($kpi['learning_count'] + $kpi['passed_count'] + $kpi['failed_count'] === 0);
 
-    return new AdminDashboardViewModel(
-        kpi: $kpi,
-        byCertificationTop10: $byCertificationTop10,
-        completionRateByCertification: $completionRate,
-        isEmptyState: $isEmptyState,
-    );
-}
+        return new AdminDashboardViewModel(
+            kpi: $kpi,
+            byCertificationTop10: $byCertificationTop10,
+            completionRateByCertification: $completionRate,
+            isEmptyState: $isEmptyState,
+        );
+    }
 }

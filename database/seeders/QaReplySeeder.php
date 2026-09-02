@@ -1,17 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use App\Models\Certification;
-use App\Models\QaThread;
-use App\Models\QaReply;
-use App\Models\User;
-use App\Enums\QaThreadStatus;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
-use Carbon\Carbon;
+use App\Models\QaReply;
+use App\Models\QaThread;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class QaReplySeeder extends Seeder
 {
@@ -20,29 +18,29 @@ class QaReplySeeder extends Seeder
      */
     public function run(): void
     {
-        $fixedStudent = User::where('name','受講生花子')->first();
+        $fixedStudent = User::where('name', '受講生花子')->first();
         $students = User::where('role', UserRole::Student)
-                ->where('status', UserStatus::InProgress)
-                ->where('id', '!=', $fixedStudent->id)
-                ->get();
-        $graduatedStudents =User::where('role', UserRole::Student)
-                ->where('status', UserStatus::Graduated)
-                ->where('id', '!=', $fixedStudent->id)
-                ->get();
+            ->where('status', UserStatus::InProgress)
+            ->where('id', '!=', $fixedStudent->id)
+            ->get();
+        $graduatedStudents = User::where('role', UserRole::Student)
+            ->where('status', UserStatus::Graduated)
+            ->where('id', '!=', $fixedStudent->id)
+            ->get();
         $withdrawnStudents = User::withTrashed()
-                ->where('role', UserRole::Student)
-                ->where('status', UserStatus::Withdrawn)
-                ->where('id', '!=', $fixedStudent->id)
-                ->get();
-        $ITCoach =User::where('role', UserRole::Coach)
-                ->where('email', 'coach@certify-lms.test')
-                ->first();
-        $businessCoach =User::where('role', UserRole::Coach)
-                ->where('email', 'coach2@certify-lms.test')
-                ->first();
+            ->where('role', UserRole::Student)
+            ->where('status', UserStatus::Withdrawn)
+            ->where('id', '!=', $fixedStudent->id)
+            ->get();
+        $ITCoach = User::where('role', UserRole::Coach)
+            ->where('email', 'coach@certify-lms.test')
+            ->first();
+        $businessCoach = User::where('role', UserRole::Coach)
+            ->where('email', 'coach2@certify-lms.test')
+            ->first();
 
-        //受講生花子
-        $thread1 = QaThread::where('title','公開鍵暗号方式と共通鍵暗号方式の違いが分かりません')->first();
+        // 受講生花子
+        $thread1 = QaThread::where('title', '公開鍵暗号方式と共通鍵暗号方式の違いが分かりません')->first();
         $replyCreatedAt7 = $thread1->created_at->copy()->addDays(3);
         QaReply::create([
             'user_id' => $fixedStudent->id,
@@ -52,7 +50,7 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt7,
         ]);
 
-        $thread2 = QaThread::where('title','データベース設計問題の解き方が分かりません')->first();
+        $thread2 = QaThread::where('title', 'データベース設計問題の解き方が分かりません')->first();
         $replyCreatedAt8 = $thread2->created_at->copy()->addDays(1);
         QaReply::create([
             'user_id' => $fixedStudent->id,
@@ -62,21 +60,21 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt8,
         ]);
 
-        //受講中ユーザー
-        $thread3 = QaThread::where('title','IPアドレスとサブネットマスクの計算方法が分かりません')->first();
+        // 受講中ユーザー
+        $thread3 = QaThread::where('title', 'IPアドレスとサブネットマスクの計算方法が分かりません')->first();
         $replyCreatedAt1 = $thread3->created_at->copy()->addDays(10);
         QaReply::create([
-            'user_id' => $students ->where('id', '!=', $thread1->user_id)->random()->id,
+            'user_id' => $students->where('id', '!=', $thread1->user_id)->random()->id,
             'body' => '私も最初は苦手でしたが、問題を解くたびにIPアドレスとサブネットマスクを2進数に書き直すようにしたら理解できるようになりました。慣れるまでは時間がかかりますが、繰り返し計算しているうちに「どこがネットワーク部なのか」が自然と分かるようになるのでおすすめです。',
             'qa_thread_id' => $thread3->id,
             'created_at' => $replyCreatedAt1,
             'updated_at' => $replyCreatedAt1,
         ]);
 
-        $thread4 = QaThread::where('title','仕訳問題で借方と貸方を間違えてしまいます')->first();
+        $thread4 = QaThread::where('title', '仕訳問題で借方と貸方を間違えてしまいます')->first();
         $replyCreatedAt11 = $thread4->created_at->copy()->addDays(4);
         QaReply::create([
-            'user_id' => $students ->where('id', '!=', $thread2->user_id)->random()->id,
+            'user_id' => $students->where('id', '!=', $thread2->user_id)->random()->id,
             'body' => '私も最初は借方と貸方を毎回間違えていました。
                         勘定科目を暗記するよりも、「何が増えたか・何が減ったか」を考えてから仕訳を書くようにしたら、
                         少しずつ間違いが減りました。
@@ -86,11 +84,11 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt11,
         ]);
 
-        //卒業ユーザー
-        $thread5 = QaThread::where('title','SQLのINNER JOINが苦手です')->first();
+        // 卒業ユーザー
+        $thread5 = QaThread::where('title', 'SQLのINNER JOINが苦手です')->first();
         $replyCreatedAt2 = $thread5->created_at->copy()->addDays(1);
         QaReply::create([
-            'user_id' => $graduatedStudents ->where('id', '!=', $thread3->user_id)->random()->id,
+            'user_id' => $graduatedStudents->where('id', '!=', $thread3->user_id)->random()->id,
             'body' => '私も最初は問題文を見ても、どのテーブルを結合すればよいのか分からず苦戦していました。
                         まずは「取得したい情報はどのテーブルにあるのか」を整理してから、
                         共通するキー（idやuser_idなど）を探すようにしたところ、SQLを書きやすくなりました。
@@ -100,8 +98,8 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt2,
         ]);
 
-        //退会ユーザー
-        $thread6 = QaThread::where('title','貸借対照表と損益計算書の違いが分かりません')->first();
+        // 退会ユーザー
+        $thread6 = QaThread::where('title', '貸借対照表と損益計算書の違いが分かりません')->first();
         $replyCreatedAt5 = $thread6->created_at->copy()->addDays(6);
         QaReply::create([
             'user_id' => $withdrawnStudents->where('id', '!=', $thread4->user_id)->random()->id,
@@ -114,8 +112,8 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt5,
         ]);
 
-        //コーチ
-        $thread7 = QaThread::where('title','IPアドレスとサブネットマスクの計算方法が分かりません')->first();
+        // コーチ
+        $thread7 = QaThread::where('title', 'IPアドレスとサブネットマスクの計算方法が分かりません')->first();
         $replyCreatedAt1 = $thread7->created_at->copy()->addDays(7);
         QaReply::create([
             'user_id' => $ITCoach->id,
@@ -125,7 +123,7 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt1,
         ]);
 
-        $thread8 = QaThread::where('title','TOEICのリスニングが聞き取れません')->first();
+        $thread8 = QaThread::where('title', 'TOEICのリスニングが聞き取れません')->first();
         $replyCreatedAt4 = $thread8->created_at->copy()->addDays(3);
         QaReply::create([
             'user_id' => $businessCoach->id,
@@ -144,7 +142,7 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt4,
         ]);
 
-        $thread9 = QaThread::where('title','貸借対照表と損益計算書の違いが分かりません')->first();
+        $thread9 = QaThread::where('title', '貸借対照表と損益計算書の違いが分かりません')->first();
         $replyCreatedAt5 = $thread9->created_at->copy()->addDays(5);
         QaReply::create([
             'user_id' => $businessCoach->id,
@@ -159,7 +157,7 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt5,
         ]);
 
-        $thread10 = QaThread::where('title','WBSの作成手順がよく分かりません')->first();
+        $thread10 = QaThread::where('title', 'WBSの作成手順がよく分かりません')->first();
         $replyCreatedAt13 = $thread10->created_at->copy()->addDays(6);
         QaReply::create([
             'user_id' => $businessCoach->id,
@@ -178,7 +176,7 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt13,
         ]);
 
-        $thread11 = QaThread::where('title','データベース設計問題の解き方が分かりません')->first();
+        $thread11 = QaThread::where('title', 'データベース設計問題の解き方が分かりません')->first();
         $replyCreatedAt8 = $thread11->created_at->copy()->addDays(3);
         QaReply::create([
             'user_id' => $ITCoach->id,
@@ -192,7 +190,7 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt8,
         ]);
 
-        $thread12 = QaThread::where('title','情報セキュリティの午後問題が苦手です')->first();
+        $thread12 = QaThread::where('title', '情報セキュリティの午後問題が苦手です')->first();
         $replyCreatedAt10 = $thread12->created_at->copy()->addDays(1);
         QaReply::create([
             'user_id' => $ITCoach->id,
@@ -204,10 +202,10 @@ class QaReplySeeder extends Seeder
             'created_at' => $replyCreatedAt10,
             'updated_at' => $replyCreatedAt10,
         ]);
-           
-        $thread13 = QaThread::where('title','仕訳問題で借方と貸方を間違えてしまいます')->first();
+
+        $thread13 = QaThread::where('title', '仕訳問題で借方と貸方を間違えてしまいます')->first();
         $replyCreatedAt11 = $thread13->created_at->copy()->addDays(3);
-         QaReply::create([
+        QaReply::create([
             'user_id' => $businessCoach->id,
             'body' => '借方・貸方を覚えるコツは、勘定科目を丸暗記するのではなく、「資産・負債・純資産・収益・費用」の5つに分類して考えることです。
                         例えば、資産が増えれば借方、資産が減れば貸方というように、勘定科目の性質を理解すると迷いにくくなります。
@@ -219,7 +217,7 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt11,
         ]);
 
-        $thread14 = QaThread::where('title','スタックとキューの違いについて教えてください')->first();
+        $thread14 = QaThread::where('title', 'スタックとキューの違いについて教えてください')->first();
         $replyCreatedAt12 = $thread14->created_at->copy()->addDays(5);
         QaReply::create([
             'user_id' => $ITCoach->id,
@@ -233,7 +231,7 @@ class QaReplySeeder extends Seeder
             'updated_at' => $replyCreatedAt12,
         ]);
 
-        $thread15 = QaThread::where('title','クリティカルパスの求め方について教えてください')->first();
+        $thread15 = QaThread::where('title', 'クリティカルパスの求め方について教えてください')->first();
         $replyCreatedAt13 = $thread15->created_at->copy()->addDays(3);
         QaReply::create([
             'user_id' => $businessCoach->id,

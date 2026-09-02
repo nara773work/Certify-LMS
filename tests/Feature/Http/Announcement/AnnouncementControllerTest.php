@@ -1,17 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Announcement;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Announcement;
-use App\Enums\UserRole;
 use App\Enums\AnnouncementTargetType;
+use App\Enums\UserRole;
+use App\Models\Announcement;
 use App\Models\Certification;
+use App\Models\User;
 use App\Notifications\AnnouncementNotification;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Queue;
+use Tests\TestCase;
 
 class AnnouncementControllerTest extends TestCase
 {
@@ -24,7 +26,7 @@ class AnnouncementControllerTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $response = $this->actingAs($user)->get('/admin/announcements');
 
@@ -35,18 +37,18 @@ class AnnouncementControllerTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Coach)->first();
+        $user = User::where('role', UserRole::Coach)->first();
 
         $response = $this->actingAs($user)->get('/admin/announcements');
 
         $response->assertStatus(403);
     }
 
-        public function test_index_student(): void
+    public function test_index_student(): void
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Student)->first();
+        $user = User::where('role', UserRole::Student)->first();
 
         $response = $this->actingAs($user)->get('/admin/announcements');
 
@@ -57,7 +59,7 @@ class AnnouncementControllerTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $response = $this->actingAs($user)->get('/admin/announcements/create');
 
@@ -68,7 +70,7 @@ class AnnouncementControllerTest extends TestCase
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $data = [
             'title' => 'test',
@@ -76,10 +78,10 @@ class AnnouncementControllerTest extends TestCase
             'target_type' => AnnouncementTargetType::AllStudents->value,
         ];
 
-        $response = $this->actingAs($user)->post('/admin/announcements',$data);
+        $response = $this->actingAs($user)->post('/admin/announcements', $data);
 
         $response->assertStatus(302);
-        $this->assertDatabaseHas('announcements',[
+        $this->assertDatabaseHas('announcements', [
             'title' => 'test',
             'body' => 'test',
             'target_type' => AnnouncementTargetType::AllStudents->value,
@@ -87,57 +89,57 @@ class AnnouncementControllerTest extends TestCase
     }
 
     public function test_store_certification(): void
-{
-    $this->seed();
+    {
+        $this->seed();
 
-    $admin = User::where('role', UserRole::Admin)->first();
-    $certification = Certification::first();
+        $admin = User::where('role', UserRole::Admin)->first();
+        $certification = Certification::first();
 
-    $student = User::whereHas('enrollments', function ($query) use ($certification) {
-        $query->where('certification_id', $certification->id);
-    })->first();
+        $student = User::whereHas('enrollments', function ($query) use ($certification) {
+            $query->where('certification_id', $certification->id);
+        })->first();
 
-    $response = $this->actingAs($admin)->post('/admin/announcements', [
-        'title' => '資格指定テスト',
-        'body' => 'test',
-        'target_type' => AnnouncementTargetType::Certification->value,
-        'target_certification_id' => $certification->id,
-    ]);
+        $response = $this->actingAs($admin)->post('/admin/announcements', [
+            'title' => '資格指定テスト',
+            'body' => 'test',
+            'target_type' => AnnouncementTargetType::Certification->value,
+            'target_certification_id' => $certification->id,
+        ]);
 
-    $response->assertStatus(302);
+        $response->assertStatus(302);
 
-    $announcement = Announcement::where('title', '資格指定テスト')->first();
+        $announcement = Announcement::where('title', '資格指定テスト')->first();
 
-    $this->assertTrue(
-        $announcement->users->contains($student)
-    );
-}
+        $this->assertTrue(
+            $announcement->users->contains($student)
+        );
+    }
 
     public function test_store_user(): void
-{
-    $this->seed();
+    {
+        $this->seed();
 
-    $admin = User::where('role', UserRole::Admin)->first();
-    $student = User::where('role', UserRole::Student)->first();
+        $admin = User::where('role', UserRole::Admin)->first();
+        $student = User::where('role', UserRole::Student)->first();
 
-    $response = $this->actingAs($admin)->post('/admin/announcements', [
-        'title' => 'ユーザー指定テスト',
-        'body' => 'test',
-        'target_type' => AnnouncementTargetType::User->value,
-        'target_user_id' => $student->id,
-    ]);
+        $response = $this->actingAs($admin)->post('/admin/announcements', [
+            'title' => 'ユーザー指定テスト',
+            'body' => 'test',
+            'target_type' => AnnouncementTargetType::User->value,
+            'target_user_id' => $student->id,
+        ]);
 
-    $response->assertStatus(302);
+        $response->assertStatus(302);
 
-    $announcement = Announcement::where('title', 'ユーザー指定テスト')->first();
+        $announcement = Announcement::where('title', 'ユーザー指定テスト')->first();
 
-    $this->assertTrue(
-        $announcement->users->contains($student)
-    );
-}
+        $this->assertTrue(
+            $announcement->users->contains($student)
+        );
+    }
 
     public function test_show(): void
-{
+    {
         $this->seed();
 
         $user = User::where('role', UserRole::Admin)->first();
@@ -149,81 +151,81 @@ class AnnouncementControllerTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee($announcement->title);
-}
+    }
 
     public function test_notificationshow(): void
-{
-    $this->seed();
+    {
+        $this->seed();
 
-    $user = User::where('role', UserRole::Student)->first();
+        $user = User::where('role', UserRole::Student)->first();
 
-    $announcement = Announcement::first();
+        $announcement = Announcement::first();
 
-    $announcement->users()->sync([$user->id]);
+        $announcement->users()->sync([$user->id]);
 
-    $user->notify(
-        new AnnouncementNotification($announcement)
-    );
+        $user->notify(
+            new AnnouncementNotification($announcement)
+        );
 
-    $notification = $user->notifications()
-        ->where('type', AnnouncementNotification::class)
-        ->latest()
-        ->first();
+        $notification = $user->notifications()
+            ->where('type', AnnouncementNotification::class)
+            ->latest()
+            ->first();
 
-    $response = $this->actingAs($user)
-        ->get("/notifications/{$notification->id}");
+        $response = $this->actingAs($user)
+            ->get("/notifications/{$notification->id}");
 
-    $response->assertStatus(200);
-}
+        $response->assertStatus(200);
+    }
 
     public function test_notificationshow_other_user(): void
-{
-    $this->seed();
+    {
+        $this->seed();
 
-    $student1 = User::where('role', UserRole::Student)->first();
+        $student1 = User::where('role', UserRole::Student)->first();
 
-    $student2 = User::where('role', UserRole::Student)
-        ->where('id', '!=', $student1->id)
-        ->first();
+        $student2 = User::where('role', UserRole::Student)
+            ->where('id', '!=', $student1->id)
+            ->first();
 
-    $notification = $student1->notifications()->first();
+        $notification = $student1->notifications()->first();
 
-    $response = $this->actingAs($student2)
-        ->get("/notifications/{$notification->id}");
+        $response = $this->actingAs($student2)
+            ->get("/notifications/{$notification->id}");
 
-    $response->assertStatus(404);
-}
+        $response->assertStatus(404);
+    }
 
-public function test_storeで通知がキューに投入される(): void
-{
-    Queue::fake();
+    public function test_storeで通知がキューに投入される(): void
+    {
+        Queue::fake();
 
-    $this->seed();
+        $this->seed();
 
-    $admin = User::where('role', UserRole::Admin)->first();
+        $admin = User::where('role', UserRole::Admin)->first();
 
-    $studentCount = User::where('role', UserRole::Student)->count();
+        $studentCount = User::where('role', UserRole::Student)->count();
 
-    $before = Queue::pushed(
-    \Illuminate\Notifications\SendQueuedNotifications::class
-)->count();
+        $before = Queue::pushed(
+            SendQueuedNotifications::class
+        )->count();
 
-$response = $this->actingAs($admin)
-    ->post('/admin/announcements', [
-        'title' => 'キューテスト',
-        'body' => 'キューに投入されるか確認',
-        'target_type' => AnnouncementTargetType::AllStudents->value,
-    ]);
+        $response = $this->actingAs($admin)
+            ->post('/admin/announcements', [
+                'title' => 'キューテスト',
+                'body' => 'キューに投入されるか確認',
+                'target_type' => AnnouncementTargetType::AllStudents->value,
+            ]);
 
-$response->assertStatus(302);
+        $response->assertStatus(302);
 
-$after = Queue::pushed(
-    \Illuminate\Notifications\SendQueuedNotifications::class
-)->count();
+        $after = Queue::pushed(
+            SendQueuedNotifications::class
+        )->count();
 
-$this->assertSame(
-    $studentCount * 2,
-    $after - $before
-);
-}
+        $this->assertSame(
+            $studentCount * 2,
+            $after - $before
+        );
+    }
 }

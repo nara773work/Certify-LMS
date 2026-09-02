@@ -1,53 +1,54 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Plan;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Tests\TestCase;
-use App\Models\User;
-use App\Models\Plan;
-use App\Enums\UserRole;
 use App\Enums\PlanStatus;
+use App\Enums\UserRole;
+use App\Models\Plan;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class PlanControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_PlanController_index_student(): void
+    public function test_plan_controller_index_student(): void
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Student)->first();
+        $user = User::where('role', UserRole::Student)->first();
 
         $response = $this->actingAs($user)->get('/admin/plans');
         $response->assertStatus(403);
 
     }
 
-        public function test_PlanController_index_coach(): void
+    public function test_plan_controller_index_coach(): void
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Coach)->first();
+        $user = User::where('role', UserRole::Coach)->first();
 
         $response = $this->actingAs($user)->get('/admin/plans');
         $response->assertStatus(403);
 
     }
 
-    public function test_PlanController_index(): void
+    public function test_plan_controller_index(): void
     {
         $this->seed();
 
-        $user = User::where('role',UserRole::Admin)->first();
+        $user = User::where('role', UserRole::Admin)->first();
 
         $response = $this->actingAs($user)->get('/admin/plans');
         $response->assertStatus(200);
 
     }
 
-    public function test_PlanController_index_keyword(): void
+    public function test_plan_controller_index_keyword(): void
     {
         $this->seed();
 
@@ -56,7 +57,7 @@ class PlanControllerTest extends TestCase
         $keyword = '1';
 
         $response = $this->actingAs($user)
-        ->get('/admin/plans?&keyword='.$keyword);
+            ->get('/admin/plans?&keyword='.$keyword);
 
         $response->assertStatus(200);
 
@@ -67,14 +68,14 @@ class PlanControllerTest extends TestCase
 
     }
 
-        public function test_PlanController_index_filter_status(): void
+    public function test_plan_controller_index_filter_status(): void
     {
         $this->seed();
 
         $user = User::where('role', UserRole::Admin)->first();
 
         $response = $this->actingAs($user)
-        ->get('/admin/plans?status='.PlanStatus::Published->value);
+            ->get('/admin/plans?status='.PlanStatus::Published->value);
 
         $response->assertStatus(200);
 
@@ -85,14 +86,14 @@ class PlanControllerTest extends TestCase
 
     }
 
-    public function test_PlanController_create(): void
+    public function test_plan_controller_create(): void
     {
         $this->seed();
 
         $user = User::where('role', UserRole::Admin)->first();
 
         $response = $this->actingAs($user)
-        ->get('/admin/plans/create');
+            ->get('/admin/plans/create');
 
         $response->assertStatus(200);
 
@@ -101,7 +102,7 @@ class PlanControllerTest extends TestCase
     /**
      * バリデーションを通過したデータは、DBに保存される
      */
-    public function test_PlanController_store_succses(): void
+    public function test_plan_controller_store_succses(): void
     {
         $this->seed();
 
@@ -111,13 +112,12 @@ class PlanControllerTest extends TestCase
             'name' => 'test',
             'description' => 'test',
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
-        
+            ->post('/admin/plans', $data);
 
         $response->assertStatus(302);
 
@@ -125,7 +125,7 @@ class PlanControllerTest extends TestCase
             'name' => 'test',
             'description' => 'test',
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ]);
 
@@ -134,7 +134,7 @@ class PlanControllerTest extends TestCase
     /**
      * バリデーションを通過しなかったデータはDBに保存されない
      */
-    public function test_PlanController_store_error(): void
+    public function test_plan_controller_store_error(): void
     {
         $this->seed();
 
@@ -144,19 +144,19 @@ class PlanControllerTest extends TestCase
             'name' => '',
             'description' => '',
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->post('/admin/plans',$data);
+            ->post('/admin/plans', $data);
 
         $response->assertSessionHasErrors([
-            'name' ,
+            'name',
         ]);
     }
 
-        public function test_PlanController_show(): void
+    public function test_plan_controller_show(): void
     {
         $this->seed();
 
@@ -164,17 +164,17 @@ class PlanControllerTest extends TestCase
         $plan = Plan::first();
 
         $response = $this->actingAs($user)
-        ->get("/admin/plans/{$plan->id}");
+            ->get("/admin/plans/{$plan->id}");
 
         $response->assertStatus(200);
 
         $response->assertviewIs('plan.management.show');
 
         $response->assertSee($plan->name);
-        
+
     }
 
-    public function test_PlanController_edit(): void
+    public function test_plan_controller_edit(): void
     {
         $this->seed();
 
@@ -182,17 +182,17 @@ class PlanControllerTest extends TestCase
         $plan = Plan::first();
 
         $response = $this->actingAs($user)
-        ->get("/admin/plans/{$plan->id}/edit");
+            ->get("/admin/plans/{$plan->id}/edit");
 
         $response->assertStatus(200);
 
         $response->assertviewIs('plan.management.edit');
 
         $response->assertSee($plan->name);
-    
+
     }
 
-    public function test_PlanController_update(): void
+    public function test_plan_controller_update(): void
     {
         $this->seed();
 
@@ -203,12 +203,12 @@ class PlanControllerTest extends TestCase
             'name' => 'update',
             'description' => '',
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ];
 
         $response = $this->actingAs($user)
-        ->put("/admin/plans/{$plan->id}",$update_data);
+            ->put("/admin/plans/{$plan->id}", $update_data);
 
         $response->assertStatus(302);
 
@@ -216,21 +216,21 @@ class PlanControllerTest extends TestCase
             'name' => 'update',
             'description' => null,
             'duration_days' => 10,
-            'default_meeting_quota'=>10,
+            'default_meeting_quota' => 10,
             'sort_order' => 10,
         ]);
-    
+
     }
 
     /**
      * 投稿者は回答がないスレッドは削除できる
      * DBからも削除される
      */
-    public function test_PlanController_delete_success(): void
+    public function test_plan_controller_delete_success(): void
     {
         $this->seed();
 
-        //logを持たず、下書きのユーザーがシーダーでいなかったので生成する
+        // logを持たず、下書きのユーザーがシーダーでいなかったので生成する
         $user = User::where('role', UserRole::Admin)->first();
         $plan = Plan::factory()->draft()->create([
             'created_by_user_id' => $user->id,
@@ -247,33 +247,33 @@ class PlanControllerTest extends TestCase
         ]);
     }
 
-    public function test_PlanController_delete_error(): void
+    public function test_plan_controller_delete_error(): void
     {
         $this->seed();
 
         $user = User::where('role', UserRole::Admin)->first();
-        $plan = Plan::where('status',PlanStatus::Published)->first();
+        $plan = Plan::where('status', PlanStatus::Published)->first();
 
         $response = $this->actingAs($user)
-        ->delete("/admin/plans/{$plan->id}");
+            ->delete("/admin/plans/{$plan->id}");
 
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('plans', [
             'id' => $plan->id,
         ]);
-    
+
     }
 
-    public function test_PlanController_publish(): void
+    public function test_plan_controller_publish(): void
     {
         $this->seed();
 
         $user = User::where('role', UserRole::Admin)->first();
-        $plan = Plan::where('status',PlanStatus::Draft)->first();
+        $plan = Plan::where('status', PlanStatus::Draft)->first();
 
         $response = $this->actingAs($user)
-        ->post("/admin/plans/{$plan->id}/publish");
+            ->post("/admin/plans/{$plan->id}/publish");
 
         $response->assertStatus(302);
 
@@ -281,18 +281,18 @@ class PlanControllerTest extends TestCase
             'id' => $plan->id,
             'status' => PlanStatus::Published->value,
         ]);
-    
+
     }
 
-    public function test_PlanController_archive(): void
+    public function test_plan_controller_archive(): void
     {
         $this->seed();
 
         $user = User::where('role', UserRole::Admin)->first();
-        $plan = Plan::where('status',PlanStatus::Published)->first();
+        $plan = Plan::where('status', PlanStatus::Published)->first();
 
         $response = $this->actingAs($user)
-        ->post("/admin/plans/{$plan->id}/archive");
+            ->post("/admin/plans/{$plan->id}/archive");
 
         $response->assertStatus(302);
 
@@ -300,18 +300,18 @@ class PlanControllerTest extends TestCase
             'id' => $plan->id,
             'status' => PlanStatus::Archived->value,
         ]);
-    
+
     }
 
-    public function test_PlanController_unarchive(): void
+    public function test_plan_controller_unarchive(): void
     {
         $this->seed();
 
         $user = User::where('role', UserRole::Admin)->first();
-        $plan = Plan::where('status',PlanStatus::Archived)->first();
+        $plan = Plan::where('status', PlanStatus::Archived)->first();
 
         $response = $this->actingAs($user)
-        ->post("/admin/plans/{$plan->id}/unarchive");
+            ->post("/admin/plans/{$plan->id}/unarchive");
 
         $response->assertStatus(302);
 
@@ -319,7 +319,6 @@ class PlanControllerTest extends TestCase
             'id' => $plan->id,
             'status' => PlanStatus::Draft->value,
         ]);
-    
-    }
 
+    }
 }

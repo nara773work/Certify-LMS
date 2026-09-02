@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\ApiNotificationController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ApiNotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,11 +25,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/v1/notifications', [ApiNotificationController::class, 'index'])
-    ->name('notifications.index');
+        ->name('notifications.index');
     Route::post('/v1/notifications/{notification}/read', [ApiNotificationController::class, 'read'])
-    ->name('notifications.read');
+        ->name('notifications.read');
     Route::post('/v1/notifications/read-all', [ApiNotificationController::class, 'readAll'])
-    ->name('notifications.readAll');
+        ->name('notifications.readAll');
 
 });
-

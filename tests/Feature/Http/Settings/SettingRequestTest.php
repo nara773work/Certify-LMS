@@ -1,21 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature\Http\Settings;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\Hash;
-use Tests\TestCase;
 use App\Enums\UserRole;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class SettingRequestTest extends TestCase
 {
     /**
      * A basic feature test example.
      */
-
     use RefreshDatabase;
 
     public function test_title_required(): void
@@ -26,18 +26,18 @@ class SettingRequestTest extends TestCase
 
         $data = [
             'name' => '',
-            'bio'=> null
+            'bio' => null,
         ];
 
         $response = $this->actingAs($Student)
-        ->patch('/settings/profile', $data);
+            ->patch('/settings/profile', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors([
             'name',
         ]);
-        
+
     }
 
     public function test_title_255(): void
@@ -48,20 +48,20 @@ class SettingRequestTest extends TestCase
 
         $data = [
             'name' => str_repeat('あ', 50),
-            'bio'=> null
+            'bio' => null,
         ];
 
         $response = $this->actingAs($Student)
-        ->patch('/settings/profile', $data);
+            ->patch('/settings/profile', $data);
 
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('users',
-        [
-            'id' => $Student->id,
-            'name' => str_repeat('あ', 50),
-            'bio'=> null
-        ]);
+            [
+                'id' => $Student->id,
+                'name' => str_repeat('あ', 50),
+                'bio' => null,
+            ]);
     }
 
     public function test_title_256(): void
@@ -72,18 +72,18 @@ class SettingRequestTest extends TestCase
 
         $data = [
             'name' => str_repeat('あ', 51),
-            'bio'=> null
+            'bio' => null,
         ];
 
         $response = $this->actingAs($Student)
-        ->patch('/settings/profile', $data);
+            ->patch('/settings/profile', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors(
-        [
-            'name'
-        ]);
+            [
+                'name',
+            ]);
     }
 
     public function test_body_1000(): void
@@ -94,20 +94,20 @@ class SettingRequestTest extends TestCase
 
         $data = [
             'name' => 'test',
-            'bio'=> str_repeat('あ', 1000)
+            'bio' => str_repeat('あ', 1000),
         ];
 
         $response = $this->actingAs($Student)
-        ->patch('/settings/profile', $data);
+            ->patch('/settings/profile', $data);
 
         $response->assertStatus(302);
 
         $this->assertDatabaseHas('users',
-        [
-            'id' => $Student->id,
-            'name' => 'test',
-            'bio'=> str_repeat('あ', 1000)
-        ]);
+            [
+                'id' => $Student->id,
+                'name' => 'test',
+                'bio' => str_repeat('あ', 1000),
+            ]);
     }
 
     public function test_body_1001(): void
@@ -118,106 +118,106 @@ class SettingRequestTest extends TestCase
 
         $data = [
             'name' => 'test',
-            'bio'=> str_repeat('あ', 1001),
+            'bio' => str_repeat('あ', 1001),
         ];
 
         $response = $this->actingAs($Student)
-        ->patch('/settings/profile', $data);
+            ->patch('/settings/profile', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors([
-            'bio'
+            'bio',
         ]);
     }
 
     public function test_avatar_image(): void
-{
-    $this->seed();
+    {
+        $this->seed();
 
-    $Student = User::where('role', UserRole::Student)->first();
+        $Student = User::where('role', UserRole::Student)->first();
 
-    $file = UploadedFile::fake()->image('avatar.jpg');
+        $file = UploadedFile::fake()->image('avatar.jpg');
 
-    $response = $this->actingAs($Student)
-        ->post('/settings/avatar', [
-            'avatar' => $file,
-        ]);
+        $response = $this->actingAs($Student)
+            ->post('/settings/avatar', [
+                'avatar' => $file,
+            ]);
 
-    $response->assertStatus(302);
+        $response->assertStatus(302);
 
-    $response->assertSessionHasNoErrors();
-}
+        $response->assertSessionHasNoErrors();
+    }
 
     public function test_avatar_mimes(): void
-{
-    $this->seed();
+    {
+        $this->seed();
 
-    $Student = User::where('role', UserRole::Student)->first();
+        $Student = User::where('role', UserRole::Student)->first();
 
-    $file = UploadedFile::fake()->create(
-        'avatar.pdf',
-        100,
-        'application/pdf'
-    );
+        $file = UploadedFile::fake()->create(
+            'avatar.pdf',
+            100,
+            'application/pdf'
+        );
 
-    $response = $this->actingAs($Student)
-        ->post('/settings/avatar', [
-            'avatar' => $file,
+        $response = $this->actingAs($Student)
+            ->post('/settings/avatar', [
+                'avatar' => $file,
+            ]);
+
+        $response->assertStatus(302);
+
+        $response->assertSessionHasErrors([
+            'avatar',
         ]);
+    }
 
-    $response->assertStatus(302);
+    public function test_avatar_2_mb(): void
+    {
+        $this->seed();
 
-    $response->assertSessionHasErrors([
-        'avatar',
-    ]);
-}
+        $Student = User::where('role', UserRole::Student)->first();
 
-    public function test_avatar_2MB(): void
-{
-    $this->seed();
+        $file = UploadedFile::fake()->create(
+            'avatar.jpg',
+            2048,
+            'image/jpeg'
+        );
 
-    $Student = User::where('role', UserRole::Student)->first();
+        $response = $this->actingAs($Student)
+            ->post('/settings/avatar', [
+                'avatar' => $file,
+            ]);
 
-    $file = UploadedFile::fake()->create(
-        'avatar.jpg',
-        2048,
-        'image/jpeg'
-    );
+        $response->assertStatus(302);
 
-    $response = $this->actingAs($Student)
-        ->post('/settings/avatar', [
-            'avatar' => $file,
+        $response->assertSessionHasNoErrors();
+    }
+
+    public function test_avatar_3_mb(): void
+    {
+        $this->seed();
+
+        $Student = User::where('role', UserRole::Student)->first();
+
+        $file = UploadedFile::fake()->create(
+            'avatar.jpg',
+            3072,
+            'image/jpeg'
+        );
+
+        $response = $this->actingAs($Student)
+            ->post('/settings/avatar', [
+                'avatar' => $file,
+            ]);
+
+        $response->assertStatus(302);
+
+        $response->assertSessionHasErrors([
+            'avatar',
         ]);
-
-    $response->assertStatus(302);
-
-    $response->assertSessionHasNoErrors();
-}
-
-    public function test_avatar_3MB(): void
-{
-    $this->seed();
-
-    $Student = User::where('role', UserRole::Student)->first();
-
-    $file = UploadedFile::fake()->create(
-        'avatar.jpg',
-        3072,
-        'image/jpeg'
-    );
-
-    $response = $this->actingAs($Student)
-        ->post('/settings/avatar', [
-            'avatar' => $file,
-        ]);
-
-    $response->assertStatus(302);
-
-    $response->assertSessionHasErrors([
-        'avatar',
-    ]);
-}
+    }
 
     public function test_carrent_password_required(): void
     {
@@ -228,19 +228,19 @@ class SettingRequestTest extends TestCase
         $data = [
             'current_password' => '',
             'password' => '',
-            'password_confirmation' => ''
+            'password_confirmation' => '',
         ];
 
         $response = $this->actingAs($Student)
-        ->put('/settings/password', $data);
+            ->put('/settings/password', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors(
-        [
-            'current_password',
-            'password' 
-        ]);
+            [
+                'current_password',
+                'password',
+            ]);
     }
 
     public function test_current_password_current(): void
@@ -252,18 +252,18 @@ class SettingRequestTest extends TestCase
         $data = [
             'current_password' => '00000000',
             'password' => '12345678',
-            'password_confirmation' => '12345678'
+            'password_confirmation' => '12345678',
         ];
 
         $response = $this->actingAs($Student)
-        ->put('/settings/password', $data);
+            ->put('/settings/password', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors(
-        [
-            'current_password' 
-        ]);
+            [
+                'current_password',
+            ]);
     }
 
     public function test_password_required(): void
@@ -275,18 +275,18 @@ class SettingRequestTest extends TestCase
         $data = [
             'current_password' => 'password',
             'password' => '',
-            'password_confirmation' => '12345678'
+            'password_confirmation' => '12345678',
         ];
 
         $response = $this->actingAs($Student)
-        ->put('/settings/password', $data);
+            ->put('/settings/password', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors(
-        [
-            'password' 
-        ]);
+            [
+                'password',
+            ]);
     }
 
     public function test_password_8(): void
@@ -298,21 +298,21 @@ class SettingRequestTest extends TestCase
         $data = [
             'current_password' => 'password',
             'password' => '12345678',
-            'password_confirmation' => '12345678'
+            'password_confirmation' => '12345678',
         ];
 
         $response = $this->actingAs($Student)
-        ->put('/settings/password', $data);
+            ->put('/settings/password', $data);
 
         $response->assertStatus(302);
 
-    $this->assertTrue(
-        Hash::check(
-            '12345678',
-            $Student->fresh()->password
-        )
-    );
-}
+        $this->assertTrue(
+            Hash::check(
+                '12345678',
+                $Student->fresh()->password
+            )
+        );
+    }
 
     public function test_password_7(): void
     {
@@ -323,18 +323,18 @@ class SettingRequestTest extends TestCase
         $data = [
             'current_password' => 'password',
             'password' => '1234567',
-            'password_confirmation' => '1234567'
+            'password_confirmation' => '1234567',
         ];
 
         $response = $this->actingAs($Student)
-        ->put('/settings/password', $data);
+            ->put('/settings/password', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors(
-        [
-            'password' 
-        ]);
+            [
+                'password',
+            ]);
     }
 
     public function test_password_confirm(): void
@@ -346,17 +346,17 @@ class SettingRequestTest extends TestCase
         $data = [
             'current_password' => 'password',
             'password' => '12345678',
-            'password_confirmation' => '11111111'
+            'password_confirmation' => '11111111',
         ];
 
         $response = $this->actingAs($Student)
-        ->put('/settings/password', $data);
+            ->put('/settings/password', $data);
 
         $response->assertStatus(302);
 
         $response->assertSessionHasErrors(
-        [
-            'password'
-        ]);
+            [
+                'password',
+            ]);
     }
 }

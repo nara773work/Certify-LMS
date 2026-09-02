@@ -105,7 +105,7 @@ http://localhost:8000 にアクセスし、下記の[ログインアカウント
 | コーチ | coach2@certify-lms.test | ビジネス系資格の担当 |
 | 受講生 | student@certify-lms.test | 受講中の資格・学習履歴・面談などのデモデータ付き |
 | 修了生 | student-graduated@certify-lms.test | 修了生。チケットS-B-06の動作確認の際に使われる|
-| 修了生2 | student-graduated@certify-lms.test | 同上 |
+| 修了生2 | student-graduated2@certify-lms.test | 同上 |
 
 このほか、ライフサイクル（招待中 / 受講中 / 卒業 / 退会）を網羅したデモユーザーが投入されます。
 
@@ -119,7 +119,7 @@ sail artisan test --filter=Xxx    # クラス名・メソッド名で絞り込�
 ```
 
 ※テスト実行結果
-
+![alt text](test.png)
 
 ## コード整形
 
@@ -146,6 +146,8 @@ sail artisan storage:link
 - league/commonmark（教材本文の Markdown レンダリング）
 - Pusher（チャットのリアルタイム配信）
 - Docker（Laravel Sail）
+- google/apiclient": "^2.19
+- Guzzle HTTP Client
 
 ## 環境変数
 
@@ -157,19 +159,28 @@ sail artisan storage:link
 
 ※docs以下にそれぞれチケット番号のファイルがあり、中に詳細設計を記載しているので、そちらを参照してください。
 
+-------------------------------------------------------
+以下実装機能の説明を記載します。
 
-## 通知機能
+1. 通知機能
+　1.1. 通知チャネル
+　1.2. お知らせ配信
+　1.3. 面談リマインダー通知
+2. 通知の非同期処理
+3. Googleカレンダー
+4. AIChat(Gemini)
+5. 修了書ダウンロード
+6. 面談パックの追加購入
+7. 外部API関連テスト
+
+## 1. 通知機能
 
 ### 通知チャネル
 
 以下の通知は、アプリ内通知とメールの両方で配信されます。
 
 - お知らせ配信
-- 面談リマインダー通知
-  - 面談前日
-  - 面談1時間前
-
----
+- 面談リマインダー通知(面談前日,面談1時間前)
 
 ### お知らせ配信
 
@@ -178,7 +189,40 @@ sail artisan storage:link
 - アプリ内通知
 - メール
 
----
+対象ユーザー
+
+- 全受講生
+- 特定の受講生
+- コーチ
+- 対象者以外には届かない
+
+#### お知らせ配信の動作確認手順
+
+1. 以下のコマンドでLaravelを起動させる
+
+```bash
+./vendor/bin/sail up -d
+```
+
+2. 管理者アカウントでログイン
+3. 左側の「お知らせ配信」を開く
+4. お知らせを新規作成する
+5. 配信対象を選択する
+6. お知らせを配信する
+7. 対象ユーザーでログイン
+8. 通知ベル、または通知を開く
+9. 以下を確認する
+
+- 通知が表示されている
+- お知らせタイトルが表示される
+- お知らせ内容が表示される
+
+10. Mailpitを開く
+11. 対象ユーザー宛てのメールが届いていることを確認する
+12. 対象外ユーザーでログイン
+13. 通知ベル、または通知を開く
+14. 該当のお知らせが表示されていないことを確認する
+15. Mailpitでも対象外ユーザー宛てのメールが送信されていないことを確認する
 
 ### 面談リマインダー通知
 
@@ -191,7 +235,34 @@ sail artisan storage:link
 
 また、同一の面談・同一のタイミングのリマインダー通知は、複数回送信されません。
 
-#### 手動実行
+### 手動実行
+
+手動実行の際に必要な環境は以下のとおりである
+- sail
+- Queue Worker
+- Mailpit(メールの送信結果を確認する場合)
+
+そのため、以下のコマンドを実行し起動したままにしておいてください。
+
+```bash
+./vendor/bin/sail up -d
+```
+
+```bash
+./vendor/bin/sail artisan queue:work
+```
+
+以下の通知はメールにも届く仕様となっている
+- お知らせ配信（配信直後）
+- 面談前日リマインダー
+- 面談1時間前リマインダー
+
+事前に以下のテストデータを用意します
+- 面談前日通知の対象となる予約済み面談
+- 1時間前通知の対象となる予約済み面談
+- キャンセル済みの面談
+
+その上で以下のコマンドをそれぞれ実行する
 
 前日通知：
 
@@ -205,7 +276,14 @@ sail artisan storage:link
 ./vendor/bin/sail artisan notifications:send-meeting-reminders --window=one_hour_before
 ```
 
-## 自動実行
+以下の事項を確認する
+
+- 対象の受講生にアプリ内通知が届く
+- 対象の受講生にメールが届く
+- キャンセル済み面談には通知されない
+- 同じコマンドを再実行しても同じ通知が重複して送信されない
+
+### 自動実行
 Laravelのschedulerで自動実行されます
 
 cronで1分ごとに実行してください
@@ -213,7 +291,43 @@ cronで1分ごとに実行してください
 * * * * * cd /path/to/Certify-LMS && ./vendor/bin/sail artisan schedule:run >> /dev/null 2>&1
 
 
-##　メールの確認
+※開発環境でschedulerを常時起動させるためには以下のコマンドを入力し、常時起動させたままにしておいてください。
+
+この時、queue:workも起動させておく必要があります。
+
+cron方式（本番環境）では常時起動させておく必要はありません。
+ローカル開発環境で動作確認を行う場合は、設定が簡単な schedule:work の使用を推奨します。
+
+```bash
+./vendor/bin/sail artisan schedule:work
+```
+
+```bash
+./vendor/bin/sail artisan queue:work
+```
+
+つまり、
+
+手動実行時：Queue Worker のみ
+
+自動実行時（ローカル環境）：schedule:work + Queue Worker
+
+自動実行時（本番環境）：cron + schedule:run + Queue Worker
+
+の構成となります。
+
+また、
+ローカル開発環境：schedule:work
+
+本番環境：cron + schedule:run
+
+のように使い分けて動作確認を行ってください
+
+| 環境 | ローカル | 本番/cron |
+| 手動 |  Queue Worker | Queue Worker |
+| 自動 | Queue Worker + schedule:work | cron + schedule:run + Queue Worker|
+
+###　メールの確認
 環境開発ではMailpitを使用してメールを確認する
 
 1.sailを起動する
@@ -251,43 +365,15 @@ Mailpitを開き、対象の受講生にメールが届いていることを確�
 ※注意事項※
 
 - Mailpitは開発環境用のメール確認ツールです。
-
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-- 実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
-=======
 - 実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
 
-### 概要
+### 通知ベル
 
 受講生・コーチ向けの通知機能を実装しています。
 
 TopBarの通知ベルから通知を確認でき、未読通知の確認・既読化・全件既読化ができます。
 
 管理者には通知ベル・通知ポップオーバーを表示しません。
-
-### 実装内容
-
-* 通知一覧APIを構築
-* Sanctum Cookie認証でAPIを保護
-* 認証ユーザー本人の通知のみ取得
-* 他ユーザーの通知IDにはアクセスできないよう制御
-* 通知の単一既読化APIを実装
-* 通知の全件既読化APIを実装
-* TopBarの通知ベルからポップオーバーを開閉
-* 通知一覧をAPIから取得して表示
-* 「全件」「未読」のタブ切り替え
-* 未読タブに未読件数を表示
-* 通知タイトル・本文プレビュー・経過時間を表示
-* 未読通知の背景を強調
-* 未読通知に未読マークを表示
-* 通知がない場合の空状態を表示
-* 通知クリック時に既読化して通知詳細へ遷移
-* 「全件既読」で未読通知をまとめて既読化
-* 未読件数をJavaScriptで動的に更新
-* 「すべての通知を見る」から通知一覧画面へ遷移
-* 受講生・コーチのみ通知機能を表示
-* 管理者は通知機能の対象外
 
 ### API
 
@@ -305,181 +391,151 @@ APIは `auth:sanctum` により認証ユーザーのみアクセス可能です�
 
 他ユーザーの通知IDを指定して既読化しようとした場合も、本人の通知として扱われないよう制御しています。
 
-### JavaScript
+実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
 
-通知ポップオーバーは `resources/js/notifications.js` で制御しています。
+### APIの動作確認
+APIはSanctum認証が必要です。
+ブラウザでログインをしてから動作確認を行ってください。
 
-主な処理：
+1. 認証済みユーザーで通知一覧APIを実行します
 
-* ベルクリックによるポップオーバー開閉
-* APIからの通知取得
-* 全件 / 未読タブ切り替え
-* 未読件数表示
-* 未読通知の強調表示
-* 通知クリック時の既読化
-* 全件既読
-* 経過時間表示
+```http
+GET /api/v1/notifications
+```
+※レスポンスに記載されているIDが通知IDです。
 
-### テスト
+2. 自分の通知IDを指定して既読化する
 
-通知APIのControllerテストを実装しています。
-
-テスト実行コマンド：
-
-```bash
-./vendor/bin/sail artisan test tests/Feature/Http/Notification/ApiNotificationControllerTest.php
+```http
+POST /api/v1/notifications/{notification}/read
 ```
 
-特定のテストのみ実行する場合：
+※read_atが設定されていることを確認します。
 
-```bash
-./vendor/bin/sail artisan test tests/Feature/Http/Notification/ApiNotificationControllerTest.php --filter="テスト名"
+3. 通知が既読になったことを確認する
+4. 全て既読APIを実行する
+
+```http
+POST /api/v1/notifications/read-all
 ```
 
-テストでは以下を確認しています。
+5. 自分の未読通知がすべて既読になっていることを確認する
+6. 未認証状態でAPIへアクセスし、認証エラーになることを確認する
+7. 別ユーザーの通知IDを指定して既読化しようとし、他ユーザーの通知を操作できないことを確認する
 
-* 未認証ユーザーは通知APIにアクセスできない
-* 認証ユーザーは通知一覧を取得できる
-* 自分の通知のみ取得できる
-* 他ユーザーの通知を取得できない
-* 通知を既読化できる
-* 他ユーザーの通知を既読化できない
-* 全件既読化できる
-* 既読済み通知を再度既読化しても問題ない
-* APIが正常なJSONレスポンスを返す
+### 通知ベルの確認
 
-### 動作確認
+受講生・コーチでログインすると、画面上部の通知ベルから通知を確認できます。
 
-1. 受講生またはコーチでログイン
-2. TopBarの通知ベルをクリック
-3. 通知一覧が表示されることを確認
-4. 「全件」「未読」を切り替える
-5. 未読件数が正しく表示されることを確認
-6. 未読通知をクリックする
-7. 通知が既読化され、通知詳細へ遷移することを確認
-8. 再度ベルを開き、未読件数が減っていることを確認
-9. 「全件既読」をクリックする
-10. 未読件数が0になり、未読マークが消えることを確認
-11. 管理者でログインし、通知ベルが表示されないことを確認
+1. student@certify-lms.test または coach@certify-lms.test でログインする
+2. TopBarの通知ベルをクリックする
+3. 通知ポップオーバーが表示される
+4. 通知一覧が表示される
+5. 「すべて」「未読」のタブを切り替えて確認する
+6. 未読通知をクリックして既読化する
+7. 「すべて既読」で未読通知を一括で既読化する
 
+未読通知がある場合は、通知ベルに未読件数が表示されます。
 
-### 概要
+管理者（admin@certify-lms.test）には通知ベル・通知ポップオーバーを表示しません。
 
-受講生・コーチ向けの通知機能を実装しています。
+## 2. 通知の非同期処理
 
-TopBarの通知ベルから通知を確認でき、未読通知の確認・既読化・全件既読化ができます。
+通知・メール送信にはLaravel Queueを使用しています。
 
-管理者には通知ベル・通知ポップオーバーを表示しません。
+.env に以下を設定します。
 
-### 実装内容
-
-* 通知一覧APIを構築
-* Sanctum Cookie認証でAPIを保護
-* 認証ユーザー本人の通知のみ取得
-* 他ユーザーの通知IDにはアクセスできないよう制御
-* 通知の単一既読化APIを実装
-* 通知の全件既読化APIを実装
-* TopBarの通知ベルからポップオーバーを開閉
-* 通知一覧をAPIから取得して表示
-* 「全件」「未読」のタブ切り替え
-* 未読タブに未読件数を表示
-* 通知タイトル・本文プレビュー・経過時間を表示
-* 未読通知の背景を強調
-* 未読通知に未読マークを表示
-* 通知がない場合の空状態を表示
-* 通知クリック時に既読化して通知詳細へ遷移
-* 「全件既読」で未読通知をまとめて既読化
-* 未読件数をJavaScriptで動的に更新
-* 「すべての通知を見る」から通知一覧画面へ遷移
-* 受講生・コーチのみ通知機能を表示
-* 管理者は通知機能の対象外
-
-### API
-
-| Method | URL                                         | 内容                |
-| ------ | ------------------------------------------- | ----------------- |
-| GET    | `/api/v1/notifications`                     | 認証ユーザーの通知一覧を取得    |
-| POST   | `/api/v1/notifications/{notification}/read` | 指定した通知を既読化        |
-| POST   | `/api/v1/notifications/read-all`            | 認証ユーザーの未読通知を全件既読化 |
-
-APIは `auth:sanctum` により認証ユーザーのみアクセス可能です。
-
-### APIのアクセス制御
-
-通知APIでは、認証ユーザー本人の通知のみを操作できます。
-
-他ユーザーの通知IDを指定して既読化しようとした場合も、本人の通知として扱われないよう制御しています。
-
-### JavaScript
-
-通知ポップオーバーは `resources/js/notifications.js` で制御しています。
-
-主な処理：
-
-* ベルクリックによるポップオーバー開閉
-* APIからの通知取得
-* 全件 / 未読タブ切り替え
-* 未読件数表示
-* 未読通知の強調表示
-* 通知クリック時の既読化
-* 全件既読
-* 経過時間表示
-
-### テスト
-
-通知APIのControllerテストを実装しています。
-
-テスト実行コマンド：
-
-```bash
-./vendor/bin/sail artisan test tests/Feature/Http/Notification/ApiNotificationControllerTest.php
+```env
+QUEUE_CONNECTION=database
 ```
 
-特定のテストのみ実行する場合：
+Queue Workerを起動し、起動したままにしておいてください。
 
 ```bash
-./vendor/bin/sail artisan test tests/Feature/Http/Notification/ApiNotificationControllerTest.php --filter="テスト名"
+./vendor/bin/sail artisan queue:work
 ```
 
-テストでは以下を確認しています。
+通知が発生する操作を行うと、通知・メールの処理はQueueに投入され、Workerによってバックグラウンドで実行されます。
 
-* 未認証ユーザーは通知APIにアクセスできない
-* 認証ユーザーは通知一覧を取得できる
-* 自分の通知のみ取得できる
-* 他ユーザーの通知を取得できない
-* 通知を既読化できる
-* 他ユーザーの通知を既読化できない
-* 全件既読化できる
-* 既読済み通知を再度既読化しても問題ない
-* APIが正常なJSONレスポンスを返す
+### Queueを使用した通知の確認
 
-### 動作確認
+1. Queue Workerを起動する
 
-1. 受講生またはコーチでログイン
-2. TopBarの通知ベルをクリック
-3. 通知一覧が表示されることを確認
-4. 「全件」「未読」を切り替える
-5. 未読件数が正しく表示されることを確認
-6. 未読通知をクリックする
-7. 通知が既読化され、通知詳細へ遷移することを確認
-8. 再度ベルを開き、未読件数が減っていることを確認
-9. 「全件既読」をクリックする
-10. 未読件数が0になり、未読マークが消えることを確認
-11. 管理者でログインし、通知ベルが表示されないことを確認
+```bash
+./vendor/bin/sail artisan queue:work
+```
 
-=======
-- 実際のメールアドレスにはメールを送信せず、Mailpit上で送信内容を確認します。
->>>>>>> origin/main
+2. 別ターミナルでアプリケーションにログインする
+3. お知らせ配信、面談予約、チャット、質問掲示板への回答など、通知が発生する操作を行う
+4. Queue Worker側でジョブが処理されることを確認する
+5. 通知ベルまたはMailpitで通知結果を確認する
+6. 通知ジョブのリトライ
 
-## Google Calendar API の設定
+通知ジョブは一時的なエラーに備えて最大3回まで再試行します。
+
+public int $tries = 3;
+
+public array $backoff = [10, 30, 60];
+
+再試行間隔は10秒、30秒、60秒です。
+
+最大試行回数を超えて失敗したジョブは failed_jobs テーブルに記録されます。
+
+失敗ジョブの確認：
+
+```bash
+./vendor/bin/sail artisan queue:failed
+```
+
+失敗ジョブを再実行：
+
+```bash
+./vendor/bin/sail artisan queue:retry <failed-job-id>
+```
+
+すべての失敗ジョブを再実行：
+
+```bash
+./vendor/bin/sail artisan queue:retry all
+```
+
+他ユーザーの通知IDを指定して既読化しようとしても、その通知を本人の通知として操作することはできません。
+
+## 3. Google Calendar API の設定
 
 Google Calendar連携を使用する場合は、以下の環境設定が必要です。
-（※Google Cloud Consoleで「Google Calendar API」を有効化する。）
 
-- 1. Google Cloud側の設定
+### Google Calendar API パッケージ
 
-Google Cloud ConsoleでOAuth 2.0 Client IDを作成し、
-`.env` に以下を設定してください。
+Google Calendar APIとの連携には `google/apiclient` を使用しています。
+
+`composer.json` に以下のパッケージが登録されています。
+
+```json
+"google/apiclient": "^2.19"
+```
+
+### Google Calendar API の有効化
+
+Google Cloud Consoleで「Google Calendar API」を有効化してください。
+
+### OAuth 2.0 Client ID の設定
+
+Google Cloud ConsoleでOAuth 2.0 Client IDを作成します。
+
+作成したClient IDとClient Secretを .env に設定してください。
+
+```env
+GOOGLE_CLIENT_ID=xxxxxxxx
+GOOGLE_CLIENT_SECRET=xxxxxxxx
+```
+
+### Google Cloud ConsoleのOAuth設定では、以下のリダイレクトURIを登録してください。
+
+```bash
+http://localhost:8000/settings/google-calendar/callback
+```
+つまり、.envはこうなります
 
 ```env
 GOOGLE_CLIENT_ID=xxxxxxxx
@@ -487,20 +543,17 @@ GOOGLE_CLIENT_SECRET=xxxxxxxx
 GOOGLE_REDIRECT_URI=http://localhost:8000/settings/google-calendar/callback
 ```
 
-- Google Cloud ConsoleのOAuth設定では、以下のリダイレクトURIを登録してください。
+.env を設定したあと、設定をクリアします。
 
-```bash
-http://localhost:8000/settings/google-calendar/callback
-```
-
-- .env を設定したあと、設定をクリアします。
 ```bash
 ./vendor/bin/sail artisan config:clear
 ```
-- Google Calendarを連携する
-ログイン後、calendarに連携してください
 
-## Google Calendar連携の確認
+### Google Calendarを連携する
+
+アプリケーションにログインし、Google Calendar連携画面からGoogleアカウントとのOAuth認証を行います。
+
+### Google Calendar連携の確認
 
 ### 1. 初期データ
 
@@ -509,38 +562,43 @@ Seeder実行後、
 - coach@certify-lms.test：Google Calendar連携済み
 - coach2@certify-lms.test：Google Calendar未連携
 
-となる。
+となります。
 
-### 2. 実際のGoogle Calendar連携を確認する場合
+※実際のGoogle Calendar連携を確認する場合
 
-Seederで作成されたGoogleCalendarTokenはダミー値のため、
-実際のGoogle Calendar APIとの通信確認を行う場合は、
-設定画面から一度Google Calendar連携を解除し、
-再度GoogleアカウントとのOAuth認証を行う。
+Seederで作成されたGoogle CalendarTokenはダミー値です。
+実際のGoogle Calendar APIとの通信確認を行う場合は設定画面から一度Google Calendar連携を解除し、再度GoogleアカウントとのOAuth認証を行ってください。
 
-### 3. 確認項目
+### 動作確認
 
-- 予約画面でGoogle Calendar上の予定が空き枠に反映される
-- コーチのGoogle Calendar連携状態が表示される
-- Google Calendar連携を解除できる
-- 解除後、未連携状態になる
-- 再度Google Calendarと連携できる
+1. coach@certify-lms.test でログインする
+2. 左側の「面談設定」を開く
+3. 既存のGoogle Calendar連携を解除する
+4. 再度「Google Calendarと連携」を実行する
+5. GoogleアカウントのOAuth認証を行う
+6. 連携が完了することを確認する
+7. Google Calendarに予定を入れる
+8. 同日の同時刻に面談可能枠を設ける
+9. Googleカレンダーに予定がない日にち、時刻にも面談可能枠を設ける
+10. 受講生としてログインし、面談予約画面を表示する
+11. Googleカレンダーに予定を入れてある日にちの時刻は、面談可能日（時間）として表示されないことを確認する。
+12. Googleカレンダーに予定の入っていない日にち（時間）は表示されていることを確認する
+13. 受講生が面談の予約を入れる
+14. コーチのGoogle Calendar側に予定が反映されることを確認する
+15. 面談をキャンセルしたとき、Google calendarの面談予約も消えていることを確認する
+16. 連携していないコーチはGoogle calendarに面談予約が反映されないこと、Google calendarの予定が面談可能枠に反映されないことを確認する 
 
-※ Seederで作成されるGoogleCalendarTokenは動作確認用のダミー値です。
-そのため、Seeder直後は「連携済み」の状態を確認できますが、
-Google Calendar APIとの実通信はできません。
-実際のAPI通信を確認する場合は、ダミートークンを削除し、
-設定画面からOAuth認証をやり直してください。
-
-## AI相談機能
+## 4. AI相談機能
 
 AI相談機能では Gemini API を利用しています。
 
-### 事前準備
-
 AI相談機能を利用するには、Gemini API キーが必要です。
 
-#### 1. Gemini API キーを取得
+### Gemini API パッケージ
+
+Gemini APIとの通信には、Guzzle HTTP Clientを使用しています。
+
+### Gemini API キーを取得
 
 Google AI Studio から Gemini API キーを取得してください。
 
@@ -550,13 +608,27 @@ Google AI Studio から Gemini API キーを取得してください。
 GEMINI_API_KEY=取得したAPIキー
 ```
 
-設定を反映させるために以下のコマンドをたたいてください
+設定を反映させるために以下のコマンドを実行してください。
 
 ```bash
 ./vendor/bin/sail artisan config:clear
 ```
 
-## データベース
+### Gemini API のモデル設定
+
+使用するGeminiモデルは config/ai-chat.php で設定します。
+
+return [
+    'gemini' => [
+        'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+    ],
+];
+
+.env では必要に応じて使用するモデルを変更できます。
+
+GEMINI_MODEL=gemini-3.6-flash
+
+### データベース
 
 AI相談機能では以下のテーブルを使用します。
 
@@ -569,15 +641,9 @@ AI相談機能では以下のテーブルを使用します。
 ./vendor/bin/sail artisan migrate
 ```
 
-## Gemini API の利用制限
+conversations に会話情報を保存し、ai_chats に会話内のメッセージを保存します。
 
-Gemini API の無料枠には利用上限があります。
-
-上限に達した場合、AIからの回答を取得できません。
-
-その場合は時間をおいて再度実行するか、Gemini API の利用状況・料金プランを確認してください。
-
-## AI相談機能の利用条件
+### AI相談機能の利用条件
 
 AI相談機能を利用できるのは以下の条件を満たす受講生です。
 
@@ -585,41 +651,38 @@ AI相談機能を利用できるのは以下の条件を満たす受講生です
 学習中であること
 会話のオーナー本人であること
 
-Gemini API を使用しています。
+また、作成した会話は会話のオーナー本人のみ閲覧・操作できます。
 
-モデルは設定ファイルで指定します。
+### Gemini API の利用制限
 
-config/ai-chat.php
+Gemini API の無料枠には利用上限があります。
 
-例：
+上限に達した場合、AIからの回答を取得できません。
 
-return [
-    'gemini' => [
-        'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
-    ],
-];
+その場合は時間をおいて再度実行するか、Gemini API の利用状況・料金プランを確認してください。
 
-.env では必要に応じて変更できます。
+### 動作確認
 
-GEMINI_MODEL=gemini-3.6-flash
-動作確認
+1. Laravel Sailを起動します。
 
-Laravel Sail を起動します。
-
+```bash
 ./vendor/bin/sail up -d
+```
 
-マイグレーションを実行します。
+2. 学習中の受講生アカウントでログインします。
+3. AI相談画面を開きます。
+4. メッセージを入力して送信します。
+5. Gemini APIからの回答が表示されることを確認します。
+6. フローティングウィジェットからもメッセージを送信し、AIから回答が返ることを確認します。
+7. 作成した会話を再度開き、過去のメッセージが保持されていることを確認します。
+8. 別の受講生アカウントから、他の受講生が作成した会話を閲覧・操作できないことを確認します。
 
-./vendor/bin/sail artisan migrate
-
-その後、学習中の受講生でログインし、AI相談画面またはフローティングウィジェットからメッセージを送信してください。
-
-## 修了証ダウンロード機能の確認
+## 5. 修了証ダウンロード機能の確認
 
 修了証ダウンロード機能を確認するためのテストデータは、
 `DownloadSeeder` で投入できます。
 
-### 1. ダウンロード確認用データを投入
+### ダウンロード確認用データを投入
 
 以下を実行してください。
 
@@ -630,12 +693,13 @@ Laravel Sail を起動します。
 Seederでは、以下の状態を作成します。
 
 修了生一郎
-日商簿記 2 級を修了
+基本情報技術者試験の公開済み資格を修了
 コーチ1を担当コーチとして設定
 修了証を発行
 修了証PDFの実体を生成
+
 修了生花子
-日商簿記 2 級以外の公開済み資格を修了
+日商簿記 2 級の公開済み資格を修了
 コーチ2を担当コーチとして設定
 修了証を発行
 修了証PDFの実体を生成
@@ -643,7 +707,7 @@ Seederでは、以下の状態を作成します。
 Seederを複数回実行しても、既に発行済みの修了証を重複作成せず、
 PDF実体が存在しない場合のみPDFを生成します。
 
-- PDF実体の確認
+### PDF実体の確認
 
 修了証のPDFは、DB上の pdf_path だけではなく、
 実際にStorageへ生成されます。
@@ -656,11 +720,13 @@ Seeder実行後、以下のようなPDFファイルが生成されます。
 
 storage/app/certificates/{ULID}.pdf
 
-- PDFが生成されているか確認
+### PDFが生成されているか確認
 
 Tinkerを起動します。
 
+```bash
 ./vendor/bin/sail artisan tinker
+```
 
 以下を実行してください。
 
@@ -684,9 +750,11 @@ exists が true になっていれば、PDFの実体が存在します。
 |管理者|一郎・花子の修了証|	ダウンロード可能|
 
 
-# 面談パック購入機能
+## 6. 面談パック購入機能
 
-## 1. Composerパッケージのインストール
+以下の環境を準備する。
+
+1. Composerパッケージのインストール
 
 Stripe PHP SDKをComposerでインストールする。
 
@@ -694,21 +762,19 @@ Stripe PHP SDKをComposerでインストールする。
 composer require stripe/stripe-php
 ```
 
-インストール後、依存関係を更新する。
+2. インストール後、依存関係を更新する。
 
 ```bash
 composer dump-autoload
 ```
 
-Laravel Sailを使用している場合は、コンテナ内で実行することもできる。
+3. Laravel Sailを使用している場合は、コンテナ内で実行することもできる。
 
 ```bash
 ./vendor/bin/sail composer require stripe/stripe-php
 ```
 
----
-
-## 2. Stripe APIキーの設定
+### Stripe APIキーの設定
 
 `.env` にStripeの秘密鍵を設定する。
 
@@ -733,9 +799,7 @@ STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxx
 ./vendor/bin/sail artisan config:clear
 ```
 
----
-
-## 3. 面談パックの初期データ
+### 面談パックの初期データ
 
 `MeetingPackSeeder` で公開中の面談パックを登録する。
 
@@ -763,9 +827,7 @@ MeetingPack::query()
     ->get();
 ```
 
----
-
-## 4. Paymentテーブル
+###  Paymentテーブル
 
 面談パックの購入情報を `payments` テーブルに保存する。
 
@@ -781,9 +843,7 @@ MeetingPack::query()
 
 `meeting_pack_id` によって、どの面談パックを購入したかを記録する。
 
----
-
-## 5. PaymentStatus
+### PaymentStatus
 
 決済状態は `PaymentStatus` enum で管理する。
 
@@ -801,9 +861,7 @@ enum PaymentStatus: string
 
 保留の場合は`Pending` とする。
 
----
-
-## 6. 面談回数の管理
+### 面談回数の管理
 
 面談回数は `MeetingQuotaTransaction` で履歴を管理する。
 
@@ -823,9 +881,8 @@ MeetingQuotaTransaction::create([
 
 決済失敗・キャンセルの場合は `Purchased` を作成しないため、残面談回数には反映されない。
 
----
 
-## 7. 残面談回数の集計
+### 残面談回数の集計
 
 `MeetingQuotaService` で残面談回数を計算する。
 
@@ -837,44 +894,7 @@ return $user->max_meetings + $sum;
 
 `granted_initial` は `max_meetings` と二重計上になるため集計対象から除外する。
 
----
-
-## 8. 面談パック選択画面
-
-以下のURLで公開中の面談パックを表示する。
-
-```text
-GET /meeting-quota/checkout
-```
-
-ルート名：
-
-```text
-meeting-quota.checkout.select
-```
-
-画面には以下を表示する。
-
-* 面談パック名
-* 面談回数
-* 価格
-* 購入ボタン
-
-購入する面談パックのIDをPOSTする。
-
-```text
-POST /meeting-quota/checkout
-```
-
-ルート名：
-
-```text
-meeting-quota.checkout.create
-```
-
----
-
-## 9. Stripe Checkoutの作成
+### Stripe Checkoutの作成
 
 選択された `meeting_pack_id` を使って `MeetingPack` を取得する。
 
@@ -904,9 +924,7 @@ Stripe Checkout Sessionを作成する。
 
 購入したのかを特定できる。
 
----
-
-## 10. Stripe決済画面
+### Stripe決済画面
 
 Checkout Sessionを作成したら、Stripeが発行したURLへリダイレクトする。
 
@@ -916,9 +934,7 @@ return redirect()->away($session->url);
 
 アプリ側でカード情報を直接処理せず、Stripe Checkoutを利用して決済する。
 
----
-
-## 11. 決済完了画面
+### 決済完了画面
 
 決済成功後は以下のURLへ戻る。
 
@@ -940,9 +956,7 @@ Stripe Checkout Session IDをQuery Parameterとして受け取る。
 
 完了画面からダッシュボードへ戻れる導線を用意する。
 
----
-
-## 12. 決済キャンセル
+### 決済キャンセル
 
 Stripe Checkoutでキャンセルした場合は、
 
@@ -960,9 +974,7 @@ meeting-quota.checkout.select
 
 ようにする。
 
----
-
-## 13. Stripe Webhook
+### Stripe Webhook
 
 Stripeから決済結果を受け取る公開エンドポイントを用意する。
 
@@ -994,9 +1006,7 @@ $event = \Stripe\Webhook::constructEvent(
 
 署名が不正な場合は処理を行わず、400を返す。
 
----
-
-## 14. checkout.session.completedの処理
+### checkout.session.completedの処理
 
 Webhookで、
 
@@ -1017,9 +1027,7 @@ meeting_pack_id
 
 そのIDを使って購入対象の受講生と面談パックを特定する。
 
----
-
-## 15. Paymentと面談回数の加算
+###  Paymentと面談回数の加算
 
 決済成功時には、以下を1つのDBトランザクションで実行する。
 
@@ -1036,9 +1044,7 @@ DB::transaction(function () {
 
 どちらかの処理が失敗した場合、両方をロールバックする。
 
----
-
-## 16. Webhookの二重処理防止
+### Webhookの二重処理防止
 
 同じStripe Checkout Sessionが複数回通知される可能性があるため、処理前に、
 
@@ -1060,9 +1066,7 @@ Payment::query()
 
 これにより、Webhookが重複して送信されても面談回数が二重加算されない。
 
----
-
-## 17. Webhookの動作確認
+### Webhookの動作確認
 
 ローカル環境ではStripe CLIを使用してWebhookを転送する。
 
@@ -1096,9 +1100,7 @@ STRIPE_WEBHOOK_SECRET=
 
 を実行する。
 
----
-
-## 18. Webhookの動作確認手順
+### Webhookの動作確認手順
 
 1. Stripe CLIを起動する。
 
@@ -1136,9 +1138,7 @@ checkout.session.completed
 
 9. `checkout.session.completed` が記録されていることを確認する。
 
----
-
-## 19. Seederによる初期データ
+### Seederによる初期データ
 
 `PaymentSeeder` では固定の受講生を使用して決済履歴を作成する。
 
@@ -1169,76 +1169,7 @@ checkout.session.completed
 
 保留状態を使用する場合は、`PaymentStatus` に `Pending` を追加したうえでSeederに登録する。
 
----
-
-## 通知・メール送信の非同期化
-
-通知・メール送信はLaravelのQueueを利用して非同期処理する。
-
-### Queue設定
-
-`.env` に以下を設定する。
-
-```env
-QUEUE_CONNECTION=database
-```
-
-Queue用の jobs テーブルと、失敗したジョブを記録する failed_jobs テーブルを使用する。
-
-### Workerの起動
-
-以下のコマンドでQueue Workerを起動する。
-
-```bash
-./vendor/bin/sail artisan queue:work
-```
-
-Workerは別ターミナルで起動したままにする。
-
-### 通知の動作確認
-
-面談予約、チャットメッセージ、質問掲示板への回答、管理者からのお知らせなど、通知が発生する操作を行う。
-
-通知はリクエスト内で直接処理せず、Queueに投入され、Workerによってバックグラウンドで処理される。
-
-一斉配信のお知らせについても、対象ユーザーごとに通知ジョブがQueueへ投入される。
-
-### リトライ
-
-通知には以下のリトライ設定を行っている。
-
-public int $tries = 3;
-
-public array $backoff = [10, 30, 60];
-
-一時的な処理失敗が発生した場合、10秒、30秒、60秒の間隔で最大3回まで再試行する。
-
-### 失敗ジョブの確認
-
-リトライ上限を超えたジョブは failed_jobs に記録される。
-
-./vendor/bin/sail artisan queue:failed
-失敗ジョブの再投入
-
-失敗したジョブは queue:retry で再度Queueへ投入できる。
-
-```bash
-./vendor/bin/sail artisan queue:retry <failed-job-id>
-```
-
-すべての失敗ジョブを再投入する場合：
-
-./vendor/bin/sail artisan queue:retry all
-
-## テスト
-
-### 通常のテスト実行
-
-```bash
-./vendor/bin/sail artisan test
-```
-
-### 外部API関連テスト
+## 7. 外部API関連テスト
 
 外部APIに依存するテストには `external-api` グループを付与しています。
 
@@ -1251,4 +1182,10 @@ public array $backoff = [10, 30, 60];
 
 ```bash
 ./vendor/bin/sail artisan test --group=external-api
+```
+
+### 通常のテスト実行
+
+```bash
+./vendor/bin/sail artisan test
 ```

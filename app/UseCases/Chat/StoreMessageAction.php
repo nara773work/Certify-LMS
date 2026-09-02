@@ -9,8 +9,8 @@ use App\Models\ChatMember;
 use App\Models\ChatMessage;
 use App\Models\ChatRoom;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use App\Notifications\ChatMessageNotification;
+use Illuminate\Support\Facades\DB;
 
 /**
  * ChatRoom にメッセージを INSERT し、送信者の既読時刻を更新したうえで Broadcast を発火する Action。

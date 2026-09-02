@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Announcement;
+use App\Models\User;
 
 class AnnouncementPolicy
 {
@@ -15,10 +17,10 @@ class AnnouncementPolicy
         //
     }
 
-public function view(User $user, Announcement $announcement): bool
-{
-    return $announcement->users()
-        ->where('users.id', $user->id)
-        ->exists();
-}
+    public function view(User $user, Announcement $announcement): bool
+    {
+        return $announcement->users()
+            ->where('users.id', $user->id)
+            ->exists();
+    }
 }
