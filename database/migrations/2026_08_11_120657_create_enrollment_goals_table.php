@@ -19,7 +19,7 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
             $table->string('title', 100);
-            $table->date('target_date');
+            $table->date('target_date')->nullable();
             $table->text('description', 1000)->nullable();
             $table->foreignUlid('user_id')
                 ->constrained()
